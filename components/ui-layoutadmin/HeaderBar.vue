@@ -96,7 +96,7 @@
       </q-btn>
 
       <!-- Btn: Sign out -->
-      <q-btn class="q-pa-md" flat round icon="fas fa-sign-out-alt" size="sm" @click="logout()">
+      <q-btn v-if="!!LogoutFn" class="q-pa-md" flat round icon="fas fa-sign-out-alt" size="sm" @click="logout()">
         <q-tooltip>Sair</q-tooltip>
       </q-btn>
     </q-toolbar>
@@ -113,6 +113,7 @@ export default {
   props: {
     LogoPath: String,
     SearchOnHelpFn: Function,
+    LogoutFn: Function,
   },
 
   components: {
@@ -227,25 +228,7 @@ export default {
     logout() {
       if (!confirm("Deseja encerrar seu acesso?")) return false;
 
-      var $hdr = this;
-
-      $hdr.$emit('load', 'logout');
-
-      var url = '/api/auth/v1/logout';
-
-      if (localStorage.getItem('authtoken'))
-        url += '?token=' + localStorage.getItem('authtoken');
-
-      this.$http.delete(url)
-        .then(function () {
-          $hdr.$emit('loaded', 'logout');
-          localStorage.removeItem('authtoken');
-          localStorage.removeItem('xsrf_token');
-          localStorage.removeItem('iam_session_key');
-          localStorage.removeItem('regularPermissions');
-          localStorage.removeItem('customPermissions');
-          location.href = '/login';
-        });
+      return this.LogoutFn();
     },
   }
 }
