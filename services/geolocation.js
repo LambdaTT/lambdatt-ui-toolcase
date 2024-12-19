@@ -1,4 +1,4 @@
-import Http from './http.js'
+import { http } from '../services.js'
 
 const getGeolocation = () => new Promise((resolve, reject) => {
   if (navigator.geolocation) {
@@ -19,7 +19,7 @@ const getGeolocation = () => new Promise((resolve, reject) => {
 });
 
 export const GeolocationService = {
-  async trackGeolocation() {
+  async trackGeolocation(url) {
     try {
       const position = await getGeolocation();
 
@@ -28,7 +28,7 @@ export const GeolocationService = {
         vl_longitude: position.longitude,
       };
 
-      await Http.post('/api/app/operators/v1/geolocation', data)
+      await http.post(url, data)
     } catch (error) {
       console.error('Erro ao coletar ou enviar geolocalização:', error);
     }
