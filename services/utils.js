@@ -352,5 +352,29 @@ export default {
         }, delay);
       });
     };
+  },
+
+  /**
+   * Retorna um array de objetos, onde cada objeto contém o nome do mês (label) e o número do mês (value).
+   * @param {boolean} [stringfy=false] - Define se o valor do mês será retornado como uma string de dois dígitos.
+   *                                   - Se `true`, o número do mês será uma string no formato "01", "02", ..., "12".
+   *                                   - Por padrão, o número do mês será retornado como um número inteiro.
+   * @returns {Array<{label: string, value: string | number}>}  - Um array de objetos representando os meses do ano. Cada objeto possui:
+   *                                                            - `label`: o nome do mês (ex: "Janeiro").
+   *                                                            - `value`: o número do mês como string ou número.
+   */
+  months(stringfy = false){
+    const months = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+
+    return months.map((month, index) => {
+      const value = index + 1; // Número do mês
+      return {
+        label: month,
+        value: stringfy ? value.toString().padStart(2, "0") : value
+      };
+    });
   }
 }
