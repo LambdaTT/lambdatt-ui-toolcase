@@ -154,6 +154,7 @@ export default {
   },
 
   notifyError: function (error) {
+    // console.log('error notify', error);
     if (error.response && error.response.data && (error.response.data.user_friendly || error.response.data.userReadable)) {
       Notify.create({
         message: error.response.data.message,
@@ -363,9 +364,9 @@ export default {
    *                                                            - `label`: o nome do mês (ex: "Janeiro").
    *                                                            - `value`: o número do mês como string ou número.
    */
-  months(stringfy = false){
+  months(stringfy = false) {
     const months = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
