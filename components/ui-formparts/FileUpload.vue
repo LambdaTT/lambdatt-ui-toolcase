@@ -1,7 +1,7 @@
 <template>
   <div>
-    <q-input :readonly="readonly" hide-bottom-space square filled :clearable="clearable" v-model="fileData.name" @click="inputClicked()"
-      type="text" :label="!!Label ? Label : 'Selecione o arquivo'" @clear="clearFile"
+    <q-input :readonly="readonly" hide-bottom-space square filled :clearable="clearable" v-model="fileData.name"
+      @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'" @clear="clearFile"
       :color="!!Color ? Color : 'primary'" @focus="$emit('focus')" :error="Error">
       <template v-slot:prepend>
         <q-icon name="cloud_upload" />
@@ -13,10 +13,11 @@
     <p v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2) }}
       kb
     </p>
-    <input :disabled="readonly" ref="inputFile" :accept="accept" type="file" v-on:change="fileChange" style="display:none;">
+    <input :disabled="readonly" ref="inputFile" :accept="accept" type="file" v-on:change="fileChange"
+      style="display:none;">
   </div>
 </template>
-<script> 
+<script>
 
 export default {
   name: 'ui-formparts-fileupload',
@@ -41,7 +42,8 @@ export default {
         src: null,
         size: null
       },
-      dialogIsOpen: false
+      dialogIsOpen: false,
+      repetitionLock: false,
     }
   },
 
@@ -69,12 +71,15 @@ export default {
     },
 
     async inputClicked() {
-      this.$emit('fileupload-before-choose');
-      await this.sleep(100);
-      this.dialogIsOpen = true;
-      window.addEventListener('focus', this.onWindowFocus);
-      this.$refs.inputFile.click();
-      document.activeElement.blur();
+      if (!this.repetitionLock) {
+        this.repetitionLock = true;
+        this.$emit('fileupload-before-choose');
+        await this.sleep(100);
+        this.dialogIsOpen = true;
+        window.addEventListener('focus', this.onWindowFocus);
+        this.$refs.inputFile.click();
+        document.activeElement.blur();
+      }
     },
 
     clearFile() {
@@ -123,6 +128,7 @@ export default {
         this.clearFileData();
       }
 
+      this.repetitionLock = false;
       this.$emit('fileupload-chosen')
     },
 
