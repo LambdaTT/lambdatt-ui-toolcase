@@ -667,8 +667,12 @@ export default {
           break;
       }
 
-      // Cria um blob com o conteúdo do arquivo
-      const blob = new Blob([content], { type: blobType });
+      // Encode the content to UTF-8
+      const encoder = new TextEncoder();
+      const utf8Content = encoder.encode(content);
+
+      // Create a blob with the UTF-8 encoded content
+      const blob = new Blob([utf8Content], { type: blobType });
 
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
