@@ -63,7 +63,8 @@ export default {
 
   computed: {
     dynamicColClass() {
-      return `col-md-${12 / (this.Actions.length + 1)}`
+      var actionsLength = (!!this.Actions && !!this.Actions.length) ? this.Actions.length : 0;
+      return `col-md-${12 / (actionsLength + 1)}`
     }
   },
 
