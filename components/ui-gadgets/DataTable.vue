@@ -415,9 +415,11 @@ export default {
     exportOptions() {
       var typeIcons = {
         xls: 'fas fa-file-excel',
+        csv: 'fas fa-file-csv',
       };
       var typeLabels = {
         xls: 'Exportar XLS',
+        csv: 'Exportar CSV',
       };
 
       if (!(this.Export instanceof Array))
@@ -665,6 +667,10 @@ export default {
           blobType = "application/vnd.ms-excel;charset=utf-8;";
           content = this.buildContentTable(data);
           break;
+        case 'csv':
+          blobType = "text/csv;charset=utf-8;";
+          content = this.buildCsvContent(data);
+          break;
       }
 
       // Encode the content to UTF-8
@@ -780,6 +786,41 @@ export default {
   `;
 
       return content;
+    },
+
+    buildCsvContent(rawdata) {
+      // Ensure the data is an array of objects
+      if (!Array.isArray(rawdata) || !rawdata.length || typeof rawdata[0] !== 'object') {
+        console.error('The provided data could not be converted to CSV.');
+        return;
+      }
+
+      // Extract headers (keys of the first object in the array)
+      const headers = this.Columns
+        .filter(column => this.visibleColumns.includes(column.field))
+        .map(column => column.label)
+
+      const data = [];
+      for (let j = 0; j < rawdata.length; j++) {
+        let row = rawdata[j];
+        let rowValues = [];
+
+        for (let i = 0; i < this.Columns.length; i++) {
+          let clm = this.Columns[i];
+          if (!(this.visibleColumns.includes(clm.field))) continue;
+
+          rowValues.push(row[clm.field]);
+        }
+        data.push(rowValues);
+      }
+
+      // Generate CSV content
+      const csvContent = [
+        headers.join(';'), // Join headers with commas
+        ...data.map(row => row.join(';')) // Map each row to CSV string
+      ].join('\r\n'); // Separate rows with a newline
+
+      return csvContent;
     }
   },
 
