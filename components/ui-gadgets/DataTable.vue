@@ -172,7 +172,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="row q-mt-lg" v-show="state == 'ready'">
+    <div v-if="!IgnorePagination" class="row q-mt-lg" v-show="state == 'ready'">
       <div :class="`col-12 col-md-6 ${$q.screen.lt.md ? 'text-center' : ''}`">
         <div>
           Mostrar
@@ -231,6 +231,7 @@ export default {
     Printable: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
+    IgnorePagination: Boolean,
   },
 
   data() {
@@ -282,7 +283,7 @@ export default {
           localStorage.setItem(`Datatable.${this.Name}.searchTerm`, this.searchTerm)
         else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
 
-        this.rawData = (await this.loadData()).data;
+        this.rawData = (await this.loadData(this.IgnorePagination)).data;
       }, 200);
     },
 
@@ -294,7 +295,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     'pagination.limit'() {
@@ -307,7 +308,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     'pagination.sortBy'() {
@@ -318,7 +319,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     'pagination.sortDir'() {
@@ -329,7 +330,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     filterParams: {
@@ -360,7 +361,8 @@ export default {
 
     rawData: {
       handler(data) {
-        this.paginate(data);
+        if (this.IgnorePagination) this.dataInPage = data;
+        else this.paginate(data);
         // Expose factory:
         this.exposeFactory();
         // turn off loading indicator
@@ -475,7 +477,7 @@ export default {
           delete filtersObject[k] == null
       }
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     setParams() {
@@ -581,7 +583,7 @@ export default {
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
-        this.rawData = (await this.loadData()).data;
+        this.rawData = (await this.loadData(this.IgnorePagination)).data;
       }, 200);
     },
 
