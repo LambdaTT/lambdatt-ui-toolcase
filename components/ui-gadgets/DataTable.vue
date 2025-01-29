@@ -84,8 +84,8 @@
         <thead>
           <tr>
             <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`q-pa-sm ${!!column.sort ? 'cursor-pointer' : ''}`" v-for="column in columns" :key="column.field"
-              @click="sort(column)">
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${!!column.sort ? 'cursor-pointer' : ''}`"
+              v-for="column in columns" :key="column.field" @click="sort(column)">
               {{ column.label }}
               <q-icon v-if="!!column.sort" size="0.9em" :name="getSortIcon(column)"
                 :color="column.sort == this.pagination.sortBy ? 'primary' : null"></q-icon>
@@ -98,8 +98,8 @@
         <tbody v-if="state == 'ready'">
           <tr v-for="(row, idx) in dataInPage" :key="idx">
             <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`q-pa-sm ${(!!column.align) ? `text-${column.align}` : ''}`" v-for="column in columns"
-              :key="column.field">
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
+              v-for="column in columns" :key="column.field">
 
               <div v-if="column.name != 'actions'">
                 <!-- In case no template is set for the td-->
@@ -115,7 +115,7 @@
 
               <!-- Especial td of actions -->
               <div class="text-center" v-if="column.name == 'actions' && showActions">
-                <q-btn flat dense color="primary" icon="fas fa-ellipsis-v">
+                <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
                   <q-tooltip>Ações do registro</q-tooltip>
                   <q-menu>
                     <q-list>
@@ -172,7 +172,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="row q-mt-lg" v-show="state == 'ready'">
+    <div v-if="!IgnorePagination" class="row q-mt-lg" v-show="state == 'ready'">
       <div :class="`col-12 col-md-6 ${$q.screen.lt.md ? 'text-center' : ''}`">
         <div>
           Mostrar
@@ -231,6 +231,8 @@ export default {
     Printable: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
+    IgnorePagination: Boolean,
+    dense: Boolean,
   },
 
   data() {
@@ -282,7 +284,7 @@ export default {
           localStorage.setItem(`Datatable.${this.Name}.searchTerm`, this.searchTerm)
         else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
 
-        this.rawData = (await this.loadData()).data;
+        this.rawData = (await this.loadData(this.IgnorePagination)).data;
       }, 200);
     },
 
@@ -294,7 +296,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     'pagination.limit'() {
@@ -307,7 +309,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     'pagination.sortBy'() {
@@ -318,7 +320,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     'pagination.sortDir'() {
@@ -329,7 +331,7 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     filterParams: {
@@ -360,7 +362,8 @@ export default {
 
     rawData: {
       handler(data) {
-        this.paginate(data);
+        if (this.IgnorePagination) this.dataInPage = data;
+        else this.paginate(data);
         // Expose factory:
         this.exposeFactory();
         // turn off loading indicator
@@ -415,9 +418,11 @@ export default {
     exportOptions() {
       var typeIcons = {
         xls: 'fas fa-file-excel',
+        csv: 'fas fa-file-csv',
       };
       var typeLabels = {
         xls: 'Exportar XLS',
+        csv: 'Exportar CSV',
       };
 
       if (!(this.Export instanceof Array))
@@ -457,6 +462,25 @@ export default {
   },
 
   methods: {
+    showActionsBtnInRow(row) {
+      var show = false;
+      for (let i = 0; i < this.RowActions.length; i++) {
+        let a = this.RowActions[i];
+        if ('hide' in a) {
+          if (typeof a.hide == 'function') {
+            if (!a.hide(row)) {
+              show = true;
+            }
+          } else {
+            if (!a.hide) {
+              show = true;
+            }
+          }
+        }
+      }
+      return show;
+    },
+
     filterHandler(filtersObject, name) {
       // Save filters state:
       localStorage.removeItem(`Datatable.${this.Name}.${name}`);
@@ -473,7 +497,7 @@ export default {
           delete filtersObject[k] == null
       }
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData()).data, 200);
+      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
     },
 
     setParams() {
@@ -579,7 +603,7 @@ export default {
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
-        this.rawData = (await this.loadData()).data;
+        this.rawData = (await this.loadData(this.IgnorePagination)).data;
       }, 200);
     },
 
@@ -665,10 +689,18 @@ export default {
           blobType = "application/vnd.ms-excel;charset=utf-8;";
           content = this.buildContentTable(data);
           break;
+        case 'csv':
+          blobType = "text/csv;charset=utf-8;";
+          content = this.buildCsvContent(data);
+          break;
       }
 
-      // Cria um blob com o conteúdo do arquivo
-      const blob = new Blob([content], { type: blobType });
+      // Encode the content to UTF-8
+      const encoder = new TextEncoder();
+      const utf8Content = encoder.encode(content);
+
+      // Create a blob with the UTF-8 encoded content
+      const blob = new Blob([utf8Content], { type: blobType });
 
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
@@ -776,6 +808,41 @@ export default {
   `;
 
       return content;
+    },
+
+    buildCsvContent(rawdata) {
+      // Ensure the data is an array of objects
+      if (!Array.isArray(rawdata) || !rawdata.length || typeof rawdata[0] !== 'object') {
+        console.error('The provided data could not be converted to CSV.');
+        return;
+      }
+
+      // Extract headers (keys of the first object in the array)
+      const headers = this.Columns
+        .filter(column => this.visibleColumns.includes(column.field))
+        .map(column => column.label)
+
+      const data = [];
+      for (let j = 0; j < rawdata.length; j++) {
+        let row = rawdata[j];
+        let rowValues = [];
+
+        for (let i = 0; i < this.Columns.length; i++) {
+          let clm = this.Columns[i];
+          if (!(this.visibleColumns.includes(clm.field))) continue;
+
+          rowValues.push(row[clm.field]);
+        }
+        data.push(rowValues);
+      }
+
+      // Generate CSV content
+      const csvContent = [
+        headers.join(';'), // Join headers with commas
+        ...data.map(row => row.join(';')) // Map each row to CSV string
+      ].join('\r\n'); // Separate rows with a newline
+
+      return csvContent;
     }
   },
 
@@ -851,6 +918,11 @@ thead {
   position: sticky;
   z-index: 2;
   background-color: white;
+}
+
+th,
+td {
+  min-width: 125px;
 }
 
 tbody>tr:nth-child(even) {
