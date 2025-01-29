@@ -1,4 +1,4 @@
-export const EventBroadcaster = {
+export default {
   events: {},
 
   // Method to listen for an event
