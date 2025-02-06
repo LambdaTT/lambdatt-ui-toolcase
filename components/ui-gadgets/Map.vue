@@ -1,10 +1,8 @@
 <template>
   <div class="map-container" :id="`map-container-${uniqid}`">
-    <div class="q-pa-xl absolute bg-white text-center" v-show="mapState == 'empty'" id="map-empty">
+    <div class="q-pa-xl absolute bg-white column flex-center" v-show="mapState == 'empty'" id="map-empty">
       <q-icon size="xl" name="fas fa-map"></q-icon>
-      <br>
-      <br>
-      Mapa Vazio.
+      <div>Mapa Vazio.</div>
     </div>
     <div class="q-pa-xl absolute bg-white text-center" v-show="mapState == 'loading'" id="map-loading">
       <div>
