@@ -2,7 +2,7 @@ import { Notify } from 'quasar'
 
 var wakeLock = null;
 
-export const WakelockService = {
+export default {
   async requestWakeLock() {
     if (!('wakeLock' in navigator)) {
       console.warn("This device does not support Wake Lock API");

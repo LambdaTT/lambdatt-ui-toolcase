@@ -1,5 +1,6 @@
 import { Notify } from 'quasar'
 
+// UTILS:
 export default {
   uniqid: function () {
     var ts = String(new Date().getTime()), i = 0, out = '';
@@ -48,7 +49,7 @@ export default {
     return serialString;
   },
 
-  readFile: function (file, callback) {
+  readFile: function (file, callback, readAsText) {
     var reader = new FileReader();
     reader.onload = function (evt) {
       callback({
@@ -57,7 +58,8 @@ export default {
       });
     };
 
-    reader.readAsDataURL(file);
+    if (readAsText) reader.readAsText(file);
+    else reader.readAsDataURL(file);
   },
 
   validateCPF: function (cpf) {
@@ -236,6 +238,12 @@ export default {
     const fileName = url.split("/").at(-1);
     const file = new File([blob], fileName, { type: blob.type });
     return file;
+  },
+
+  currentDatetime: () => {
+    var UTC_now = new Date();
+
+    return new Date(UTC_now.toLocaleString('en', { timeZone: 'America/Sao_Paulo' }));
   },
 
   validateForm(input, inputError, customRules) {

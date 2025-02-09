@@ -1,8 +1,21 @@
-import http from './services/http'
-import localData from './services/localData'
-import persistentNotifications from './services/persistentNotifications'
-import persistentRequests from './services/persistentRequests'
-import utils from './services/utils'
+import bluetooth from './services/bluetooth'
 import eventbroadcaster from './services/eventbroadcaster'
+import geolocation from './services/geolocation'
+import http from './services/http'
+import localData from './services/localdata'
+import persistentNotifications from './services/persistentnotifications'
+import requestQueue from './services/requestqueue'
+import utils from './services/utils'
+import wakeLock from './services/wakelock'
 
-export { http, localData, persistentNotifications, persistentRequests, utils, eventbroadcaster };
+export {
+    bluetooth,
+    eventbroadcaster,
+    geolocation,
+    http,
+    localData,
+    persistentNotifications,
+    requestQueue,
+    utils,
+    wakeLock,
+};

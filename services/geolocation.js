@@ -18,7 +18,7 @@ const getGeolocation = () => new Promise((resolve, reject) => {
   }
 });
 
-export const GeolocationService = {
+export default {
   async trackGeolocation(url) {
     try {
       const position = await getGeolocation();

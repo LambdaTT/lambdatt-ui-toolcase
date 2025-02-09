@@ -7,7 +7,7 @@ function handleReceivedData(event) {
   return dataChunk;
 }
 
-export const BluetoothService = {
+export default {
   device: null,
   service: null,
   characteristic: null,
