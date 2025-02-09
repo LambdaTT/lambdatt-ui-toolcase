@@ -476,7 +476,7 @@ export default {
               show = true;
             }
           }
-        }
+        } else show = true;
       }
       return show;
     },
