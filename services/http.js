@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { utils } from '../services.js'
+import { utils, eventbroadcaster } from '../services.js'
 
 var headers = {};
 export default {
@@ -27,6 +27,9 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent');
+
     return axios.get(url, reqConf);
   },
 
@@ -44,6 +47,9 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent');
+
     return axios.post(url, data, reqConf);
   },
 
@@ -60,6 +66,9 @@ export default {
 
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent');
 
     return axios.put(url, data, reqConf);
   },
@@ -83,6 +92,9 @@ export default {
 
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent');
 
     return axios.delete(url, reqConf);
   },
@@ -122,6 +134,9 @@ export default {
         window.URL.revokeObjectURL(_url);
         anchorElement.remove();
       });
+
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent');
   },
 
   upload: function (url, params, method) {
@@ -144,6 +159,9 @@ export default {
 
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent');
 
     return axios[method](url, reqConf);
   }
