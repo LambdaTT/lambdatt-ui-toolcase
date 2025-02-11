@@ -1,3 +1,9 @@
+import { ref } from 'vue';
+
+var storage = ref({});
+var transactions = [];
+var autocommit = true;
+
 var _filterFunction = (params) => {
   return (obj) => {
     if (params != null)
@@ -67,18 +73,22 @@ var _filterFunction = (params) => {
 
 export default {
   init(datasetName) {
-    if (localStorage.getItem(datasetName) == null)
+    if (localStorage.getItem(datasetName) == null) {
       localStorage.setItem(datasetName, '[]');
+      storage.value[datasetName] = '[]';
+    }
   },
 
   find(datasetName, params, filterFunction) {
-    var dataset = localStorage.getItem(datasetName);
-    if (dataset == null) throw `There's no dataset named ${datasetName}.`;
-    dataset = JSON.parse(dataset);
-
     if (!filterFunction) filterFunction = _filterFunction;
 
-    return dataset.filter(filterFunction(params));
+    if (!(datasetName in storage.value)) {
+      var dataset = localStorage.getItem(datasetName);
+      if (dataset == null) throw `There's no dataset named ${datasetName}.`;
+      storage.value[datasetName] = dataset;
+    }
+
+    return JSON.parse(storage.value[datasetName]).filter(filterFunction(params));
   },
 
   first(datasetName, params, filterFunction) {
@@ -102,7 +112,10 @@ export default {
       dataset.push(obj);
     }
 
-    localStorage.setItem(datasetName, JSON.stringify(dataset));
+    transactions.push({ datasetName, dataset });
+    if (autocommit) this.commit();
+
+    return data;
   },
 
   update(datasetName, params, data, filterFunction) {
@@ -112,18 +125,22 @@ export default {
 
     if (!filterFunction) filterFunction = _filterFunction(params);
 
+    var affectedRows = 0;
     for (let i = 0; i < dataset.length; i++) {
       if (filterFunction(dataset[i])) {
         for (let k in data) {
           if (k in dataset[i]) {
             dataset[i][k] = data[k];
+            affectedRows++;
           }
         }
       }
     }
 
-    localStorage.removeItem(datasetName);
-    localStorage.setItem(datasetName, JSON.stringify(dataset));
+    transactions.push({ datasetName, dataset });
+    if (autocommit) this.commit();
+
+    return affectedRows;
   },
 
   delete(datasetName, params, filterFunction) {
@@ -133,13 +150,37 @@ export default {
 
     if (!filterFunction) filterFunction = _filterFunction(params);
 
+    var affectedRows = 0;
     for (let i = 0; i < dataset.length; i++) {
       if (filterFunction(dataset[i])) {
         dataset.splice(i, 1);
+        affectedRows++;
       }
     }
 
-    localStorage.removeItem(datasetName);
-    localStorage.setItem(datasetName, JSON.stringify(dataset));
+    transactions.push({ datasetName, dataset });
+    if (autocommit) this.commit();
+
+    return affectedRows;
+  },
+
+  setAutoCommit(mode) {
+    autocommit = Boolean(mode);
+  },
+
+  commit() {
+    for (let i = 0; i < transactions.length; i++) {
+      let t = transactions[i];
+
+      localStorage.setItem(t.datasetName, JSON.stringify(t.dataset));
+      storage.value[t.datasetName] = JSON.stringify(t.dataset);
+    }
+
+    this.resetTransactions();
+  },
+
+  resetTransactions() {
+    transactions = [];
+    autocommit = true;
   }
 }
