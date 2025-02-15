@@ -25,7 +25,7 @@ export default {
   },
 
   cloneObj: function (obj) {
-    return JSON.parse(JSON.stringify(obj));
+    return { ...obj }
   },
 
   sleep: function (ms) {
@@ -33,20 +33,17 @@ export default {
   },
 
   objToSerialString: function (object, skipKeys, joint) {
-    if (!object) return '';
+    if (!(object instanceof Object)) console.error("Invalid object data.");
+    if (!object || this.objectSize(object) == 0) return '';
 
-    skipKeys = skipKeys == null ? [] : skipKeys;
-    joint = joint == null ? '&' : joint;
+    skipKeys = skipKeys ?? [];
 
-    var serialString = null;
-    serialString = Object.keys(object).map(function (key) {
+    return Object.keys(object).map(function (key) {
       if (skipKeys.indexOf(key) > -1)
         return '';
 
-      return key + '=' + object[key];
-    }).join(joint);
-
-    return serialString;
+      return `${key}=${object[key]}`;
+    }).join(joint ?? '&');
   },
 
   readFile: function (file, callback, readAsText) {
@@ -224,12 +221,7 @@ export default {
   },
 
   objectSize: function (obj) {
-    var size = 0;
-    for (var k in obj) {
-      if (obj.hasOwnProperty(k)) size++;
-    }
-
-    return size;
+    return !obj ? 0 : Object.keys(obj).length;
   },
 
   fileFromURL: async (url) => {
@@ -385,5 +377,5 @@ export default {
         value: stringfy ? value.toString().padStart(2, "0") : value
       };
     });
-  }
+  },
 }
