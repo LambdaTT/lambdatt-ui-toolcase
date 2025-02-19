@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 
 var storage = ref({});
-var transactions = [];
+var transactions = {};
 var autocommit = true;
 
 var _filterFunction = (params) => {
@@ -97,8 +97,18 @@ export default {
     else return results[0];
   },
 
+  fetch(callback, datasetName, params, filterFunction) {
+    var results = this.find(datasetName, params, filterFunction);
+
+    for (let i = 0; i < results.length; i++) {
+      callback(results[i]);
+    }
+
+    return results;
+  },
+
   insert(datasetName, data) {
-    var dataset = localStorage.getItem(datasetName);
+    var dataset = transactions[datasetName] ?? localStorage.getItem(datasetName);
     if (dataset == null) dataset = [];
     else dataset = JSON.parse(dataset);
 
@@ -112,14 +122,14 @@ export default {
       dataset.push(obj);
     }
 
-    transactions.push({ datasetName, dataset });
+    transactions[datasetName] = JSON.stringify(dataset);
     if (autocommit) this.commit();
 
     return data;
   },
 
   update(datasetName, params, data, filterFunction) {
-    var dataset = localStorage.getItem(datasetName);
+    var dataset = transactions[datasetName] ?? localStorage.getItem(datasetName);
     if (dataset == null) throw `There's no dataset named ${datasetName}.`;
     dataset = JSON.parse(dataset);
 
@@ -137,14 +147,14 @@ export default {
       }
     }
 
-    transactions.push({ datasetName, dataset });
+    transactions[datasetName] = JSON.stringify(dataset);
     if (autocommit) this.commit();
 
     return affectedRows;
   },
 
   delete(datasetName, params, filterFunction) {
-    var dataset = localStorage.getItem(datasetName);
+    var dataset = transactions[datasetName] ?? localStorage.getItem(datasetName);
     if (dataset == null) throw `There's no dataset named ${datasetName}.`;
     dataset = JSON.parse(dataset);
 
@@ -158,7 +168,7 @@ export default {
       }
     }
 
-    transactions.push({ datasetName, dataset });
+    transactions[datasetName] = JSON.stringify(dataset);
     if (autocommit) this.commit();
 
     return affectedRows;
@@ -169,18 +179,18 @@ export default {
   },
 
   commit() {
-    for (let i = 0; i < transactions.length; i++) {
-      let t = transactions[i];
+    for (let k in transactions) {
+      let dataset = transactions[k];
 
-      localStorage.setItem(t.datasetName, JSON.stringify(t.dataset));
-      storage.value[t.datasetName] = JSON.stringify(t.dataset);
+      localStorage.setItem(k, dataset);
+      storage.value[k] = dataset;
     }
 
     this.resetTransactions();
   },
 
   resetTransactions() {
-    transactions = [];
+    transactions = {};
     autocommit = true;
   }
 }
