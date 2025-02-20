@@ -137,6 +137,24 @@
           </tr>
         </tbody>
 
+        <!-- Error State -->
+        <tbody v-if="state == 'error'">
+          <tr>
+            <td class="q-pa-lg text-center text-red-3" :colspan="columns.length">
+              <div>
+                <div>
+                  <q-icon size="lg" name="fas fa-bomb"></q-icon>
+                </div>
+                <div class="text-h6">
+                  ERRO!
+                </div>
+                <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
+                <small>Favor entrar em contato com o administrador do sistema.</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+
         <!-- Empty State -->
         <tbody v-if="state == 'empty'">
           <tr>
@@ -265,6 +283,7 @@ export default {
       rawData: [],
       dataInPage: [],
       loadTimeout: null,
+      error: null,
 
       // State:
       loading: false,
@@ -611,6 +630,8 @@ export default {
       if (!this.loading) {
         // turn on loading indicator
         this.loading = true;
+        this.error = null;
+        this.errorState = false;
 
         var params = this.setParams();
         if (!!ignorePagination) {
@@ -632,7 +653,9 @@ export default {
         } catch (err) {
           this.loading = false;
           this.errorState = true;
+          this.error = err;
           this.$emit('error-thrown', err);
+          throw err;
         }
       }
     },
