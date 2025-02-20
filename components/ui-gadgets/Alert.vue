@@ -43,7 +43,7 @@ export default {
     },
 
     show(v) {
-      history.$emit('update:model-value', v);
+      this.$emit('update:model-value', v);
     }
   },
 
