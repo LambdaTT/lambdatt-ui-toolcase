@@ -29,6 +29,7 @@ export default {
     Content: String,
     persistent: Boolean,
     modelValue: Boolean,
+    DefaultOpened: Boolean,
   },
 
   data() {
