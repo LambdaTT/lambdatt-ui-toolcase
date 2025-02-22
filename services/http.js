@@ -27,10 +27,12 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
-    // Evt Trigger
-    eventbroadcaster.$broadcast('http-request-sent');
+    var reqPromise = axios.get(url, reqConf);
 
-    return axios.get(url, reqConf);
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent', reqPromise);
+
+    return reqPromise;
   },
 
   post: function (url, data) {
@@ -47,10 +49,12 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
-    // Evt Trigger
-    eventbroadcaster.$broadcast('http-request-sent');
+    var reqPromise = axios.post(url, data, reqConf);
 
-    return axios.post(url, data, reqConf);
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent', reqPromise);
+
+    return reqPromise
   },
 
   put: function (url, data) {
@@ -67,10 +71,12 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
-    // Evt Trigger
-    eventbroadcaster.$broadcast('http-request-sent');
+    var reqPromise = axios.put(url, data, reqConf);
 
-    return axios.put(url, data, reqConf);
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent', reqPromise);
+
+    return reqPromise
   },
 
   delete: function (url, params) {
@@ -93,10 +99,12 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
-    // Evt Trigger
-    eventbroadcaster.$broadcast('http-request-sent');
+    var reqPromise = axios.delete(url, reqConf);
 
-    return axios.delete(url, reqConf);
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent', reqPromise);
+
+    return reqPromise;
   },
 
   download: function (url, params, method) {
@@ -120,7 +128,7 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
-    axios[method](url, reqConf)
+    var reqPromise = axios[method](url, reqConf)
       .then((response) => {
         let blob = new Blob([response.data], { type: response.headers['content-type'] })
         var _url = window.URL.createObjectURL(blob);
@@ -136,7 +144,9 @@ export default {
       });
 
     // Evt Trigger
-    eventbroadcaster.$broadcast('http-request-sent');
+    eventbroadcaster.$broadcast('http-request-sent', reqPromise);
+
+    return reqPromise;
   },
 
   upload: function (url, params, method) {
@@ -160,9 +170,11 @@ export default {
     var sessionKey = localStorage.getItem('iam_session_key');
     if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
 
-    // Evt Trigger
-    eventbroadcaster.$broadcast('http-request-sent');
+    var reqPromise = axios[method](url, reqConf);
 
-    return axios[method](url, reqConf);
+    // Evt Trigger
+    eventbroadcaster.$broadcast('http-request-sent', reqPromise);
+
+    return reqPromise;
   }
 }
