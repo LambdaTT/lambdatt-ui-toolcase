@@ -7,6 +7,7 @@ import persistentNotifications from './services/persistentnotifications'
 import requestQueue from './services/requestqueue'
 import utils from './services/utils'
 import wakeLock from './services/wakelock'
+import datemanager from './services/datemanager'
 
 export {
     bluetooth,
@@ -18,4 +19,5 @@ export {
     requestQueue,
     utils,
     wakeLock,
+    datemanager,
 };
