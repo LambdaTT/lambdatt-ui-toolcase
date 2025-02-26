@@ -10,9 +10,9 @@
         <q-icon v-if="!!Icon" :name="Icon" />
       </template>
     </q-input>
-    <p v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2) }}
+    <div v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2) }}
       kb
-    </p>
+    </div>
     <input :disabled="readonly" ref="inputFile" :accept="accept" type="file" v-on:change="fileChange"
       style="display:none;">
   </div>
@@ -121,8 +121,8 @@ export default {
         this.fileData = {
           file: filedata.file,
           name: filedata.file.name,
-          size: filedata.file.size,
           src: filedata.src,
+          size: filedata.file.size,
         };
       } else {
         this.clearFileData();
