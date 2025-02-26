@@ -943,7 +943,13 @@ thead {
   background-color: white;
 }
 
-th,
+th {
+  white-space: nowrap;
+  /* Prevents text from wrapping */
+  width: fit-content;
+  /* Adjusts width to fit the content */
+}
+
 td {
   min-width: 125px;
 }
