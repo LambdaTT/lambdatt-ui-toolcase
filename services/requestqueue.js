@@ -28,18 +28,15 @@ export default {
 
       try {
         var response = await http[req.method](req.url, req.body);
+        if (req.callback) req.callback(response);
       } catch (e) {
         if (req.retry) markedForDel = false;
+      } finally {
+        if (markedForDel)
+          localData.delete('requestQueue', { 'id': req.id });
+        else if (req.repeat > 0)
+          localData.update('requestQueue', { 'id': req.id }, { repeat: req.repeat - 1 });
       }
-
-      if (req.callback) req.callback(response);
-
-      if (markedForDel)
-        localData.delete('requestQueue', { 'id': req.id });
-      else if (req.repeat > 0)
-        localData.update('requestQueue', { 'id': req.id }, { repeat: req.repeat - 1 });
-
-
     }
   }
 }
