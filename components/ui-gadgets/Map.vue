@@ -1,9 +1,12 @@
 <template>
   <div class="map-container" :id="`map-container-${uniqid}`">
-    <div class="q-pa-xl absolute bg-white column flex-center" v-show="mapState == 'empty'" id="map-empty">
+    <!-- Empty -->
+    <div v-show="mapState == 'empty'" class="q-pa-xl absolute bg-white column flex-center" id="map-empty">
       <q-icon size="xl" name="fas fa-map"></q-icon>
       <div>Mapa Vazio.</div>
     </div>
+
+    <!-- Loading -->
     <div class="q-pa-xl absolute bg-white text-center" v-show="mapState == 'loading'" id="map-loading">
       <div>
         <q-spinner-oval size="lg" />
@@ -12,6 +15,20 @@
         Carregando...
       </div>
     </div>
+
+    <!-- Offline -->
+    <div v-show="mapState == 'offline'" class="q-pa-xl absolute bg-white text-center">
+      <div>
+        <q-icon size="lg" name="wifi_off"></q-icon>
+      </div>
+      <div class="text-h6">
+        Você Está Offline
+      </div>
+      <div class="text-caption">Não é possível carregar o mapa sem conexão.</div>
+      <small>Para visualizar o mapa, reconecte a rede</small>
+    </div>
+
+    <!-- Ready -->
     <div class="map" :id="`map-${uniqid}`" v-show="mapState == 'ready'"></div>
   </div>
 </template>
@@ -35,7 +52,7 @@ export default {
   watch: {
     AddressObj: {
       handler(val) {
-        this.handleAddressObj(val)      
+        this.handleAddressObj(val)
       },
       deep: true
     },
@@ -82,12 +99,12 @@ export default {
 
       this.mapState = 'loading';
 
-      if(this.updMapDebounce)
+      if (this.updMapDebounce)
         clearTimeout(this.updMapDebounce);
 
       this.updMapDebounce = setTimeout(() => {
         var fullAddress = buildAddress ? this.buildFullAddress(this.AddressObj) : this.AddressStr;
-        
+
         if (fullAddress == null) return;
 
         this.getGeoCode(fullAddress, (latitude, longitude) => {
@@ -133,13 +150,18 @@ export default {
     }
   },
 
-  created() {
+  mounted() {
     // Generate an uniqid
     var ts = String(new Date().getTime()), i = 0, out = '';
     for (i = 0; i < ts.length; i += 2) {
       out += Number(ts.substr(i, 2)).toString(36);
     }
     this.uniqid = ('d' + out);
+
+    if (navigator.onLine == false) {
+      this.mapState = 'offline';
+      return;
+    }
 
     if (!!this.AddressObj) this.handleAddressObj();
     else if (!!this.AddressStr) this.handleAddressStr();
