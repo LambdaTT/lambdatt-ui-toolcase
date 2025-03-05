@@ -38,7 +38,7 @@
       </InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
-      <InputField type="select" clearable :dense="dense" :readonly="formReadonly" Label="UF"
+      <InputField type="select" :dense="dense" :readonly="formReadonly" Label="UF"
         Icon="fas fa-map-marker-alt" v-model="input.do_addressuf" :Options="brazilianStates"
         :Error="inputError.do_addressuf" @focus="inputError.do_addressuf = false"></InputField>
     </div>
