@@ -5,14 +5,13 @@
         <h1>Informações de Endereço</h1>
       </div>
     </div>
-    <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
-      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP" Icon="fas fa-search"
-        v-model="input.ds_addresszipcode" :Error="inputError.ds_addresszipcode"
-        @focus="inputError.ds_addresszipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
-      </InputField>
-    </div>
-    <div v-if="!wrapFields" class="col-12 col-md-6">
-      &nbsp;
+    <div class="col-12 row">
+      <div :class="`col-12 ${wrapFields == true ? '' : 'col-md-6'}`">
+        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP" Icon="fas fa-search"
+          v-model="input.ds_addresszipcode" :Error="inputError.ds_addresszipcode"
+          @focus="inputError.ds_addresszipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
+        </InputField>
+      </div>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
       <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Endereço"
