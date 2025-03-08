@@ -355,6 +355,13 @@ export default {
     };
   },
 
+  async waitFor(condition) {
+    if (condition !== true)
+      await this.waitFor(condition);
+
+    return true;
+  },
+
   /**
    * Retorna um array de objetos, onde cada objeto contém o nome do mês (label) e o número do mês (value).
    * @param {boolean} [stringfy=false] - Define se o valor do mês será retornado como uma string de dois dígitos.
