@@ -43,10 +43,8 @@ export default {
   },
 
   watch: {
-    selected() {
-      var selectedValue = !!this.selected ? this.selected.value : null;
-
-      this.$emit('update:model-value', selectedValue);
+    selected(v) {
+      this.$emit('update:model-value', v?.value);
     },
 
     modelValue(v) {
