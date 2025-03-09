@@ -119,10 +119,10 @@
                   <q-tooltip>Ações do registro</q-tooltip>
                   <q-menu>
                     <q-list>
-                      <q-item v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
+                      <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
                         v-for="(a, idx) in RowActions" :key="idx" clickable v-close-popup @click="a.fn(row)">
                         <q-item-section v-if="a.icon" side>
-                          <q-icon size="sm" :name="a.icon"></q-icon>
+                          <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                         </q-item-section>
                         <q-item-section>
                           {{ a.label }}
