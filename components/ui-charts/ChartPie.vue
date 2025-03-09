@@ -1,9 +1,9 @@
 <template>
   <div>
     <!-- Loading -->
-    <div class="text-center q-pa-xl" v-show="showLoader">
+    <div class="text-center q-pa-xl text-grey-8" v-show="showLoader">
       <div>
-        <q-spinner-oval size="lg" />
+        <q-spinner-gears size="lg" />
       </div>
       <div class="text-caption">
         Carregando...

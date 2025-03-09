@@ -1,15 +1,15 @@
 <template>
   <div class="map-container" :id="`map-container-${uniqid}`">
     <!-- Empty -->
-    <div v-show="mapState == 'empty'" class="q-pa-xl absolute bg-white column flex-center" id="map-empty">
+    <div v-show="mapState == 'empty'" class="q-pa-xl absolute bg-white column flex-center text-grey-8" id="map-empty">
       <q-icon size="xl" name="fas fa-map"></q-icon>
       <div>Mapa Vazio.</div>
     </div>
 
     <!-- Loading -->
-    <div class="q-pa-xl absolute bg-white text-center" v-show="mapState == 'loading'" id="map-loading">
+    <div class="q-pa-xl absolute bg-white text-center text-grey-8" v-show="mapState == 'loading'" id="map-loading">
       <div>
-        <q-spinner-oval size="lg" />
+        <q-spinner-gears size="lg" />
       </div>
       <div class="text-caption">
         Carregando...
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Offline -->
-    <div v-show="mapState == 'offline'" class="q-pa-xl absolute bg-white text-center">
+    <div v-show="mapState == 'offline'" class="q-pa-xl absolute bg-white text-center text-grey-8">
       <div>
         <q-icon size="lg" name="wifi_off"></q-icon>
       </div>

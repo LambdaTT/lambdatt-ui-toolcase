@@ -158,13 +158,13 @@
         <!-- Empty State -->
         <tbody v-if="state == 'empty'">
           <tr>
-            <td class="q-pa-lg text-center" :colspan="columns.length">
+            <td class="q-pa-lg text-center text-grey-8" :colspan="columns.length">
               <div>
                 <div>
                   <q-icon size="lg" name="far fa-folder-open"></q-icon> *
                 </div>
                 <div class="text-h6">
-                  Lista vazia.
+                  Lista Vazia.
                 </div>
               </div>
             </td>
@@ -174,9 +174,9 @@
         <!-- Loading State -->
         <tbody v-if="state == 'loading'">
           <tr>
-            <td class="q-pa-lg text-center" :colspan="columns.length">
+            <td class="q-pa-lg text-center text-grey-8" :colspan="columns.length">
               <div>
-                <q-spinner-oval size="lg" />
+                <q-spinner-gears size="lg" />
               </div>
               <div class="text-caption">
                 Carregando...
