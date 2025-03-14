@@ -1,7 +1,7 @@
 <template>
   <div :class="dense ? 'q-pa-xs' : 'q-pa-sm'">
     <!-- Input text: -->
-    <q-input ref="InputFieldRef" hide-bottom-space v-if="type == 'text' || type == null"
+    <q-input :ref="inputRefId" hide-bottom-space v-if="type == 'text' || type == null"
       :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square filled :dense="dense" :clearable="clearable"
       :readonly="readonly" :disable="disable" v-model="value" :error="Error" @focus="() => $emit('focus')" type="text"
       :maxlength="maxlength" :label="Label" :mask="Mask" @update:model-value="updModelValue">
@@ -12,7 +12,7 @@
     </q-input>
 
     <!-- Input password: -->
-    <q-input ref="InputFieldRef" hide-bottom-space v-if="type == 'password'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
+    <q-input :ref="inputRefId" hide-bottom-space v-if="type == 'password'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
       filled :dense="dense" :clearable="clearable" :readonly="readonly" :disable="disable" v-model="value" :error="Error"
       @focus="() => $emit('focus')" type="password" :maxlength="maxlength" :label="Label"
       @update:model-value="updModelValue">
@@ -23,7 +23,7 @@
     </q-input>
 
     <!-- Input textarea: -->
-    <q-input ref="InputFieldRef" hide-bottom-space v-if="type == 'textarea'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
+    <q-input :ref="inputRefId" hide-bottom-space v-if="type == 'textarea'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
       filled :dense="dense" :clearable="clearable" :readonly="readonly" :disable="disable" v-model="value" :error="Error"
       @focus="() => $emit('focus')" type="textarea" :maxlength="maxlength" :label="Label"
       @update:model-value="updModelValue">
@@ -34,7 +34,7 @@
     </q-input>
 
     <!-- Input email: -->
-    <q-input ref="InputFieldRef" hide-bottom-space v-if="type == 'email'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
+    <q-input :ref="inputRefId" hide-bottom-space v-if="type == 'email'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
       filled :dense="dense" :clearable="clearable" :readonly="readonly" :disable="disable" v-model="value" :error="Error"
       @focus="() => $emit('focus')" type="email" maxlength="255" :label="Label" @update:model-value="updModelValue">
       <template v-slot:append>
@@ -44,7 +44,7 @@
     </q-input>
 
     <!-- Input number: -->
-    <q-input ref="InputFieldRef" hide-bottom-space v-if="type == 'number'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
+    <q-input :ref="inputRefId" hide-bottom-space v-if="type == 'number'" :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square
       filled :dense="dense" :clearable="clearable" :readonly="readonly" :disable="disable" v-model="value" :error="Error"
       @focus="() => $emit('focus')" type="number" :step="step" :max="max" :min="min" :label="Label"
       @update:model-value="updModelValue">
@@ -142,7 +142,8 @@ export default {
 
   data() {
     return {
-      value: null
+      value: null,
+      inputRefId: null
     }
   },
 
@@ -163,11 +164,12 @@ export default {
   },
 
   created() {
+    this.inputRefId = `InputFieldRef-${this.$utils.uniqid()}`
     this.value = this.modelValue;
   },
 
   mounted() {
-    this.$emit('expose-ref', this.$refs.InputFieldRef);
+    this.$emit('expose-ref', this.$refs[this.inputRefId]);
   }
 }
 </script>
