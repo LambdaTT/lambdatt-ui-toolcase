@@ -1,5 +1,6 @@
 <template>
-  <q-btn-dropdown class="q-mx-xs" :icon="Icon" :color="Color" :label="Label" :disable="Disable || AvailableActions.length < 1">
+  <q-btn-dropdown class="full-width q-mx-xs" :icon="Icon" :color="Color" :label="Label"
+    :disable="Disable || AvailableActions.length < 1">
     <q-list class="text-primary">
       <q-item v-close-popup v-for="action in AvailableActions" :key="action.label" clickable @click="action.fn">
         <q-item-section avatar>
