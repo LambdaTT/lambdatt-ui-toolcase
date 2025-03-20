@@ -7,6 +7,7 @@
           <q-icon size="sm" :name="action.icon" />
         </q-item-section>
         <q-item-section>{{ action.label }}</q-item-section>
+        <q-tooltip v-if="!!action.tooltip">{{ action.tooltip }}</q-tooltip>
       </q-item>
     </q-list>
   </q-btn-dropdown>
