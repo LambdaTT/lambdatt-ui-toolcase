@@ -73,7 +73,6 @@ export default {
 
   methods: {
     setDefault() {
-      // var v = this.Default ? this.Default : (this.modelValue ? this.modelValue : null);
       var v = this.Default ? this.Default : null;
       var date;
       var firstTime;
@@ -128,6 +127,10 @@ export default {
       this.date = date;
       this.firstTime = firstTime;
       this.lastTime = lastTime;
+      if (!!this.Default && firstTime && lastTime) {
+        this.defaultFirstTime = firstTime;
+        this.defaultLastTime = lastTime;
+      }
     },
 
     updateModelValue() {

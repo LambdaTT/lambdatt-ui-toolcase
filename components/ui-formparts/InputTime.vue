@@ -1,8 +1,10 @@
 <template>
-  <q-input hide-bottom-space clearable :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :label="Label" :dense="dense" readonly filled v-model="value" :error="Error">
+  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :label="Label" :dense="dense"
+    readonly filled v-model="value" :error="Error">
     <template v-slot:append>
       <q-icon id="clear-button" v-if="!!value && !readonly" name="cancel" clickable @click="clear()"
         class="cursor-pointer">
+        <q-tooltip>Limpar seleção</q-tooltip>
       </q-icon>
       <q-icon v-if="readonly" name="fas fa-clock" color="grey-8" class="cursor-ban"></q-icon>
       <q-icon v-if="!readonly" name="fas fa-clock" color="primary" clickable @click="$emit('focus')"
@@ -37,7 +39,6 @@ export default {
   data() {
     return {
       value: null,
-      default: null
     }
   },
 
@@ -54,13 +55,14 @@ export default {
     },
 
     clear() {
-      this.value = this.default;
-      this.$emit('update:model-value', this.default);
+      this.value = this.Default;
+      console.log(this.Default, this.value);
+
+      this.$emit('update:model-value', this.Default);
     }
   },
 
   mounted() {
-    this.default = this.Default ? this.Default : null;
     if (!this.modelValue)
       this.clear();
     else this.value = this.modelValue;
