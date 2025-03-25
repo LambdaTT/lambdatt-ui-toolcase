@@ -1,13 +1,13 @@
 <template>
   <div id="wrapper" class="text-center q-pa-sm">
-    <div :class="`photo-container ${square?'square':''}`">
+    <div :class="`photo-container ${square ? 'square' : ''}`">
       <q-img :src="input.src ? input.src : DefaultImgPath" />
     </div>
     <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
       @update:model-value="updModelValue">
     </FileUpload>
-    <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit" @click="activateFileInput()"
-      size="md">
+    <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
+      @click="activateFileInput()" size="md">
       <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
     </q-btn>
   </div>
