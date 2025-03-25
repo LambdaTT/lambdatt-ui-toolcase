@@ -7,19 +7,19 @@
     </div>
     <div class="col-12 row">
       <div :class="`col-12 ${wrapFields == true ? '' : 'col-md-6'}`">
-        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP" Icon="fas fa-search"
+        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP*" Icon="fas fa-search"
           v-model="input.ds_addresszipcode" :Error="inputError.ds_addresszipcode"
           @focus="inputError.ds_addresszipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
         </InputField>
       </div>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
-      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Endereço"
+      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Endereço*"
         Icon="fas fa-map-marker-alt" v-model="input.ds_addressstreet" :Error="inputError.ds_addressstreet"
         @focus="inputError.ds_addressstreet = false"></InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
-      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Número"
+      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Número*"
         Icon="fas fa-map-marker-alt" v-model="input.ds_addressnumber" :Error="inputError.ds_addressnumber"
         @focus="inputError.ds_addressnumber = false"></InputField>
     </div>
@@ -28,17 +28,17 @@
         Icon="fas fa-map-marker-alt" v-model="input.ds_addresscomplement"></InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
-      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Bairro"
+      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Bairro*"
         Icon="fas fa-map-marker-alt" v-model="input.ds_addressneighborhood" :Error="inputError.ds_addressneighborhood"
         @focus="inputError.ds_addressneighborhood = false"></InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
-      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Cidade" Icon="fas fa-city"
+      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Cidade*" Icon="fas fa-city"
         v-model="input.ds_addresscity" :Error="inputError.ds_addresscity" @focus="inputError.ds_addresscity = false">
       </InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
-      <InputField type="select" :dense="dense" :readonly="formReadonly" Label="UF"
+      <InputField type="select" :dense="dense" :readonly="formReadonly" Label="UF*"
         Icon="fas fa-map-marker-alt" v-model="input.do_addressuf" :Options="brazilianStates"
         :Error="inputError.do_addressuf" @focus="inputError.do_addressuf = false"></InputField>
     </div>
