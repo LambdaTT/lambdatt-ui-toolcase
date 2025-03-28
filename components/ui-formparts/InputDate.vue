@@ -7,23 +7,25 @@
         <q-tooltip>Limpar seleção</q-tooltip>
       </q-icon>
       <q-icon v-if="readonly" name="fas fa-calendar-alt" color="grey-8" class="cursor-ban"></q-icon>
-      <q-icon v-if="!readonly" clickable @click="$emit('focus');" name="fas fa-calendar-alt" color="primary"
+      <q-icon v-else clickable @click="$emit('focus');" name="fas fa-calendar-alt" color="primary"
         class="cursor-pointer">
         <q-tooltip>Selecionar {{ range ? 'Período' : 'Data' }}</q-tooltip>
         <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-          <q-date :range="range" v-model="date" @update:model-value="updateModelValue()">
-          </q-date>
-          <div v-if="withTime" class="q-pt-md">
-            <InputTime dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime" :Default="defaultFirstTime"
-              @update:model-value="updateModelValue()">
-            </InputTime>
-            <InputTime v-if="range" dense Label="Até:" v-model="lastTime" :Default="defaultLastTime"
-              @update:model-value="updateModelValue()">
-            </InputTime>
-          </div>
-          <div class="row items-center justify-end">
-            <q-btn v-close-popup label="Fechar" color="primary" flat />
-          </div>
+          <q-card>
+            <q-date :range="range" v-model="date" @update:model-value="updateModelValue()">
+            </q-date>
+            <div v-if="withTime" class="q-pa-sm">
+              <InputTime dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime" :Default="defaultFirstTime"
+                @update:model-value="updateModelValue()">
+              </InputTime>
+              <InputTime v-if="range" dense Label="Até:" v-model="lastTime" :Default="defaultLastTime" class="q-pt-sm"
+                @update:model-value="updateModelValue()">
+              </InputTime>
+            </div>
+            <div class="row items-center justify-end q-pa-sm">
+              <q-btn v-close-popup label="Fechar" color="primary" flat dense />
+            </div>
+          </q-card>
         </q-popup-proxy>
       </q-icon>
     </template>
