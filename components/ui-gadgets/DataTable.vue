@@ -67,7 +67,7 @@
           </q-toolbar>
           <div class="row q-py-sm">
             <div v-for="(f, i) in columnFilters" :key="i" class="col-12 col-md-4">
-              <InputField clearable dense :type="f.type" :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []"
+              <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds" :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []"
                 v-model="filterParams[f.field]">
               </InputField>
             </div>
