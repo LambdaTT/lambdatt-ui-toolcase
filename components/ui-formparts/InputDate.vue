@@ -15,11 +15,11 @@
             <q-date :range="range" v-model="date" @update:model-value="updateModelValue()">
             </q-date>
             <div v-if="withTime" class="q-pa-sm">
-              <InputTime dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime" :Default="defaultFirstTime"
-                @update:model-value="updateModelValue()">
+              <InputTime :withSeconds="withSeconds" dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime"
+                :Default="defaultFirstTime" @update:model-value="updateModelValue()">
               </InputTime>
-              <InputTime v-if="range" dense Label="Até:" v-model="lastTime" :Default="defaultLastTime" class="q-pt-sm"
-                @update:model-value="updateModelValue()">
+              <InputTime :withSeconds="withSeconds" v-if="range" dense Label="Até:" v-model="lastTime"
+                :Default="defaultLastTime" class="q-pt-sm" @update:model-value="updateModelValue()">
               </InputTime>
             </div>
             <div class="row items-center justify-end q-pa-sm">
