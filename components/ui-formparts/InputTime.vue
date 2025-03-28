@@ -11,7 +11,7 @@
         class="cursor-pointer">
         <q-tooltip>Selecionar hora</q-tooltip>
         <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-          <q-time with-seconds @update:model-value="updateModelValue" v-model="value" format24h>
+          <q-time :with-seconds="withSeconds" @update:model-value="updateModelValue" v-model="value" format24h>
             <div class="row items-center justify-end">
               <q-btn v-close-popup label="Close" color="primary" flat />
             </div>
@@ -33,7 +33,8 @@ export default {
     Error: Boolean,
     modelValue: String,
     readonly: Boolean,
-    Default: String
+    Default: String,
+    withSeconds: Boolean
   },
 
   data() {

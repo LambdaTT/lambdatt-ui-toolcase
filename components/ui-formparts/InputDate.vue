@@ -14,11 +14,11 @@
           <q-date :range="range" v-model="date" @update:model-value="updateModelValue()">
           </q-date>
           <div v-if="withTime" class="q-pt-md">
-            <InputTime dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime" :Default="defaultFirstTime"
-              @update:model-value="updateModelValue()">
+            <InputTime :withSeconds="withSeconds" dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime"
+              :Default="defaultFirstTime" @update:model-value="updateModelValue()">
             </InputTime>
-            <InputTime v-if="range" dense Label="Até:" v-model="lastTime" :Default="defaultLastTime"
-              @update:model-value="updateModelValue()">
+            <InputTime :withSeconds="withSeconds" v-if="range" dense Label="Até:" v-model="lastTime"
+              :Default="defaultLastTime" @update:model-value="updateModelValue()">
             </InputTime>
           </div>
           <div class="row items-center justify-end">
@@ -44,6 +44,7 @@ export default {
     readonly: Boolean,
     range: Boolean,
     withTime: Boolean,
+    withSeconds: Boolean,
     dense: Boolean
   },
 
