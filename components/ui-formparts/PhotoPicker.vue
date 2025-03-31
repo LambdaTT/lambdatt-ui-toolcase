@@ -1,6 +1,18 @@
 <template>
-  <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
-    <q-avatar :square="square" :size="setSize">
+  <div  id="wrapper" :class="`q-pa-sm ${setAlign}`">
+    <div v-if="cover">
+      <q-card class="q-pa-sm">
+        <q-img :src="input.src ? input.src : DefaultImgPath" :ratio="16/9" fit="contain" :height="coverHeight" :width="coverWidth" />
+        <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
+          @update:model-value="updModelValue">
+        </FileUpload>
+        <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
+          @click="activateFileInput()" :size="setIconSize">
+          <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
+        </q-btn>
+      </q-card>
+    </div>
+    <q-avatar v-else :square="square" :size="setSize">
       <q-img :src="input.src ? input.src : DefaultImgPath" />
       <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
         @update:model-value="updModelValue">
@@ -35,6 +47,9 @@ export default {
     disable: Boolean,
     square: Boolean,
     size: String,
+    cover: Boolean,
+    coverHeight: String,
+    coverWidth: String,
     align: String,
   },
 
