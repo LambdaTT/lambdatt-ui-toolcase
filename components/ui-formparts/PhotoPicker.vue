@@ -1,18 +1,16 @@
 <template>
   <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
-    <q-avatar :square="square" :size="size ? size + 'px' : '150px'">
+    <q-avatar :square="square" :size="setSize">
       <q-img :src="input.src ? input.src : DefaultImgPath" />
       <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
         @update:model-value="updModelValue">
       </FileUpload>
       <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
-        @click="activateFileInput()" size="md">
+        @click="activateFileInput()" :size="setIconSize">
         <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
       </q-btn>
     </q-avatar>
   </div>
-
-
   <!-- <div id="wrapper" class="text-center q-pa-sm">
     <div :class="`photo-container ${square ? 'square' : ''}`">
       <q-img :src="input.src ? input.src : DefaultImgPath" />
@@ -64,6 +62,21 @@ export default {
   },
 
   computed: {
+    setSize() {
+      if(!!this.size) { return this.size + 'px'; }
+      return '150px';
+    },
+
+    setIconSize() {
+      if(!!this.size) {
+        if(this.size <= 70) return this.size/7 + 'px';
+        if(this.size <= 100) return 'sm';
+        if(this.size <= 300) return 'md';
+        return 'lg';
+      }
+      return 'md';
+    },
+
     setAlign() {
       if(!!this.align){
         switch (this.align) {
