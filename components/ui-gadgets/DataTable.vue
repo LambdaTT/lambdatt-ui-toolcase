@@ -67,8 +67,8 @@
           </q-toolbar>
           <div class="row q-py-sm">
             <div v-for="(f, i) in columnFilters" :key="i" class="col-12 col-md-4">
-              <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds" :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []"
-                v-model="filterParams[f.field]">
+              <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds"
+                :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]">
               </InputField>
             </div>
           </div>
@@ -96,45 +96,52 @@
 
         <!-- Ready State -->
         <tbody v-if="state == 'ready'">
-          <tr v-for="(row, idx) in dataInPage" :key="idx">
-            <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
-              v-for="column in columns" :key="column.field">
+          <template v-for="(row, idx) in rows" :key="idx">
+            <tr v-if="row != 'interval'">
+              <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
+                :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
+                v-for="column in columns" :key="column.field">
 
-              <div v-if="column.name != 'actions'">
-                <!-- In case no template is set for the td-->
-                <div v-if="!(`cell-${column.name}` in $slots)">
-                  {{ column.format ? column.format(row) : row[column.field] }}
+                <div v-if="column.name != 'actions'">
+                  <!-- In case no template is set for the td-->
+                  <div v-if="!(`cell-${column.name}` in $slots)">
+                    {{ column.format ? column.format(row) : row[column.field] }}
+                  </div>
+
+                  <!-- In case a template is set for the td-->
+                  <div v-if="`cell-${column.name}` in $slots">
+                    <slot :name="`cell-${column.name}`" :data="row"></slot>
+                  </div>
                 </div>
 
-                <!-- In case a template is set for the td-->
-                <div v-if="`cell-${column.name}` in $slots">
-                  <slot :name="`cell-${column.name}`" :data="row"></slot>
+                <!-- Especial td of actions -->
+                <div class="text-center" v-if="column.name == 'actions' && showActions">
+                  <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
+                    <q-tooltip>Ações do registro</q-tooltip>
+                    <q-menu>
+                      <q-list>
+                        <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
+                          v-for="(a, idx) in RowActions" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                          <q-item-section v-if="a.icon" side>
+                            <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
+                          </q-item-section>
+                          <q-item-section>
+                            {{ a.label }}
+                          </q-item-section>
+                          <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
                 </div>
-              </div>
-
-              <!-- Especial td of actions -->
-              <div class="text-center" v-if="column.name == 'actions' && showActions">
-                <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
-                  <q-tooltip>Ações do registro</q-tooltip>
-                  <q-menu>
-                    <q-list>
-                      <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                        v-for="(a, idx) in RowActions" :key="idx" clickable v-close-popup @click="a.fn(row)">
-                        <q-item-section v-if="a.icon" side>
-                          <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
-                        </q-item-section>
-                        <q-item-section>
-                          {{ a.label }}
-                        </q-item-section>
-                        <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </q-btn>
-              </div>
-            </td>
-          </tr>
+              </td>
+            </tr>
+            <tr v-else>
+              <td v-if="!('interval-row' in $slots)" :colspan="columns.length" class="q-pa-md"></td>
+              <slot v-else name="interval-row" :data="{ previous: data[idx - 1], current: row, next: data[idx + 1] }">
+              </slot>
+            </tr>
+          </template>
         </tbody>
 
         <!-- Error State -->
@@ -249,6 +256,7 @@ export default {
     Printable: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
+    Interval: Function,
     IgnorePagination: Boolean,
     dense: Boolean,
   },
@@ -477,6 +485,26 @@ export default {
       }
 
       return searchableColumns;
+    },
+
+    rows() {
+      var result = [...this.dataInPage];
+      let offset = 0;
+
+      if (!!this.Interval && typeof this.Interval == 'function') {
+        for (let i = 0; i < this.dataInPage.length; i++) {
+          let previous = this.dataInPage[i - 1];
+          let current = this.dataInPage[i];
+          let next = this.dataInPage[i + 1];
+
+          if (this.Interval(previous, current, next) === true) {
+            result.splice(i + 1 + offset, 0, 'interval');
+            offset++;
+          }
+        }
+      }
+
+      return result;
     }
   },
 
