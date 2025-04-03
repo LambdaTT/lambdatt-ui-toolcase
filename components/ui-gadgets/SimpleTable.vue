@@ -3,6 +3,12 @@
     <!-- Options and Controls -->
     <div class="row q-pb-sm">
       <div class="col-12 col-md-8">
+        <!-- Custom Resources -->
+        <q-btn v-for="(r, i) in CustomResources" :key="i" flat round color="primary" size="sm"
+          :icon="r.icon ?? 'fas fa-gear'" @click="r.fn">
+          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
+        </q-btn>
+
         <!--Visible Columns control-->
         <q-btn flat round color="primary" size="sm" icon="fas fa-columns">
           <q-tooltip>Colunas visíveis</q-tooltip>
@@ -189,6 +195,7 @@ export default {
     Printable: Boolean,
     dense: Boolean,
     IntervalRule: Function,
+    CustomResources: Array,
   },
 
   data() {
