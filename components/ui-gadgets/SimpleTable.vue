@@ -188,7 +188,7 @@ export default {
     Export: Object,
     Printable: Boolean,
     dense: Boolean,
-    Interval: Function,
+    IntervalRule: Function,
   },
 
   data() {
@@ -217,13 +217,13 @@ export default {
       var result = [...this.Data];
       let offset = 0;
 
-      if (!!this.Interval && typeof this.Interval == 'function') {
+      if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
         for (let i = 0; i < this.Data.length; i++) {
           let previous = this.Data[i - 1];
           let current = this.Data[i];
           let next = this.Data[i + 1];
 
-          if (this.Interval(previous, current, next) === true) {
+          if (this.IntervalRule(previous, current, next) === true) {
             result.splice(i + 1 + offset, 0, 'interval');
             offset++;
           }

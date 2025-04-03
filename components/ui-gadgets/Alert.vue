@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :persistent="persistent" v-model="show">
+  <q-dialog backdrop-filter="blur(4px) contrast(40%)" :persistent="persistent" v-model="show">
     <q-card>
       <q-card-section>
         <div class="text-h6">
