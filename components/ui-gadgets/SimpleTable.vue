@@ -225,7 +225,7 @@ export default {
       let offset = 0;
 
       if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
-        for (let i = 0; i < this.Data.length; i++) {
+        for (let i = -1; i < this.Data.length; i++) {
           let previous = this.Data[i - 1];
           let current = this.Data[i];
           let next = this.Data[i + 1];

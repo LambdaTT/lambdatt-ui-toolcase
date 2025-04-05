@@ -492,7 +492,7 @@ export default {
       let offset = 0;
 
       if (!!this.Interval && typeof this.Interval == 'function') {
-        for (let i = 0; i < this.dataInPage.length; i++) {
+        for (let i = -1; i < this.dataInPage.length; i++) {
           let previous = this.dataInPage[i - 1];
           let current = this.dataInPage[i];
           let next = this.dataInPage[i + 1];
