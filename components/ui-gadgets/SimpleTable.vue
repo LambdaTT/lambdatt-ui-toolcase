@@ -107,9 +107,10 @@
               </td>
             </tr>
             <tr v-else>
-              <td v-if="!('interval-row' in $slots)" :colspan="columns.length" class="q-pa-md"></td>
-              <slot v-else name="interval-row" :data="{ previous: data[idx - 1], current: row, next: data[idx + 1] }">
-              </slot>
+              <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
+                <slot name="interval-row" :data="{ previous: data[idx - 1], current: row, next: data[idx + 1] }">
+                </slot>
+              </td>
             </tr>
           </template>
 
