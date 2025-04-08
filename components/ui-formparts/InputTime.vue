@@ -57,8 +57,6 @@ export default {
 
     clear() {
       this.value = this.Default;
-      console.log(this.Default, this.value);
-
       this.$emit('update:model-value', this.Default);
     }
   },
