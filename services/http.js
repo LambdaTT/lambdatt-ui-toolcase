@@ -12,7 +12,7 @@ export default {
     var _params = '';
     if (utils.objectSize(params) > 0) {
       _params = utils.objToSerialString(params);
-      url = `${url}?${_params}`;
+      url = `${url}${url.includes('?') ? '&' : '?'}${_params}`;
     }
 
     var reqConf = {
@@ -84,7 +84,7 @@ export default {
     var _params = '';
     if (utils.objectSize(params) > 0) {
       _params = utils.objToSerialString(params);
-      url = `${url}?${_params}`;
+      url = `${url}${url.includes('?') ? '&' : '?'}${_params}`;
     }
 
     var reqConf = {
@@ -112,7 +112,7 @@ export default {
     url = `${process.env.API}${url}`;
 
     if (utils.objectSize(params) > 0)
-      url = `${url}?${utils.objToSerialString(params)}`;
+      url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
 
     var reqConf = {
       responseType: 'arrayBuffer',
@@ -156,7 +156,7 @@ export default {
     url = `${process.env.API}${url}`;
 
     if (utils.objectSize(params) > 0)
-      url = `${url}?${utils.objToSerialString(params)}`;
+      url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
 
     var reqConf = {
       headers: { 'Content-Type': 'multipart/form-data', ...headers }
