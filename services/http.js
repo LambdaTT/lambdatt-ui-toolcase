@@ -107,7 +107,7 @@ export default {
     return reqPromise;
   },
 
-  download: function (url, params, method, filename) {
+  download: function ({ url, params, method, filename }) {
     method = !!method ? method.toLowerCase() : 'get';
     url = `${process.env.API}${url}`;
 
