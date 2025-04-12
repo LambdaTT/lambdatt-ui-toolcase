@@ -1,14 +1,20 @@
 import axios from 'axios';
 import { utils, eventbroadcaster } from '../services.js'
+import { is } from 'quasar';
 
 var headers = {};
+var isExternal = false;
 export default {
+  external() { isExternal = true },
+
   setHeader: function (name, value) {
     headers[name] = value;
   },
 
   get: function (url, params) {
-    url = `${process.env.API}${url}`;
+    url = `${isExternal ? '' : process.env.API}${url}`;
+    isExternal = false;
+
     var _params = '';
     if (utils.objectSize(params) > 0) {
       _params = utils.objToSerialString(params);
@@ -36,7 +42,9 @@ export default {
   },
 
   post: function (url, data) {
-    url = `${process.env.API}${url}`;
+    url = `${isExternal ? '' : process.env.API}${url}`;
+    isExternal = false;
+
     var reqConf = {
       headers: { ...headers }
     };
@@ -58,7 +66,9 @@ export default {
   },
 
   put: function (url, data) {
-    url = `${process.env.API}${url}`;
+    url = `${isExternal ? '' : process.env.API}${url}`;
+    isExternal = false;
+
     var reqConf = {
       headers: { ...headers }
     };
@@ -80,7 +90,9 @@ export default {
   },
 
   delete: function (url, params) {
-    url = `${process.env.API}${url}`;
+    url = `${isExternal ? '' : process.env.API}${url}`;
+    isExternal = false;
+
     var _params = '';
     if (utils.objectSize(params) > 0) {
       _params = utils.objToSerialString(params);
@@ -108,9 +120,10 @@ export default {
   },
 
   download: function ({ url, params, method, filename }) {
-    method = !!method ? method.toLowerCase() : 'get';
-    url = `${process.env.API}${url}`;
+    url = `${isExternal ? '' : process.env.API}${url}`;
+    isExternal = false;
 
+    method = !!method ? method.toLowerCase() : 'get';
     if (utils.objectSize(params) > 0)
       url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
 
@@ -160,7 +173,8 @@ export default {
     if (!(data instanceof FormData)) throw 'You can only upload data in the form a FormData object';
 
     method = !!method ? method.toLowerCase() : 'post';
-    url = `${process.env.API}${url}`;
+    url = `${isExternal ? '' : process.env.API}${url}`;
+    isExternal = false;
 
     if (utils.objectSize(params) > 0)
       url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
