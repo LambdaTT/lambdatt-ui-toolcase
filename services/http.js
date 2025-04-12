@@ -17,7 +17,6 @@ export default {
 
   get: function (url, params) {
     url = `${isExternal ? '' : process.env.API}${url}`;
-    isExternal = false;
 
     var _params = '';
     if (utils.objectSize(params) > 0) {
@@ -31,12 +30,15 @@ export default {
 
     headers = {};
 
-    var xsrfToken = localStorage.getItem('xsrf_token');
-    if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
+    if (!isExternal) {
+      var xsrfToken = localStorage.getItem('xsrf_token');
+      if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
 
-    var sessionKey = localStorage.getItem('iam_session_key');
-    if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+      var sessionKey = localStorage.getItem('iam_session_key');
+      if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+    }
 
+    isExternal = false;
     var reqPromise = axios.get(url, reqConf);
 
     // Evt Trigger
@@ -47,7 +49,6 @@ export default {
 
   post: function (url, data) {
     url = `${isExternal ? '' : process.env.API}${url}`;
-    isExternal = false;
 
     var reqConf = {
       headers: { ...headers }
@@ -55,12 +56,15 @@ export default {
 
     headers = {};
 
-    var xsrfToken = localStorage.getItem('xsrf_token');
-    if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
+    if (!isExternal) {
+      var xsrfToken = localStorage.getItem('xsrf_token');
+      if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
 
-    var sessionKey = localStorage.getItem('iam_session_key');
-    if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+      var sessionKey = localStorage.getItem('iam_session_key');
+      if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+    }
 
+    isExternal = false;
     var reqPromise = axios.post(url, data, reqConf);
 
     // Evt Trigger
@@ -71,7 +75,6 @@ export default {
 
   put: function (url, data) {
     url = `${isExternal ? '' : process.env.API}${url}`;
-    isExternal = false;
 
     var reqConf = {
       headers: { ...headers }
@@ -79,12 +82,15 @@ export default {
 
     headers = {};
 
-    var xsrfToken = localStorage.getItem('xsrf_token');
-    if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
+    if (!isExternal) {
+      var xsrfToken = localStorage.getItem('xsrf_token');
+      if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
 
-    var sessionKey = localStorage.getItem('iam_session_key');
-    if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+      var sessionKey = localStorage.getItem('iam_session_key');
+      if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+    }
 
+    isExternal = false;
     var reqPromise = axios.put(url, data, reqConf);
 
     // Evt Trigger
@@ -95,7 +101,6 @@ export default {
 
   delete: function (url, params) {
     url = `${isExternal ? '' : process.env.API}${url}`;
-    isExternal = false;
 
     var _params = '';
     if (utils.objectSize(params) > 0) {
@@ -109,12 +114,15 @@ export default {
 
     headers = {};
 
-    var xsrfToken = localStorage.getItem('xsrf_token');
-    if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
+    if (!isExternal) {
+      var xsrfToken = localStorage.getItem('xsrf_token');
+      if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
 
-    var sessionKey = localStorage.getItem('iam_session_key');
-    if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+      var sessionKey = localStorage.getItem('iam_session_key');
+      if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+    }
 
+    isExternal = false;
     var reqPromise = axios.delete(url, reqConf);
 
     // Evt Trigger
@@ -125,7 +133,6 @@ export default {
 
   download: function ({ url, params, method, filename }) {
     url = `${isExternal ? '' : process.env.API}${url}`;
-    isExternal = false;
 
     method = !!method ? method.toLowerCase() : 'get';
     if (utils.objectSize(params) > 0)
@@ -139,12 +146,15 @@ export default {
 
     headers = {};
 
-    var xsrfToken = localStorage.getItem('xsrf_token');
-    if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
+    if (!isExternal) {
+      var xsrfToken = localStorage.getItem('xsrf_token');
+      if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
 
-    var sessionKey = localStorage.getItem('iam_session_key');
-    if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+      var sessionKey = localStorage.getItem('iam_session_key');
+      if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+    }
 
+    isExternal = false;
     var reqPromise = axios[method](url, reqConf)
       .then((response) => {
         let fname;
@@ -178,7 +188,6 @@ export default {
 
     method = !!method ? method.toLowerCase() : 'post';
     url = `${isExternal ? '' : process.env.API}${url}`;
-    isExternal = false;
 
     if (utils.objectSize(params) > 0)
       url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
@@ -189,12 +198,16 @@ export default {
 
     headers = {};
 
-    var xsrfToken = localStorage.getItem('xsrf_token');
-    if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
+    if (!isExternal) {
+      // Add Xsrf-Token and Iam-Session-Key to headers
+      var xsrfToken = localStorage.getItem('xsrf_token');
+      if (xsrfToken != null) reqConf.headers['Xsrf-Token'] = xsrfToken;
 
-    var sessionKey = localStorage.getItem('iam_session_key');
-    if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+      var sessionKey = localStorage.getItem('iam_session_key');
+      if (sessionKey != null) reqConf.headers['Iam-Session-Key'] = sessionKey;
+    }
 
+    isExternal = false;
     var reqPromise = axios[method](url, reqConf);
 
     // Evt Trigger
