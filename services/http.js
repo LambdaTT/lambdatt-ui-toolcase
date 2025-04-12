@@ -107,7 +107,7 @@ export default {
     return reqPromise;
   },
 
-  download: function (url, params, method) {
+  download: function (url, params, method, filename) {
     method = !!method ? method.toLowerCase() : 'get';
     url = `${process.env.API}${url}`;
 
@@ -130,13 +130,20 @@ export default {
 
     var reqPromise = axios[method](url, reqConf)
       .then((response) => {
+        let fname;
+        if (!!filename) {
+          fname = filename;
+        } else if (!!response.headers['content-filename']) {
+          fname = decodeURI(response.headers['content-filename']).replaceAll('+', ' ');
+        } else fname = 'downloaded_file';
+
         let blob = new Blob([response.data], { type: response.headers['content-type'] })
         var _url = window.URL.createObjectURL(blob);
 
         let anchorElement = document.createElement('a');
         anchorElement.style.display = 'none';
         anchorElement.href = _url;
-        anchorElement.download = decodeURI(response.headers['content-filename']).replaceAll('+', ' ');
+        anchorElement.download = fname;
         anchorElement.click();
 
         window.URL.revokeObjectURL(_url);
