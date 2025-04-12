@@ -5,10 +5,14 @@ import { is } from 'quasar';
 var headers = {};
 var isExternal = false;
 export default {
-  external() { isExternal = true },
+  external() {
+    isExternal = true;
+    return this;
+  },
 
-  setHeader: function (name, value) {
+  setHeader(name, value) {
     headers[name] = value;
+    return this;
   },
 
   get: function (url, params) {
