@@ -13,7 +13,7 @@
     <div v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2) }}
       kb
     </div>
-    <input :disabled="readonly" ref="inputFile" :accept="accept" type="file" v-on:change="fileChange"
+    <input :disabled="readonly" :ref="inputRefId" :accept="accept" type="file" v-on:change="fileChange"
       style="display:none;">
   </div>
 </template>
@@ -44,6 +44,7 @@ export default {
       },
       dialogIsOpen: false,
       repetitionLock: false,
+      inputRefId: null,
     }
   },
 
@@ -77,13 +78,13 @@ export default {
         await this.sleep(100);
         this.dialogIsOpen = true;
         window.addEventListener('focus', this.onWindowFocus);
-        this.$refs.inputFile.click();
+        this.$refs[this.inputRefId].click();
         document.activeElement.blur();
       }
     },
 
     clearFile() {
-      var input = this.$refs.inputFile;
+      var input = this.$refs[this.inputRefId];
       input.value = null;
       this.clearFileData();
     },
@@ -144,6 +145,8 @@ export default {
 
   mounted() {
     this.$emit('activateFn', this.inputClicked);
+    this.inputRefId = `InputFileRef-${this.$utils.uniqid()}`;
+    this.$emit('expose-ref', this.$refs[this.inputRefId]);
   }
 }
 </script>
