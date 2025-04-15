@@ -1,8 +1,9 @@
 <template>
-  <div  id="wrapper" :class="`q-pa-sm ${setAlign}`">
+  <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
     <div v-if="cover">
       <q-card class="q-pa-sm">
-        <q-img :src="input.src ? input.src : DefaultImgPath" :ratio="16/9" fit="contain" :height="coverHeight" :width="coverWidth" />
+        <q-img :src="input.src ? input.src : DefaultImgPath" :ratio="16 / 9" fit="contain" :height="coverHeight"
+          :width="coverWidth" />
         <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
           @update:model-value="updModelValue">
         </FileUpload>
@@ -15,7 +16,7 @@
     <q-avatar v-else :square="square" :size="setSize">
       <q-img :src="input.src ? input.src : DefaultImgPath" />
       <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
-        @update:model-value="updModelValue">
+        @update:model-value="updModelValue" :accept="accept ? accept : 'image/*'">
       </FileUpload>
       <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
         @click="activateFileInput()" :size="setIconSize">
@@ -51,6 +52,10 @@ export default {
     coverHeight: String,
     coverWidth: String,
     align: String,
+    accept: {
+      type: String,
+      validator: val => val === 'image/*' || val === 'image/png' || val === 'image/jpeg' || val === 'image/jpg'
+    }
   },
 
   data() {
@@ -78,22 +83,22 @@ export default {
 
   computed: {
     setSize() {
-      if(!!this.size) { return this.size + 'px'; }
+      if (!!this.size) { return this.size + 'px'; }
       return '150px';
     },
 
     setIconSize() {
-      if(!!this.size) {
-        if(this.size <= 70) return this.size/7 + 'px';
-        if(this.size <= 100) return 'sm';
-        if(this.size <= 300) return 'md';
+      if (!!this.size) {
+        if (this.size <= 70) return this.size / 7 + 'px';
+        if (this.size <= 100) return 'sm';
+        if (this.size <= 300) return 'md';
         return 'lg';
       }
       return 'md';
     },
 
     setAlign() {
-      if(!!this.align){
+      if (!!this.align) {
         switch (this.align) {
           case 'left':
             return 'text-left';
