@@ -54,7 +54,12 @@ export default {
     Widescreen: {
       type: Boolean,
       default: false
-    }
+    },
+    defaultCamera: {
+      type: String,
+      default: 'back',
+      validator: v => ['front', 'back'].includes(v)
+    },
   },
 
   data() {
@@ -66,7 +71,7 @@ export default {
   },
 
   computed: {
-    videoWrapperStyle(){
+    videoWrapperStyle() {
       return {
         aspectRatio: this.aspectRatio,
         width: '100%',
@@ -110,7 +115,14 @@ export default {
       try {
         this.photoUrl = null;
         this.photoFile = null;
-        this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        const constraints = {
+          video: {
+            facingMode: { ideal: this.defaultCamera === 'front' ? 'user' : 'environment' }
+          }
+        };
+
+        this.stream = await navigator.mediaDevices.getUserMedia(constraints);
         this.$refs.video.srcObject = this.stream;
         this.step = 1;
       } catch (err) {
@@ -128,7 +140,7 @@ export default {
 
       // Determina a proporção desejada com base na prop
       const desiredAspect = eval(`${this.aspectRatio}`);
-      
+
 
       // Base: usamos a altura real do vídeo
       let drawWidth = videoWidth;
