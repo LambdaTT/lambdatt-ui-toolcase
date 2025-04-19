@@ -55,7 +55,7 @@ export default {
       type: Boolean,
       default: false
     },
-    defaultCamera: {
+    DefaultCamera: {
       type: String,
       default: 'back',
       validator: v => ['front', 'back'].includes(v)
@@ -118,7 +118,7 @@ export default {
 
         const constraints = {
           video: {
-            facingMode: { ideal: this.defaultCamera === 'front' ? 'user' : 'environment' }
+            facingMode: { ideal: this.DefaultCamera === 'front' ? 'user' : 'environment' }
           }
         };
 
