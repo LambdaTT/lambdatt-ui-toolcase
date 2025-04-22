@@ -1,12 +1,11 @@
 <template>
   <div :class="dense ? 'q-pa-xs' : 'q-pa-sm'">
     <!-- Input text: -->
-    <q-input v-if="type == 'text' || type == null" type="text" square filled hide-bottom-space
-      :ref="inputRefId" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly" 
+    <q-input v-if="type == 'text' || type == null" type="text" square filled hide-bottom-space :ref="inputRefId"
+      :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
       :maxlength="maxlength" :mask="Mask" :reverse-fill-mask="ReverseFillMask" :fill-mask="FillMask"
-      :class="`full-width bg-${BgColor ? BgColor : 'white'}`"
-      v-model="value" :error="Error" @focus="() => $emit('focus')" 
-      @update:model-value="updModelValue">
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue" @click="inputClicked">
       <template v-slot:append>
         <slot name="buttons"></slot>
         <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
@@ -14,11 +13,10 @@
     </q-input>
 
     <!-- Input password: -->
-    <q-input v-if="type == 'password'" type="password" square filled hide-bottom-space 
-      :ref="inputRefId" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
-      :maxlength="maxlength" :class="`full-width bg-${BgColor ? BgColor : 'white'}`"
-      v-model="value" :error="Error" @focus="() => $emit('focus')"
-      @update:model-value="updModelValue">
+    <q-input v-if="type == 'password'" type="password" square filled hide-bottom-space :ref="inputRefId" :label="Label"
+      :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly" :maxlength="maxlength"
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue" @click="inputClicked">
       <template v-slot:append>
         <slot name="buttons"></slot>
         <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
@@ -26,11 +24,10 @@
     </q-input>
 
     <!-- Input textarea: -->
-    <q-input v-if="type == 'textarea'" type="textarea" square filled hide-bottom-space
-      :ref="inputRefId" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
-      :maxlength="maxlength" :class="`full-width bg-${BgColor ? BgColor : 'white'}`"  
-      v-model="value" :error="Error" @focus="() => $emit('focus')"
-      @update:model-value="updModelValue">
+    <q-input v-if="type == 'textarea'" type="textarea" square filled hide-bottom-space :ref="inputRefId" :label="Label"
+      :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly" :maxlength="maxlength"
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue" @click="inputClicked">
       <template v-slot:append>
         <slot name="buttons"></slot>
         <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
@@ -38,11 +35,10 @@
     </q-input>
 
     <!-- Input email: -->
-    <q-input v-if="type == 'email'" type="email" square filled hide-bottom-space maxlength="255"
-      :ref="inputRefId" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
-      :class="`full-width bg-${BgColor ? BgColor : 'white'}`"
-      v-model="value" :error="Error" @focus="() => $emit('focus')" 
-      @update:model-value="updModelValue">
+    <q-input v-if="type == 'email'" type="email" square filled hide-bottom-space maxlength="255" :ref="inputRefId"
+      :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue" @click="inputClicked">
       <template v-slot:append>
         <slot name="buttons"></slot>
         <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
@@ -50,11 +46,10 @@
     </q-input>
 
     <!-- Input number: -->
-    <q-input v-if="type == 'number'" :ref="inputRefId" square filled hide-bottom-space :step="step" :max="max" :min="min"
-      :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
-      :class="`full-width bg-${BgColor ? BgColor : 'white'}`"
-      v-model="value" :error="Error" @focus="() => $emit('focus')" type="number"
-      @update:model-value="updModelValue">
+    <q-input v-if="type == 'number'" :ref="inputRefId" square filled hide-bottom-space :step="step" :max="max"
+      :min="min" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
+      @focus="() => $emit('focus')" type="number" @update:model-value="updModelValue" @click="inputClicked">
       <template v-slot:append>
         <slot name="buttons"></slot>
         <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
@@ -62,43 +57,43 @@
     </q-input>
 
     <!-- Input select: -->
-    <Select2 v-if="type == 'select'" :BgColor="BgColor"  :clearable="clearable" :dense="dense" :disable="disable"
+    <Select2 v-if="type == 'select'" :BgColor="BgColor" :clearable="clearable" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" :Options="Options" :Label="Label" :Icon="Icon" :Error="Error"
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </Select2>
 
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :BgColor="BgColor"  :dense="dense" :disable="disable" :readonly="readonly"
+    <InputDate v-if="type == 'date'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
       v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input daterange: -->
-    <InputDate v-if="type == 'daterange'" :BgColor="BgColor"  :dense="dense" :disable="disable" :readonly="readonly"
+    <InputDate v-if="type == 'daterange'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
       v-model="value" range :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetime: -->
-    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor"  :dense="dense" :disable="disable"
+    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" withTime :Default="Default" :Label="Label" :Error="Error"
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetimerange: -->
-    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor"  :dense="dense"
+    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense"
       :disable="disable" :readonly="readonly" v-model="value" range withTime :Default="Default" :Label="Label"
       :Error="Error" @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input time: -->
-    <InputTime v-if="type == 'time'" :withSeconds="withSeconds" :BgColor="BgColor"  :dense="dense" :disable="disable"
+    <InputTime v-if="type == 'time'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
       @update:model-value="updModelValue" @focus="() => $emit('focus')">
     </InputTime>
 
     <!-- Input color: -->
-    <InputColor v-if="type == 'color'" :BgColor="BgColor"  :clearable="clearable" :dense="dense" :disable="disable"
+    <InputColor v-if="type == 'color'" :BgColor="BgColor" :clearable="clearable" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputColor>
@@ -154,6 +149,10 @@ export default {
       type: [String, Boolean],
       default: false,
     },
+    SelectOnClick: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
@@ -170,6 +169,13 @@ export default {
   },
 
   methods: {
+    inputClicked() {
+      if (this.SelectOnClick) {
+        const nativeInput = this.$refs[this.inputRefId].$el.querySelector('input');
+        if (!!nativeInput) nativeInput.select();
+      }
+    },
+
     updModelValue(v) {
       this.$emit('update:model-value', v);
     },
