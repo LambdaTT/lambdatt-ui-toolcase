@@ -63,25 +63,29 @@
     </Select2>
 
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly" :dateOptions="dateOptions"
+    <InputDate v-if="type == 'date'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly" :todayBtn="todayBtn" 
+      :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
       v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input daterange: -->
-    <InputDate v-if="type == 'daterange'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly" :dateOptions="dateOptions"
+    <InputDate v-if="type == 'daterange'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly" :todayBtn="todayBtn"
+      :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
       v-model="value" range :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetime: -->
-    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable" :dateOptions="dateOptions"
+    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable" :todayBtn="todayBtn"
+      :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
       :readonly="readonly" v-model="value" withTime :Default="Default" :Label="Label" :Error="Error"
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetimerange: -->
-    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :dateOptions="dateOptions"
+    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :todayBtn="todayBtn"
+      :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
       :disable="disable" :readonly="readonly" v-model="value" range withTime :Default="Default" :Label="Label"
       :Error="Error" @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
@@ -132,6 +136,9 @@ export default {
     readonly: Boolean,
     // Date
     dateOptions: { type: [Array, Function]},
+    todayBtn: Boolean,
+    minDatePage: String,
+    maxDatePage: String,
     // Time
     withSeconds: Boolean,
     // Select
