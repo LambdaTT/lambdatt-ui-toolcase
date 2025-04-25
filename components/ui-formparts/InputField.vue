@@ -63,25 +63,25 @@
     </Select2>
 
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
+    <InputDate v-if="type == 'date'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly" :dateOptions="dateOptions"
       v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input daterange: -->
-    <InputDate v-if="type == 'daterange'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
+    <InputDate v-if="type == 'daterange'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly" :dateOptions="dateOptions"
       v-model="value" range :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetime: -->
-    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
+    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable" :dateOptions="dateOptions"
       :readonly="readonly" v-model="value" withTime :Default="Default" :Label="Label" :Error="Error"
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetimerange: -->
-    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense"
+    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :dateOptions="dateOptions"
       :disable="disable" :readonly="readonly" v-model="value" range withTime :Default="Default" :Label="Label"
       :Error="Error" @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
@@ -120,20 +120,18 @@ export default {
   props: {
     // General
     modelValue: [String, Object, Number],
+    BgColor: String,
+    Label: String,
+    Icon: String,
+    Error: Boolean,
     type: String,
     clearable: Boolean,
     dense: Boolean,
     disable: Boolean,
     maxlength: String,
     readonly: Boolean,
-    BgColor: String,
-    Label: String,
-    Icon: String,
-    Error: Boolean,
-    Default: [String, Object, Number],
-    accept: String,
-    ReadAsURL: Boolean,
-    placeholder: String,
+    // Date
+    dateOptions: { type: [Array, Function]},
     // Time
     withSeconds: Boolean,
     // Select
@@ -153,6 +151,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    // Others
+    Default: [String, Object, Number],
+    accept: String,
+    ReadAsURL: Boolean,
+    placeholder: String,
   },
 
   data() {

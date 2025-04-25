@@ -12,7 +12,7 @@
         <q-tooltip>Selecionar {{ range ? 'Período' : 'Data' }}</q-tooltip>
         <q-popup-proxy cover transition-show="scale" transition-hide="scale">
           <q-card>
-            <q-date :range="range" v-model="date" @update:model-value="updateModelValue()">
+            <q-date :range="range" :options="dateOptions" v-model="date" @update:model-value="updateModelValue()">
             </q-date>
             <div v-if="withTime" class="q-pa-sm">
               <InputTime :withSeconds="withSeconds" dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime"
@@ -38,16 +38,17 @@ export default {
   name: 'ui-formparts-inputdate',
 
   props: {
+    modelValue: { type: [String, Object] },
+    Default: { type: [String, Object] },
     BgColor: String,
     Label: String,
     Error: Boolean,
-    Default: { type: [String, Object] },
-    modelValue: { type: [String, Object] },
-    readonly: Boolean,
+    dateOptions: { type: [Array, Function]},
+    dense: Boolean,
     range: Boolean,
+    readonly: Boolean,
     withTime: Boolean,
     withSeconds: Boolean,
-    dense: Boolean
   },
 
   data() {
