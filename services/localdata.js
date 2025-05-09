@@ -79,6 +79,13 @@ export default {
     }
   },
 
+  kill(datasetName) {
+    if (localStorage.getItem(datasetName) != null) {
+      localStorage.removeItem(datasetName);
+      delete storage.value[datasetName];
+    }
+  },
+
   find(datasetName, params, filterFunction) {
     if (!filterFunction) filterFunction = _filterFunction;
 
