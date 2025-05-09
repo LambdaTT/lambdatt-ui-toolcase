@@ -7,18 +7,18 @@
 
     <!-- Taken Photo preview -->
     <div v-show="step == 2" class="col-12">
-      <div class="text-caption">Foto capturada:</div>
-      <q-img :src="photoUrl" style="width:100%;"></q-img>
+      <div class="text-caption text-center">Foto capturada</div>
+      <q-img :src="photoUrl" style="width:100%; border-radius: 5px;"></q-img>
     </div>
 
     <!-- Taken Photo preview -->
-    <div v-show="step == 3" class="col-12 text-center">
-      <q-icon name="far fa-check-circle" color="positive" size="5em"></q-icon>
-      <div class="text-grey-10">Foto capturada com sucesso</div>
+    <div v-show="step == 3" class="col-12 text-center q-pa-sm">
+      <q-icon name="fas fa-check-circle" color="positive" size="5em"></q-icon>
+      <div class="text-grey-10 q-mt-sm">Foto capturada com sucesso</div>
     </div>
 
     <!-- Buttons and controls -->
-    <div class="col-12">
+    <div class="col-12 q-mt-xs">
       <q-btn class="q-ma-xs full-width" color="primary" icon="fas fa-play" v-show="step == 0" label="Abrir câmera"
         @click="startCamera" />
       <q-btn class="q-ma-xs full-width" color="primary" icon="fas fa-camera" v-show="step == 1" label="Tirar Foto"
@@ -106,6 +106,7 @@ export default {
         dataUrl: this.photoUrl,
         file: this.photoFile,
         fileName: `${this.ResultFileName}.jpg` || 'captura.jpg',
+        fnReset: this.reset,
       };
     }
   },
@@ -213,7 +214,14 @@ export default {
     confirmPhoto() {
       this.step = 3;
       this.$emit('update:modelValue', this.factory);
-    }
+    },
+
+    reset() {
+      this.step = 0;
+      this.photoUrl = null;
+      this.stream = null;
+      this.startCamera();
+    },
   },
 
   mounted() {
@@ -228,6 +236,7 @@ export default {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
+  border-radius: 5px;
 }
 
 .video-wrapper video {
