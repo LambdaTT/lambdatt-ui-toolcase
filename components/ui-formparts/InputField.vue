@@ -92,7 +92,7 @@
 
     <!-- Input time: -->
     <InputTime v-if="type == 'time'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
-      :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
+      :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error" square
       @update:model-value="updModelValue" @focus="() => $emit('focus')">
     </InputTime>
 
