@@ -2,7 +2,7 @@
   <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
     <div v-if="cover">
       <q-card class="q-pa-sm">
-        <q-img :src="input.src ? input.src : DefaultImgPath" :ratio="16 / 9" fit="contain" :height="coverHeight"
+        <q-img class="bg-grey-3" :src="input.src ? input.src : DefaultImgPath" :ratio="16 / 9" fit="contain" :height="coverHeight"
           :width="coverWidth" />
         <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
           @update:model-value="updModelValue">
