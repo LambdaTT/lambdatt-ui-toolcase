@@ -7,13 +7,12 @@
 
     <!-- Taken Photo preview -->
     <div v-show="step == 2" class="col-12">
-      <div class="text-caption text-center">Foto capturada</div>
       <q-img :src="photoUrl" style="width:100%; border-radius: 5px;"></q-img>
     </div>
 
     <!-- Taken Photo preview -->
     <div v-show="step == 3" class="col-12 text-center q-pa-sm">
-      <q-icon name="fas fa-check-circle" color="positive" size="5em"></q-icon>
+      <q-icon name="fas fa-check-circle" color="positive" size="4em"></q-icon>
       <div class="text-grey-10 q-mt-sm">Foto capturada com sucesso</div>
     </div>
 
