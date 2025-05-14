@@ -61,9 +61,6 @@
               @click="filterParams = {}">
               <q-tooltip>Limpar filtros</q-tooltip>
             </q-btn>
-            <q-btn size="sm" icon="fas fa-close" color="primary" flat round dense @click="showFilterPanel = false">
-              <q-tooltip>Fechar painel de filtros</q-tooltip>
-            </q-btn>
           </q-toolbar>
           <div class="row q-py-sm">
             <div v-for="(f, i) in columnFilters" :key="i" class="col-12 col-md-4">
@@ -85,10 +82,12 @@
           <tr>
             <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
               :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${!!column.sort ? 'cursor-pointer' : ''}`"
-              v-for="column in columns" :key="column.field" @click="sort(column)">
-              {{ column.label }}
+              v-for="column in columns" :key="column.field" @click="sort(column)"
+              :style="column.width ? `width: ${column.width};` : ''">
+              <span>{{ column.label }}</span>
               <q-icon v-if="!!column.sort" size="0.9em" :name="getSortIcon(column)"
-                :color="column.sort == this.pagination.sortBy ? 'primary' : null"></q-icon>
+                :color="column.sort == this.pagination.sortBy ? 'primary' : null">
+              </q-icon>
               <q-tooltip v-if="!!column.sort">Clique para ordenar p/ {{ column.label }}</q-tooltip>
             </th>
           </tr>
@@ -100,7 +99,8 @@
             <tr v-if="row != 'interval'">
               <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
                 :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
-                v-for="column in columns" :key="column.field">
+                v-for="column in columns" :key="column.field"
+                :style="column.width ? `width: ${column.width};` : ''">
 
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
