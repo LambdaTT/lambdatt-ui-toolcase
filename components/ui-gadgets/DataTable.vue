@@ -81,14 +81,14 @@
         <thead>
           <tr>
             <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${!!column.sort ? 'cursor-pointer' : ''}`"
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${column.sortable !==  false ? 'cursor-pointer' : ''}`"
               v-for="column in columns" :key="column.field" @click="sort(column)"
               :style="column.width ? `width: ${column.width};` : ''">
               <span>{{ column.label }}</span>
-              <q-icon v-if="!!column.sort" size="0.9em" :name="getSortIcon(column)"
-                :color="column.sort == this.pagination.sortBy ? 'primary' : null">
+              <q-icon v-if="column.sortable !==  false" size="0.9em" :name="getSortIcon(column)"
+                :color="getColumnNumber(column) == this.pagination.sortBy ? 'primary' : null">
               </q-icon>
-              <q-tooltip v-if="!!column.sort">Clique para ordenar p/ {{ column.label }}</q-tooltip>
+              <q-tooltip v-if="column.sortable !==  false">Clique para ordenar p/ {{ column.label }}</q-tooltip>
             </th>
           </tr>
         </thead>
@@ -611,17 +611,7 @@ export default {
       return result;
     },
 
-    getSortIcon(column) {
-      if (column.sort == this.pagination.sortBy) {
-        if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up';
-        else if (this.pagination.sortDir == 'DESC') return 'fas fa-sort-down';
-        else return 'fas fa-ban';
-      } else return 'fas fa-sort';
-    },
-
-    sort(column) {
-      if (column.sortable === false || (!!column.sortBy === false && this.rawData.length == 0)) return;
-
+    getColumnNumber(column){
       var sortNumber = null;
       if (!!column.sortBy === false) {
         // Find sort number:
@@ -634,6 +624,22 @@ export default {
       } else {
         sortNumber = column.sortBy
       }
+
+      return sortNumber;
+    },
+
+    getSortIcon(column) {
+      if (this.getColumnNumber(column) == this.pagination.sortBy) {
+        if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up';
+        else if (this.pagination.sortDir == 'DESC') return 'fas fa-sort-down';
+        else return 'fas fa-ban';
+      } else return 'fas fa-sort';
+    },
+
+    sort(column) {
+      if (column.sortable === false || (!!column.sortBy === false && this.rawData.length == 0)) return;
+
+      var sortNumber = this.getColumnNumber(column)
 
       if (this.pagination.sortBy == sortNumber) {
         if (this.pagination.sortDir == 'ASC') this.pagination.sortDir = 'DESC';

@@ -37,8 +37,15 @@ export default {
 
   data() {
     return {
-      options: [],
+      rawData: [],
       selected: null,
+    }
+  },
+
+  computed:{
+    options(){
+      return [...this.rawData].sort((a, b) =>
+        a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }))
     }
   },
 
@@ -53,7 +60,7 @@ export default {
 
     Options: {
       handler(v) {
-        this.options = v;
+        this.rawData = v;
       },
 
       deep: true
@@ -80,20 +87,20 @@ export default {
     filterFn(val, update) {
       if (!!val == false || val === '') {
         update(() => {
-          this.options = this.Options;
+          this.rawData = this.Options;
         })
         return
       }
 
       update(() => {
         const needle = val.toLowerCase()
-        this.options = this.Options.filter(v => v.label.toLowerCase().includes(needle));
+        this.rawData = this.Options.filter(v => v.label.toLowerCase().includes(needle));
       })
     },
   },
 
   mounted() {
-    this.options = this.Options;
+    this.rawData = this.Options;
     this.setValue()
   }
 }
