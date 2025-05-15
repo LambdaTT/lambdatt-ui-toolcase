@@ -99,8 +99,7 @@
             <tr v-if="row != 'interval'">
               <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
                 :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
-                v-for="column in columns" :key="column.field"
-                :style="column.width ? `width: ${column.width};` : ''">
+                v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
 
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
@@ -250,6 +249,10 @@ export default {
       type: Object,
       required: true
     },
+    DefaultSorting: {
+      type: Object,
+      validator: (v) => ('by' in v) && ('direction' in v)
+    },
     RowActions: Object,
     ExtraFilters: Object,
     Export: Object,
@@ -274,7 +277,7 @@ export default {
         pageLastItem: null,
         pageLastIndex: null,
         limit: 10,
-        sortBy: null,
+        sortBy: '1',
         sortDir: 'ASC',
       },
 
@@ -550,8 +553,8 @@ export default {
     setParams() {
       // Pagination Params:
       var result = {
-        '$sort_by': this.pagination.sortBy,
-        '$sort_direction': this.pagination.sortDir,
+        '$sort_by': this.pagination.sortBy ?? '1',
+        '$sort_direction': this.pagination.sortDir ?? 'ASC',
         '$page': this.pagination.currentPage,
         '$limit': Number(this.pagination.limit)
       };
@@ -617,14 +620,27 @@ export default {
     },
 
     sort(column) {
-      if (!!column.sort === false) return;
+      if (column.sortable === false || (!!column.sortBy === false && this.rawData.length == 0)) return;
 
-      if (this.pagination.sortBy == column.sort) {
+      var sortNumber = null;
+      if (!!column.sortBy === false) {
+        // Find sort number:
+        let columns = Object.keys(this.rawData[0]);
+        let idx = columns.indexOf(column.field);
+
+        if (idx == -1) return
+
+        sortNumber = idx + 1
+      } else {
+        sortNumber = column.sortBy
+      }
+
+      if (this.pagination.sortBy == sortNumber) {
         if (this.pagination.sortDir == 'ASC') this.pagination.sortDir = 'DESC';
         else if (this.pagination.sortDir == 'DESC') this.pagination.sortDir = 'ASC';
-
+        
       } else {
-        this.pagination.sortBy = column.sort;
+        this.pagination.sortBy = sortNumber;
         this.pagination.sortDir = 'ASC';
       }
 
@@ -901,6 +917,8 @@ export default {
     // Set columns:
     this.columns = [...this.Columns];
     this.visibleColumns = JSON.parse(localStorage.getItem(`Datatable.${this.Name}.visibleColumns`)) ?? this.Columns.map(clm => clm.field)
+
+    // Set Actions:
     if (this.RowActions && this.RowActions?.length > 0)
       this.columns.push({
         name: 'actions',
@@ -910,28 +928,24 @@ export default {
         filterable: false
       });
 
+    var loadFirstData = true;
     // Set persisted filters:
     var persistedFilters = localStorage.getItem(`Datatable.${this.Name}.filters`);
     if (!!persistedFilters) {
       this.showFilterPanel = true;
       setTimeout(() => this.filterParams = JSON.parse(persistedFilters), 100)
+      loadFirstData = false
     }
 
     // Set persisted search term:
     this.searchTerm = localStorage.getItem(`Datatable.${this.Name}.searchTerm`) ?? null;
+    if (!!this.searchTerm) loadFirstData = false;
 
     // Set sorting:
-    for (let i = this.Columns.length - 1; i >= 0; i--) {
-      let clm = this.Columns[i];
-      if (!!clm.sortByDefault) {
-        this.pagination.sortBy = clm.sort;
-        this.pagination.sortDir = clm.sortByDefault;
-        break;
-      }
-
-      if (!!clm.sort) {
-        this.pagination.sortBy = clm.sort;
-      }
+    if (!!this.DefaultSorting) {
+      this.pagination.sortBy = this.DefaultSorting.by;
+      this.pagination.sortDir = this.DefaultSorting.direction;
+      loadFirstData = false
     }
 
     // Set persisted pagination:
@@ -944,8 +958,13 @@ export default {
 
       if (!!persistedPagination.currentPage && persistedPagination.currentPage != 1) {
         setTimeout(() => this.pagination.currentPage = persistedPagination.currentPage, 200);
+        loadFirstData = false
       }
     }
+
+    // If no change occurred in any parameters, start the first load:
+    if (loadFirstData)
+      this.rawData = (await this.loadData()).data;
   },
 }
 </script>
