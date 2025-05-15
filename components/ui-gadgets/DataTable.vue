@@ -615,7 +615,7 @@ export default {
       var sortNumber = null;
       if (!!column.sortBy === false) {
         // Find sort number:
-        let columns = Object.keys(this.rawData[0]);
+        let columns = Object.keys(this.rawData[0] ?? {});
         let idx = columns.indexOf(column.field);
 
         if (idx == -1) return

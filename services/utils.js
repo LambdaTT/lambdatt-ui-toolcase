@@ -153,7 +153,6 @@ export default {
   },
 
   notifyError: function (error) {
-    // console.log('error notify', error);
     if (error.response && error.response.data && (error.response.data.user_friendly || error.response.data.userReadable)) {
       Notify.create({
         message: error.response.data.message,
