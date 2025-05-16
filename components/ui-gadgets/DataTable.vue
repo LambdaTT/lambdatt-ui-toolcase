@@ -315,7 +315,7 @@ export default {
         else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
 
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data;
+        if(response) this.rawData = response.data;
       }, 200);
     },
 
@@ -329,7 +329,8 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data}, 200);
+        if(response) this.rawData = response.data;
+      }, 200);
     },
 
     'pagination.limit'() {
@@ -344,7 +345,8 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data}, 200);
+        if(response) this.rawData = response.data;
+      }, 200);
     },
 
     'pagination.sortBy'() {
@@ -357,7 +359,8 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data}, 200);
+        if(response) this.rawData = response.data;
+      }, 200);
     },
 
     'pagination.sortDir'() {
@@ -370,7 +373,8 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data}, 200);
+        if(response) this.rawData = response.data;
+      }, 200);
     },
 
     filterParams: {
@@ -558,7 +562,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data
+        if(response) this.rawData = response.data
       }, 200);
     },
 
@@ -685,7 +689,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        this.rawData = response.data;
+        if(response) this.rawData = response.data;
       }, 200);
     },
 
@@ -987,7 +991,7 @@ export default {
     // If no change occurred in any parameters, start the first load:
     if (loadFirstData) {
       const response = await this.loadData();
-      this.rawData = response.data;
+      if(response) this.rawData = response.data;
     }
   },
 }
