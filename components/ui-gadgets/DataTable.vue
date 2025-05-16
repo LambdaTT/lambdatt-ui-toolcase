@@ -314,7 +314,8 @@ export default {
           localStorage.setItem(`Datatable.${this.Name}.searchTerm`, this.searchTerm)
         else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
 
-        this.rawData = (await this.loadData(this.IgnorePagination)).data;
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data;
       }, 200);
     },
 
@@ -326,7 +327,9 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
+      this.loadTimeout = setTimeout(async () => {
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data}, 200);
     },
 
     'pagination.limit'() {
@@ -339,7 +342,9 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
+      this.loadTimeout = setTimeout(async () => {
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data}, 200);
     },
 
     'pagination.sortBy'() {
@@ -350,7 +355,9 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
+      this.loadTimeout = setTimeout(async () => {
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data}, 200);
     },
 
     'pagination.sortDir'() {
@@ -361,7 +368,9 @@ export default {
       localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
+      this.loadTimeout = setTimeout(async () => {
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data}, 200);
     },
 
     filterParams: {
@@ -547,7 +556,10 @@ export default {
           delete filtersObject[k] == null
       }
 
-      this.loadTimeout = setTimeout(async () => this.rawData = (await this.loadData(this.IgnorePagination)).data, 200);
+      this.loadTimeout = setTimeout(async () => {
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data
+      }, 200);
     },
 
     setParams() {
@@ -672,7 +684,8 @@ export default {
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
-        this.rawData = (await this.loadData(this.IgnorePagination)).data;
+        const response = await this.loadData(this.IgnorePagination);
+        this.rawData = response.data;
       }, 200);
     },
 
@@ -754,9 +767,11 @@ export default {
     async exportFile(filetype, filename) {
       filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`;
 
-      var data = (await this.loadData(true)).data;
+      const response = await this.loadData(true);
+      var data = response.data;
       var blobType;
       var content;
+
       switch (filetype) {
         case 'xls':
           blobType = "application/vnd.ms-excel;charset=utf-8;";
@@ -791,7 +806,8 @@ export default {
     },
 
     async printData() {
-      var data = (await this.loadData(true)).data;
+      const response = await this.loadData(true);
+      var data = response.data;
       this.loading = false;
 
       const content = `${this.buildContentTable(data)}`;
@@ -969,8 +985,10 @@ export default {
     }
 
     // If no change occurred in any parameters, start the first load:
-    if (loadFirstData)
-      this.rawData = (await this.loadData()).data;
+    if (loadFirstData) {
+      const response = await this.loadData();
+      this.rawData = response.data;
+    }
   },
 }
 </script>
