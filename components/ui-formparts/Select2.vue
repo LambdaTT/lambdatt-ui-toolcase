@@ -44,8 +44,11 @@ export default {
 
   computed:{
     options(){
-      return [...this.rawData].sort((a, b) =>
-        a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }))
+      if(this.rawData.length > 0) {
+        return [...this.rawData].sort((a, b) =>
+          a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }))
+      }
+      return [];
     }
   },
 
