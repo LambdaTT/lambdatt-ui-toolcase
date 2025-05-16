@@ -637,6 +637,14 @@ export default {
         if (idx == -1) return
 
         sortNumber = idx + 1
+      } else if(typeof column.sortBy == 'string'){
+        // Find sort number:
+        let columns = Object.keys(this.rawData[0] ?? {});
+        let idx = columns.indexOf(column.sortBy);
+
+        if (idx == -1) return
+
+        sortNumber = idx + 1
       } else {
         sortNumber = column.sortBy
       }
