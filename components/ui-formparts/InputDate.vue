@@ -12,9 +12,8 @@
         <q-tooltip>Selecionar {{ range ? 'Período' : 'Data' }}</q-tooltip>
         <q-popup-proxy cover transition-show="scale" transition-hide="scale">
           <q-card>
-            <q-date :range="range" :today-btn="todayBtn" :options="dateOptions" 
-              :navigation-min-year-month="minDatePage" :navigation-max-year-month="maxDatePage"
-              v-model="date" @update:model-value="updateModelValue()">
+            <q-date :range="range" :today-btn="todayBtn" :options="dateOptions" :navigation-min-year-month="minDatePage"
+              :navigation-max-year-month="maxDatePage" v-model="date" @update:model-value="updateModelValue()">
             </q-date>
             <div v-if="withTime" class="q-pa-sm">
               <InputTime :withSeconds="withSeconds" dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime"
@@ -45,7 +44,7 @@ export default {
     BgColor: String,
     Label: String,
     Error: Boolean,
-    dateOptions: { type: [Array, Function]},
+    dateOptions: { type: [Array, Function] },
     dense: Boolean,
     range: Boolean,
     readonly: Boolean,

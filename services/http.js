@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { utils, eventbroadcaster } from '../services.js'
-import { is } from 'quasar';
 
 var headers = {};
 var isExternal = false;
