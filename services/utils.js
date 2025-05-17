@@ -306,7 +306,9 @@ export default {
     ];
   },
 
-  async getAddressByZipCode(zipcode) {
+  async getAddressByZipCode(zipcode, notifyNotFound) {
+    notifyNotFound = notifyNotFound ?? true
+
     if (!zipcode || zipcode.length < 9) return null;
     zipcode = zipcode.replace(/-/g, "");
     if (!/^[0-9]{8}$/.test(zipcode)) {
@@ -317,14 +319,17 @@ export default {
       });
       return false;
     }
+
     var response = await fetch(`https://viacep.com.br/ws/${encodeURIComponent(zipcode)}/json/`);
     var result = await response.json();
     if ("erro" in result) {
-      this.notify({
-        message: "O CEP informado é inválido",
-        type: 'negative',
-        position: 'top-right'
-      });
+      if (notifyNotFound)
+        this.notify({
+          message: "CEP não encontrado.",
+          type: 'negative',
+          position: 'top-right'
+        });
+
       return false;
     } else {
       return result;

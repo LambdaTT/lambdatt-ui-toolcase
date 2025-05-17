@@ -11,6 +11,7 @@
           v-model="input.ds_addresszipcode" :Error="inputError.ds_addresszipcode"
           @focus="inputError.ds_addresszipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
         </InputField>
+        <span class="q-ml-sm text-amber-9 text-caption text-bold" v-if="!!zipcodeWarning">{{ zipcodeWarning }}</span>
       </div>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
@@ -38,7 +39,7 @@
       </InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
-      <InputField type="select" :dense="dense" :readonly="formReadonly" Label="UF*"
+      <InputField type="select" clearable :dense="dense" :readonly="formReadonly" Label="UF*"
         Icon="fas fa-map-marker-alt" v-model="input.do_addressuf" :Options="brazilianStates"
         :Error="inputError.do_addressuf" @focus="inputError.do_addressuf = false"></InputField>
     </div>
@@ -88,6 +89,7 @@ export default {
         do_addressuf: false,
       },
       formReadonly: !!this.readonly,
+      zipcodeWarning: null
     }
   },
 
@@ -122,12 +124,13 @@ export default {
     },
 
     async getAddressByZipcode() {
-      var address = await this.$utils.getAddressByZipCode(this.input.ds_addresszipcode);
+      var address = await this.$utils.getAddressByZipCode(this.input.ds_addresszipcode, false);
       if (address === null) return;
       if (address === false) {
-        this.inputError.ds_addresszipcode = true;
+        this.zipcodeWarning = 'CEP não encontrado. Preencha o endereço manualmente.'
         return;
       }
+      this.zipcodeWarning = null
       // Updating Values
       this.input.ds_addressstreet = address.logradouro;
       this.input.ds_addressneighborhood = address.bairro;
