@@ -46,7 +46,7 @@ export default {
     options(){
       if(this.rawData.length > 0) {
         return [...this.rawData].sort((a, b) =>
-          a.label.localeCompare(b.label, 'pt-BR', { sensitivity: 'base' }))
+          String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
       }
       return [];
     }
