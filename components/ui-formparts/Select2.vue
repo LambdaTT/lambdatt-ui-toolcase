@@ -97,7 +97,7 @@ export default {
 
       update(() => {
         const needle = val.toLowerCase()
-        this.rawData = this.Options.filter(v => v.label.toLowerCase().includes(needle));
+        this.rawData = this.Options.filter(v => String(v.label).toLowerCase().includes(needle));
       })
     },
   },
