@@ -34,7 +34,7 @@
         @focus="inputError.ds_addressneighborhood = false"></InputField>
     </div>
     <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
-      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Cidade*" Icon="fas fa-city"
+      <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Cidade*" Icon="fas fa-building"
         v-model="input.ds_addresscity" :Error="inputError.ds_addresscity" @focus="inputError.ds_addresscity = false">
       </InputField>
     </div>
