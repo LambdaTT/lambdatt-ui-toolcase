@@ -1,5 +1,5 @@
 <template>
-  <q-select hide-bottom-space :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive"
+  <q-select behavior="menu" hide-bottom-space :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive"
     :disable="disable" :hide-dropdown-icon="readonly" :dense="dense" filled square :clearable="clearable"
     v-model="selected" use-input hide-selected fill-input input-debounce="300" :options="options" @filter="filterFn"
     :label="Label" :error="Error" @focus="$emit('focus')" :readonly="readonly">
