@@ -1,7 +1,7 @@
 <template>
   <q-card :flat="!card">
     <div v-if="showTitle">
-      <div v-if="!card" class="text-bold q-pa-sm" style="font-size: 20px;">Informações de Endereço</div>
+      <div v-if="!card" class="q-pa-sm" style="font-size: 20px;">Informações de Endereço</div>
       <div v-else class="bg-grey-9 q-pa-md text-bold text-white q-pl-lg card-title">Endereço</div>
     </div>
     <div class="row" :class="!card? '': 'q-pa-md'">
