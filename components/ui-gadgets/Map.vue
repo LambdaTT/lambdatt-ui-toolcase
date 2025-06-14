@@ -7,12 +7,12 @@
     </div>
 
     <!-- Loading -->
-    <div class="q-pa-xl absolute bg-white text-center text-grey-8" v-show="mapState == 'loading'" id="map-loading">
-      <div>
+    <div class="q-pa-xl absolute bg-white text-center text-grey-8 row items-center" v-show="mapState == 'loading'" id="map-loading">
+      <div class="col-12">
         <q-spinner-gears size="lg" />
-      </div>
-      <div class="text-caption">
-        Carregando...
+        <div class="text-caption">
+          Carregando...
+        </div>
       </div>
     </div>
 
@@ -163,7 +163,8 @@ export default {
       return;
     }
 
-    if (!!this.AddressObj) this.handleAddressObj();
+    if (!!this.AddressObj)
+      this.handleAddressObj(this.AddressObj);
     else if (!!this.AddressStr) this.handleAddressStr();
 
   },
