@@ -1,5 +1,5 @@
 <template>
-  <div :class="dense ? 'q-pa-xs' : 'q-pa-sm'">
+  <div :class="ignorePadding ? '' : (dense ? 'q-pa-xs' : 'q-pa-sm')">
     <!-- Input text: -->
     <q-input v-if="type == 'text' || type == null" type="text" square filled hide-bottom-space :ref="inputRefId"
       :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
@@ -177,6 +177,10 @@ export default {
     accept: String,
     ReadAsURL: Boolean,
     placeholder: String,
+    ignorePadding: {
+      type: Boolean,
+      default: false
+    }
   },
 
   data() {

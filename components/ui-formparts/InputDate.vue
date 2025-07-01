@@ -1,5 +1,5 @@
 <template>
-  <InputField :disable="disable" :Mask="mask" v-model="value" :Label="Label" :dense="dense" :Error="error || Error"
+  <InputField ignorePadding :disable="disable" :Mask="mask" v-model="value" :Label="Label" :dense="dense" :Error="error || Error"
     :ErrorMsg="errormsg" :readonly="readonly" :clearable="clearable" @focus="() => $emit('focus')"
     Icon="fas fa-calendar-alt" />
 </template>
