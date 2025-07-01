@@ -64,38 +64,50 @@
     </Select2>
 
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
-      :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
-      v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
-      @update:model-value="updModelValue">
-    </InputDate>
-
-    <!-- Input daterange: -->
-    <InputDate v-if="type == 'daterange'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
-      :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
-      v-model="value" range :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+    <InputDate v-if="type == 'date'" :dense="dense" :disable="disable" :readonly="readonly" v-model="value"
+      :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetime: -->
-    <InputDate v-if="type == 'datetime'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
-      :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
-      :readonly="readonly" v-model="value" withTime :Default="Default" :Label="Label" :Error="Error"
-      @focus="() => $emit('focus')" @update:model-value="updModelValue">
+    <InputDate v-if="type == 'datetime'" withTime :withSeconds="withSeconds" :dense="dense" :disable="disable" :readonly="readonly" v-model="value"
+      :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+      @update:model-value="updModelValue">
     </InputDate>
 
-    <!-- Input datetimerange: -->
-    <InputDate v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense"
+    <!-- Input date picker: -->
+    <DatePicker v-if="type == 'datepicker'" :BgColor="BgColor" :dense="dense" :disable="disable" :readonly="readonly"
+      :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
+      v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+      @update:model-value="updModelValue">
+    </DatePicker>
+
+    <!-- Input daterange picker: -->
+    <DatePicker v-if="type == 'daterangepicker'" :BgColor="BgColor" :dense="dense" :disable="disable"
+      :readonly="readonly" :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage"
+      :maxDatePage="maxDatePage" v-model="value" range :Default="Default" :Label="Label" :Error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue">
+    </DatePicker>
+
+    <!-- Input datetime picker: -->
+    <DatePicker v-if="type == 'datetimepicker'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense"
+      :disable="disable" :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage"
+      :maxDatePage="maxDatePage" :readonly="readonly" v-model="value" withTime :Default="Default" :Label="Label"
+      :Error="Error" @focus="() => $emit('focus')" @update:model-value="updModelValue">
+    </DatePicker>
+
+    <!-- Input datetimerange picker: -->
+    <DatePicker v-if="type == 'datetimerange'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense"
       :todayBtn="todayBtn" :dateOptions="dateOptions" :minDatePage="minDatePage" :maxDatePage="maxDatePage"
       :disable="disable" :readonly="readonly" v-model="value" range withTime :Default="Default" :Label="Label"
       :Error="Error" @focus="() => $emit('focus')" @update:model-value="updModelValue">
-    </InputDate>
+    </DatePicker>
 
     <!-- Input time: -->
-    <InputTime v-if="type == 'time'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
+    <TimePicker v-if="type == 'time'" :withSeconds="withSeconds" :BgColor="BgColor" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error" square
       @update:model-value="updModelValue" @focus="() => $emit('focus')">
-    </InputTime>
+    </TimePicker>
 
     <!-- Input color: -->
     <InputColor v-if="type == 'color'" :BgColor="BgColor" :clearable="clearable" :dense="dense" :disable="disable"

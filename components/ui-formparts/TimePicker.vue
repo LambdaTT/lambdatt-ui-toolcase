@@ -24,7 +24,7 @@
 
 <script>
 export default {
-  name: 'ui-formparts-inputtime',
+  name: 'ui-formparts-timepicker',
 
   props: {
     BgColor: String,
