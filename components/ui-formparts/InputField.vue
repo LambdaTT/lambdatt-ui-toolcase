@@ -64,15 +64,15 @@
     </Select2>
 
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :dense="dense" :disable="disable" :readonly="readonly" v-model="value"
+    <InputDate v-if="type == 'date'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly" v-model="value"
       :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input datetime: -->
-    <InputDate v-if="type == 'datetime'" withTime :withSeconds="withSeconds" :dense="dense" :disable="disable" :readonly="readonly" v-model="value"
-      :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
-      @update:model-value="updModelValue">
+    <InputDate v-if="type == 'datetime'" withTime :withSeconds="withSeconds" :dense="dense" :clearable="clearable"
+      :disable="disable" :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </InputDate>
 
     <!-- Input date picker: -->
@@ -140,7 +140,7 @@ export default {
     BgColor: String,
     Label: String,
     Icon: String,
-    Error: Boolean,
+    Error: { type: Boolean, default: false },
     ErrorMsg: String,
     type: String,
     clearable: Boolean,

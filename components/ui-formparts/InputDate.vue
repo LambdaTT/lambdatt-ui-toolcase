@@ -1,6 +1,6 @@
 <template>
-  <InputField ignorePadding :disable="disable" :Mask="mask" v-model="value" :Label="Label" :dense="dense" :Error="error || Error"
-    :ErrorMsg="errormsg" :readonly="readonly" :clearable="clearable" @focus="() => $emit('focus')"
+  <InputField ignorePadding :disable="disable" :Mask="mask" v-model="value" :Label="Label" :dense="dense"
+    :Error="hasError" :ErrorMsg="errormsg" :readonly="readonly" :clearable="clearable" @focus="() => $emit('focus')"
     Icon="fas fa-calendar-alt" />
 </template>
 
@@ -9,7 +9,7 @@ export default {
   name: 'ui-formparts-inputdate',
 
   props: {
-    modelValue: { type: String, required: true },
+    modelValue: String,
     readonly: { type: Boolean, default: false },
     disable: { type: Boolean, default: false },
     dense: { type: Boolean, default: false },
@@ -29,6 +29,12 @@ export default {
       state: 'pending',
       error: false,
       errormsg: '',
+    }
+  },
+
+  computed: {
+    hasError() {
+      return this.state === 'error' || this.error;
     }
   },
 
@@ -52,45 +58,45 @@ export default {
     },
 
     value(val) {
+      this.error = false;
+      this.errormsg = '';
       this.state = 'pending';
       let emitValue = null;
 
-      if (val && val.length >= 10) {
-        const [datePart, timePart] = val.split(' ');
-        const [day, month, year] = datePart.split('/').map(Number);
+      if (!val) return this.clear();
+      else if (val.length < 10) return;
 
-        if (!(day > 0 && day <= 31 && month > 0 && month <= 12 && year > 0)) {
+      const [datePart, timePart] = val.split(' ');
+      const [day, month, year] = datePart.split('/').map(Number);
+
+      if (!(day > 0 && day <= 31 && month > 0 && month <= 12 && year > 0)) {
+        this.error = true;
+        this.errormsg = 'Data inválida';
+        this.state = 'error';
+        return;
+      }
+
+      if (!!timePart) {
+        const timeParts = timePart.split(':');
+        if (timeParts.length < 2 || timeParts.length > 3) {
           this.error = true;
-          this.errormsg = 'Data inválida';
+          this.errormsg = 'Hora inválida';
           this.state = 'error';
           return;
         }
-
-        if (!!timePart) {
-          const timeParts = timePart.split(':');
-          if (timeParts.length < 2 || timeParts.length > 3) {
-            this.error = true;
-            this.errormsg = 'Hora inválida';
-            this.state = 'error';
-            return;
-          }
-          const [hours, minutes, seconds] = timeParts.map(Number);
-          if (!(hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 && (seconds === undefined || (seconds >= 0 && seconds < 60)))) {
-            this.error = true;
-            this.errormsg = 'Hora inválida';
-            this.state = 'error';
-            return;
-          }
+        const [hours, minutes, seconds] = timeParts.map(Number);
+        if (!(hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 && (seconds === undefined || (seconds >= 0 && seconds < 60)))) {
+          this.error = true;
+          this.errormsg = 'Hora inválida';
+          this.state = 'error';
+          return;
         }
+      }
 
-        this.error = false;
-        this.errormsg = '';
-        this.state = 'success';
+      this.state = 'success';
 
-        emitValue = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        if (this.withTime) emitValue += ` ${timePart ?? '00:00:00'}`;
-
-      } else this.clear();
+      emitValue = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      if (this.withTime) emitValue += ` ${timePart ?? '00:00:00'}`;
 
       this.$emit('update:modelValue', { value: emitValue, state: this.state });
     }
@@ -99,6 +105,8 @@ export default {
   methods: {
     clear() {
       this.value = this.Default || null;
+      this.error = false;
+      this.errormsg = '';
     }
   },
 
