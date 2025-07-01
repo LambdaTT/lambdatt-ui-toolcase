@@ -1,36 +1,58 @@
 <template>
-  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :dense="dense" readonly filled
-    square v-model="formattedDate" :error="Error" :label="Label">
-    <template v-slot:append>
-      <q-icon id="clear-button" v-if="!!formattedDate && !readonly" name="cancel" clickable @click="clear()"
-        class="cursor-pointer">
-        <q-tooltip>Limpar seleção</q-tooltip>
-      </q-icon>
-      <q-icon v-if="readonly" name="fas fa-calendar-alt" color="grey-8" class="cursor-ban"></q-icon>
-      <q-icon v-else clickable @click="$emit('focus');" name="fas fa-calendar-alt" color="primary"
-        class="cursor-pointer">
-        <q-tooltip>Selecionar {{ range ? 'Período' : 'Data' }}</q-tooltip>
-        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-          <q-card>
-            <q-date :range="range" :today-btn="todayBtn" :options="dateOptions" :navigation-min-year-month="minDatePage"
-              :navigation-max-year-month="maxDatePage" v-model="date" @update:model-value="updateModelValue()">
-            </q-date>
-            <div v-if="withTime" class="q-pa-sm">
-              <InputTime :withSeconds="withSeconds" dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime"
-                :Default="defaultFirstTime" @update:model-value="updateModelValue()">
-              </InputTime>
-              <InputTime :withSeconds="withSeconds" v-if="range" dense Label="Até:" v-model="lastTime"
-                :Default="defaultLastTime" class="q-pt-sm" @update:model-value="updateModelValue()">
-              </InputTime>
-            </div>
-            <div class="row items-center justify-end q-pa-sm">
-              <q-btn v-close-popup label="Fechar" color="primary" flat dense />
-            </div>
-          </q-card>
-        </q-popup-proxy>
-      </q-icon>
-    </template>
-  </q-input>
+  <div>
+    <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :dense="dense" readonly filled
+      square v-model="formattedDate" :error="Error" :label="Label">
+      <template v-slot:append>
+        <q-icon id="clear-button" v-if="!!formattedDate && !readonly" name="cancel" clickable @click="clear()"
+          class="cursor-pointer">
+          <q-tooltip>Limpar seleção</q-tooltip>
+        </q-icon>
+        <q-icon v-if="readonly" name="fas fa-calendar-alt" color="grey-8" class="cursor-ban"></q-icon>
+        <q-icon v-else clickable @click="$emit('focus');" name="fas fa-calendar-alt" color="primary"
+          class="cursor-pointer">
+          <q-tooltip>Selecionar {{ range ? 'Período' : 'Data' }}</q-tooltip>
+          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-card>
+              <q-date :emit-immediately="!range" :range="range" :today-btn="todayBtn" :options="dateOptions"
+                :navigation-min-year-month="minDatePage" :navigation-max-year-month="maxDatePage" v-model="date"
+                @update:model-value="updateModelValue()">
+              </q-date>
+              <div v-if="withTime" class="q-pa-sm">
+                <InputTime :withSeconds="withSeconds" dense :Label="range ? 'De:' : 'Hora'" v-model="firstTime"
+                  :Default="defaultFirstTime" @update:model-value="updateModelValue()">
+                </InputTime>
+                <InputTime :withSeconds="withSeconds" v-if="range" dense Label="Até:" v-model="lastTime"
+                  :Default="defaultLastTime" class="q-pt-sm" @update:model-value="updateModelValue()">
+                </InputTime>
+              </div>
+              <div class="row items-center justify-end q-pa-sm">
+                <q-btn v-close-popup class="q-mr-sm" label="Digitar" color="primary" dense @click="typingMode = true" />
+                <q-btn v-close-popup label="Fechar" color="primary" flat dense />
+              </div>
+            </q-card>
+          </q-popup-proxy>
+        </q-icon>
+      </template>
+    </q-input>
+
+    <q-dialog v-model="typingMode" persistent transition-show="scale" transition-hide="scale">
+      <q-card>
+        <q-card-section class="row items-center justify-between">
+          <span class="text-h6">Digite a data</span>
+          <q-btn flat icon="close" @click="typingMode = false" />
+        </q-card-section>
+        <q-card-section class="q-pa-md">
+          <InputField :Mask="typingModeOptions.mask" v-model="typingModeOptions.modelValue" Label="Digite a Data"
+            :Error="typingModeOptions.error" :ErrorMsg="typingModeOptions.errormsg" :readonly="readonly" />
+        </q-card-section>
+        <q-card-section class="row items-center justify-end">
+          <q-btn v-close-popup :label="typingModeOptions.doneState ? 'Concluir' : 'Fechar'"
+            :color="typingModeOptions.doneState ? 'positive' : 'grey-8'" dense class="q-mr-sm"
+            @click="typingMode = false;" :icon="typingModeOptions.doneState ? 'check' : 'close'" />
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+  </div>
 </template>
 
 <script>
@@ -43,7 +65,7 @@ export default {
     Default: { type: [String, Object] },
     BgColor: String,
     Label: String,
-    Error: Boolean,
+    Error: { type: Boolean, default: false },
     dateOptions: { type: [Array, Function] },
     dense: Boolean,
     range: Boolean,
@@ -57,6 +79,15 @@ export default {
 
   data() {
     return {
+      typingMode: false,
+      typingModeOptions: {
+        modelValue: null,
+        mask: `${this.withTime ? `##/##/#### ##:##${this.withSeconds ? ':##' : ''}` : '##/##/####'}`,
+        inputColor: 'primary',
+        error: false,
+        errormsg: '',
+        doneState: false,
+      },
       defaultFirstTime: null,
       defaultLastTime: null,
       firstTime: null,
@@ -76,6 +107,72 @@ export default {
 
     lastTime() {
       this.updateModelValue();
+    },
+
+    typingMode(newVal) {
+      if (newVal) {
+        // If typing mode is enabled, we set the modelValue to the current date, but reverting from 'yyyy-mm-dd' to 'dd/mm/yyyy':
+        let dateParts = this.date.split('-');
+        this.typingModeOptions.modelValue = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+        if (this.withTime) {
+          this.typingModeOptions.modelValue += ` ${this.firstTime ? this.firstTime : '00:00:00'}`;
+          if (this.range && this.lastTime) {
+            this.typingModeOptions.modelValue += ` - ${this.lastTime}`;
+          }
+        }
+      } else {
+        // Reset the typing mode options when closed
+        this.typingModeOptions.modelValue = null;
+        this.typingModeOptions.error = false;
+        this.typingModeOptions.errormsg = '';
+        this.typingModeOptions.doneState = false;
+      }
+    },
+
+    'typingModeOptions.modelValue'(newVal) {
+      // check for a valid days and months numbers, taking into account when it has time or not
+      // then format the date to yyyy-mm-dd or yyyy-mm-dd hh:mm:ss
+      if (newVal && newVal.length >= 10) {
+        if (this.withTime && newVal.includes(':')) {
+          // If it has time, we split the date and time
+          const [datePart, timePart] = newVal.split(' ');
+          const [day, month, year] = datePart.split('/').map(Number);
+          const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+          if (day > 0 && day <= 31 && month > 0 && month <= 12 && year > 0 &&
+            hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 &&
+            (!this.withSeconds || (seconds >= 0 && seconds < 60))) {
+            this.typingModeOptions.error = false;
+            this.typingModeOptions.errormsg = '';
+            // Format the date to yyyy-mm-dd hh:mm:ss and split it to date and firstTime:
+            this.firstTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}${this.withSeconds ? `:${seconds.toString().padStart(2, '0')}` : ''}`;
+            this.date = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            this.typingModeOptions.doneState = true;
+          } else {
+            this.typingModeOptions.error = true;
+            this.typingModeOptions.errormsg = 'Data ou hora inválida';
+            this.typingModeOptions.doneState = false;
+          }
+        } else {
+          // If it does not have time, we only check the date part
+          const [day, month, year] = newVal.split('/').map(Number);
+          if (day > 0 && day <= 31 && month > 0 && month <= 12 && year > 0) {
+            // Format the date to yyyy-mm-dd hh:mm:ss and split it to date:
+            this.date = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+
+            this.typingModeOptions.error = false;
+            this.typingModeOptions.errormsg = '';
+            this.typingModeOptions.doneState = true;
+          } else {
+            this.typingModeOptions.error = true;
+            this.typingModeOptions.errormsg = 'Data inválida';
+            this.typingModeOptions.doneState = false;
+          }
+        }
+
+      }
+      else this.typingModeOptions.doneState = false;
     },
   },
 
