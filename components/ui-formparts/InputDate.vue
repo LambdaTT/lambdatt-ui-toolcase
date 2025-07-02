@@ -10,16 +10,16 @@ export default {
 
   props: {
     modelValue: String,
-    readonly: { type: Boolean, default: false },
-    disable: { type: Boolean, default: false },
-    dense: { type: Boolean, default: false },
-    clearable: { type: Boolean, default: true },
-    withTime: { type: Boolean, default: false },
-    withSeconds: { type: Boolean, default: false },
-    BrazilianFormat: { type: Boolean, default: true },
-    Default: { type: String, default: null },
-    Label: { type: String, default: 'Digite a Data' },
-    Error: { type: Boolean, default: false },
+    readonly: Boolean,
+    disable: Boolean,
+    dense: Boolean,
+    clearable: Boolean,
+    withTime: Boolean,
+    withSeconds: Boolean,
+    BrazilianFormat: Boolean,
+    Default: String,
+    Label: String,
+    Error: Boolean,
   },
 
   data() {
@@ -98,7 +98,8 @@ export default {
       emitValue = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
       if (this.withTime) emitValue += ` ${timePart ?? '00:00:00'}`;
 
-      this.$emit('update:modelValue', { value: emitValue, state: this.state });
+      this.$emit('update:modelValue', emitValue);
+      this.$emit('update:state', this.state);
     }
   },
 
