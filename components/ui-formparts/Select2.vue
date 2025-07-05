@@ -42,9 +42,9 @@ export default {
     }
   },
 
-  computed:{
-    options(){
-      if(this.rawData.length > 0) {
+  computed: {
+    options() {
+      if (this.rawData.length > 0) {
         return [...this.rawData].sort((a, b) =>
           String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
       }
@@ -58,7 +58,7 @@ export default {
     },
 
     modelValue(v) {
-      this.setValue()
+      this.setValue(v);
     },
 
     Options: {
@@ -71,19 +71,17 @@ export default {
   },
 
   methods: {
-    setValue() {
-      if (this.Options?.length) {
-        if (this.modelValue === null || typeof this.modelValue == 'undefined' || this.modelValue === '') {
+    setValue(v) {
+      if (this.Options !== null) {
+        if (v === null || typeof v == 'undefined' || v === '') {
           this.selected = null;
-        }
-        else {
-          this.selected = this.Options.filter((v) => {
-            v.value = (typeof v.value == "number") ? String(v.value) : v.value; // Number to String
-            return JSON.stringify(v.value).toLocaleLowerCase() == JSON.stringify(this.modelValue).toLocaleLowerCase();
-          })[0];
+        } else {
+          this.selected = this.Options.filter((opt) => {
+            return String(opt.value).toLocaleLowerCase() == String(v).toLocaleLowerCase();
+          })[0] ?? null;
         }
       } else {
-        setTimeout(this.setValue, 100);
+        setTimeout(() => this.setValue(v), 100);
       }
     },
 
@@ -104,7 +102,7 @@ export default {
 
   mounted() {
     this.rawData = this.Options;
-    this.setValue()
+    this.setValue(this.modelValue);
   }
 }
 </script>
