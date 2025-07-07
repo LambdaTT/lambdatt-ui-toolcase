@@ -171,6 +171,7 @@ export default {
     for (let i = 0; i < dataset.length; i++) {
       if (filterFunction(dataset[i])) {
         dataset.splice(i, 1);
+        i--;
         affectedRows++;
       }
     }
