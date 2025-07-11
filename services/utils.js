@@ -389,4 +389,17 @@ export default {
       };
     });
   },
+
+  empty(value) {
+    return (
+      value === undefined ||
+      value === null ||
+      value === false ||
+      value === 0 ||
+      value === '' ||
+      value === '0' ||
+      (Array.isArray(value) && value.length === 0) ||
+      (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
+    );
+  }
 }
