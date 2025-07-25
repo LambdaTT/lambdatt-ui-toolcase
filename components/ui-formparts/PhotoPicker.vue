@@ -1,41 +1,65 @@
 <template>
   <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
-    <div v-if="cover">
-      <q-card class="q-pa-sm">
-        <q-img class="bg-grey-3" :src="input.src ? input.src : DefaultImgPath" :ratio="16 / 9" fit="contain" :height="coverHeight"
-          :width="coverWidth" />
-        <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
-          @update:model-value="updModelValue">
-        </FileUpload>
-        <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
-          @click="activateFileInput()" :size="setIconSize">
-          <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
-        </q-btn>
-      </q-card>
-    </div>
-    <q-avatar v-else :square="square" :size="setSize">
-      <q-img :src="input.src ? input.src : DefaultImgPath" />
-      <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
-        @update:model-value="updModelValue" :accept="accept ? accept : 'image/*'">
+    <q-card v-if="cover" class="q-pa-sm">
+      <q-img class="bg-grey-3" 
+        :src="setSrc" 
+        :ratio="setRatio" 
+        :fit="setFit" 
+        :height="coverHeight" 
+        :width="coverWidth" />
+
+      <FileUpload 
+        class="hidden" 
+        v-model="input" 
+        :ReadAsURL="true"
+        :accept="accept ? accept : 'image/*'"
+        @activateFn="(fn) => activateFileInput = fn" 
+        @update:model-value="updModelValue">
       </FileUpload>
-      <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
-        @click="activateFileInput()" :size="setIconSize">
+
+      <q-btn 
+        flat 
+        round 
+        class="bg-white" 
+        id="btn-edit" 
+        color="primary" 
+        :disable="disable" 
+        icon="fas fa-edit"
+        @click="activateFileInput()" 
+        :size="setIconSize">
+        <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
+      </q-btn>
+    </q-card>
+
+    <q-avatar v-else :square="square" :size="setSize">
+      <q-img 
+        :src="setSrc" 
+        :ratio="setRatio" 
+        :fit="setFit" />
+
+      <FileUpload 
+        class="hidden" 
+        v-model="input" 
+        :ReadAsURL="true"
+        :accept="accept ? accept : 'image/*'"
+        @activateFn="(fn) => activateFileInput = fn" 
+        @update:model-value="updModelValue">
+      </FileUpload>
+
+      <q-btn 
+        flat 
+        round 
+        id="btn-edit" 
+        class="bg-white" 
+        color="primary" 
+        icon="fas fa-edit"
+        :disable="disable" 
+        :size="setIconSize"
+        @click="activateFileInput()">
         <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
       </q-btn>
     </q-avatar>
   </div>
-  <!-- <div id="wrapper" class="text-center q-pa-sm">
-    <div :class="`photo-container ${square ? 'square' : ''}`">
-      <q-img :src="input.src ? input.src : DefaultImgPath" />
-    </div>
-    <FileUpload @activateFn="(fn) => activateFileInput = fn" class="hidden" v-model="input" :ReadAsURL="true"
-      @update:model-value="updModelValue">
-    </FileUpload>
-    <q-btn class="bg-white" id="btn-edit" color="primary" flat round :disable="disable" icon="fas fa-edit"
-      @click="activateFileInput()" size="md">
-      <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
-    </q-btn>
-  </div> -->
 </template>
 
 <script>
@@ -52,6 +76,7 @@ export default {
     coverHeight: String,
     coverWidth: String,
     align: String,
+    fit: String,
     accept: {
       type: String,
       validator: val => val === 'image/*' || val === 'image/png' || val === 'image/jpeg' || val === 'image/jpg'
@@ -82,6 +107,10 @@ export default {
   },
 
   computed: {
+    setSrc() {
+      return this.input.src ? this.input.src : this.DefaultImgPath;
+    },
+
     setSize() {
       if (!!this.size) { return this.size + 'px'; }
       return '150px';
@@ -109,6 +138,14 @@ export default {
         }
       }
       return 'text-center';
+    },
+
+    setRatio() {
+      return this.cover? 16/9 : 1;
+    },
+
+    setFit() {
+      return this.fit? this.fit : 'cover';
     }
   },
 
