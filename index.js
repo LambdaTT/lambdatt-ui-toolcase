@@ -25,7 +25,6 @@ function mapComponents() {
     const componentName = path.split('/').pop().replace(/\.\w+$/, '');
     componentsMap[componentName] = mod.default;
   }
-  console.log('Components mapped:', componentsMap);
   return componentsMap;
 }
 
