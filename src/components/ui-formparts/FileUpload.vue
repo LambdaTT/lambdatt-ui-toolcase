@@ -1,8 +1,8 @@
 <template>
   <div>
-    <q-input :disable="disable" :readonly="readonly" hide-bottom-space square filled :clearable="clearable" v-model="fileData.name"
-      @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'" @clear="clearFile"
-      :color="!!Color ? Color : 'primary'" @focus="$emit('focus')" :error="Error">
+    <q-input :disable="disable" :readonly="readonly" hide-bottom-space square filled :clearable="clearable"
+      v-model="fileData.name" @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'"
+      @clear="clearFile" :color="!!Color ? Color : 'primary'" @focus="$emit('focus')" :error="Error">
       <template v-slot:prepend>
         <q-icon name="cloud_upload" />
       </template>
@@ -10,7 +10,8 @@
         <q-icon v-if="!!Icon" :name="Icon" />
       </template>
     </q-input>
-    <div v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2) }}
+    <div v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2)
+    }}
       kb
     </div>
     <input :disabled="readonly" :ref="inputRefId" :accept="accept" type="file" v-on:change="fileChange"
@@ -146,7 +147,7 @@ export default {
 
   mounted() {
     this.$emit('activateFn', this.inputClicked);
-    this.inputRefId = `InputFileRef-${this.$utils.uniqid()}`;
+    this.inputRefId = `InputFileRef-${this.$toolcase.services.utils.uniqid()}`;
     this.$emit('expose-ref', this.$refs[this.inputRefId]);
   }
 }

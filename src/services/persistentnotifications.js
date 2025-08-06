@@ -1,4 +1,5 @@
-import { utils, localData } from '../services.js'
+import localData from './localdata.js';
+import utils from './utils.js';
 
 export default {
   add(notification) {

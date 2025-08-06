@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { utils, eventbroadcaster } from '../services.js'
+import utils from './utils.js';
+import eventbroadcaster from './eventbroadcaster.js';
 
 var headers = {};
 var isExternal = false;

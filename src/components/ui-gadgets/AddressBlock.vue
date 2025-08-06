@@ -4,7 +4,7 @@
       <div v-if="!card" class="q-pa-sm" style="font-size: 20px;">Informações de Endereço</div>
       <div v-else class="bg-grey-9 q-pa-md text-bold text-white q-pl-lg card-title">Endereço</div>
     </div>
-    <div class="row" :class="!card? '': 'q-pa-md'">
+    <div class="row" :class="!card ? '' : 'q-pa-md'">
       <div class="col-12 row">
         <div :class="`col-12 ${wrapFields == true ? '' : 'col-md-6'}`">
           <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP*" Icon="fas fa-search"
@@ -97,7 +97,7 @@ export default {
 
   computed: {
     brazilianStates() {
-      return this.$utils.brazilianStates();
+      return this.$toolcase.services.utils.brazilianStates();
     },
 
     factory() {
@@ -117,7 +117,7 @@ export default {
 
   methods: {
     validateFields() {
-      if (!this.$utils.validateForm(this.input, this.inputError)) return false;
+      if (!this.$toolcase.services.utils.validateForm(this.input, this.inputError)) return false;
       return true;
     },
 
@@ -126,7 +126,7 @@ export default {
     },
 
     async getAddressByZipcode() {
-      var address = await this.$utils.getAddressByZipCode(this.input.ds_addresszipcode, false);
+      var address = await this.$toolcase.services.utils.getAddressByZipCode(this.input.ds_addresszipcode, false);
       if (address === null) return;
       if (address === false) {
         this.zipcodeWarning = 'CEP não encontrado. Preencha o endereço manualmente.'

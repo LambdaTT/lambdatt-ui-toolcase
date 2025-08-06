@@ -1,4 +1,4 @@
-import { http } from '../services.js'
+import http from './http.js'
 
 const getGeolocation = () => new Promise((resolve, reject) => {
   if (navigator.geolocation) {

@@ -64,8 +64,8 @@
     </Select2>
 
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly" v-model="value"
-      :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+    <InputDate v-if="type == 'date'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly"
+      v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
@@ -214,7 +214,7 @@ export default {
   },
 
   created() {
-    this.inputRefId = `InputFieldRef-${this.$utils.uniqid()}`
+    this.inputRefId = `InputFieldRef-${this.$toolcase.services.utils.uniqid()}`
     this.value = this.modelValue;
   },
 
