@@ -126,7 +126,7 @@ export default {
         this.$refs.video.srcObject = this.stream;
         this.step = 1;
       } catch (err) {
-        if(String(err).includes("NotFoundError")) { this.$eventbroadcaster.$broadcast('no-camera'); }
+        if (String(err).includes("NotFoundError")) { this.$toolcase.services.eventbroadcaster.$broadcast('no-camera'); }
         console.error('An error has occured on the attempt to start the camera', err);
       }
     },

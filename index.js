@@ -68,7 +68,7 @@ export const TOOLCASE = {
   COMPONENTS: mapComponents(),
   PAGES: mapPages(),
   LAYOUTS: mapLayouts(),
-  autoWire(app) {
+  autoWire(app, router) {
     // 1) sync register all components
     registerComponents(app)
 
@@ -79,9 +79,11 @@ export const TOOLCASE = {
       pages: mapPages(),
       layouts: mapLayouts(),
     }
+
+    this.SERVICES.routehelpers.routerInstance = router;
   }
 }
 
-export function autoWire(app) {
-  TOOLCASE.autoWire(app);
+export function autoWire(app, router) {
+  TOOLCASE.autoWire(app, router);
 }
