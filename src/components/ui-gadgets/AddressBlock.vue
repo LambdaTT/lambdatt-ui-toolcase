@@ -97,7 +97,7 @@ export default {
 
   computed: {
     brazilianStates() {
-      return this.$toolcase.services.utils.brazilianStates();
+      return this.$getService('toolcase/utils').brazilianStates();
     },
 
     factory() {
@@ -117,7 +117,7 @@ export default {
 
   methods: {
     validateFields() {
-      if (!this.$toolcase.services.utils.validateForm(this.input, this.inputError)) return false;
+      if (!this.$getService('toolcase/utils').validateForm(this.input, this.inputError)) return false;
       return true;
     },
 
@@ -126,7 +126,7 @@ export default {
     },
 
     async getAddressByZipcode() {
-      var address = await this.$toolcase.services.utils.getAddressByZipCode(this.input.ds_addresszipcode, false);
+      var address = await this.$getService('toolcase/utils').getAddressByZipCode(this.input.ds_addresszipcode, false);
       if (address === null) return;
       if (address === false) {
         this.zipcodeWarning = 'CEP não encontrado. Preencha o endereço manualmente.'

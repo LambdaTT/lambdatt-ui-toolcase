@@ -163,7 +163,7 @@ export default {
     for (let i = 0; i < this.Datasets.length; i++) {
       let set = this.Datasets[i];
 
-      let color = this.$toolcase.services.utils.randomHexColor()
+      let color = this.$getService('toolcase/utils').randomHexColor()
 
       this.datasets.push({
         label: set.label,

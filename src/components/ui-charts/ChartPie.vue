@@ -131,7 +131,7 @@ export default {
           if (this.BeforeLoad) await this.BeforeLoad(params);
 
           // fetch data from server
-          var response = await this.$toolcase.services.http.get(this.DataURL, params);
+          var response = await this.$getService('toolcase/http').get(this.DataURL, params);
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
@@ -174,7 +174,7 @@ export default {
         let data = this.rawData[i];
         chartObj.data.labels.push(data[this.LabelsField]);
 
-        dataset.backgroundColor.push(this.$toolcase.services.utils.randomHexColor())
+        dataset.backgroundColor.push(this.$getService('toolcase/utils').randomHexColor())
 
         dataset.data.push(data[this.ValueField]);
       }

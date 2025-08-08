@@ -214,7 +214,7 @@ export default {
   },
 
   created() {
-    this.inputRefId = `InputFieldRef-${this.$toolcase.services.utils.uniqid()}`
+    this.inputRefId = `InputFieldRef-${this.$getService('toolcase/utils').uniqid()}`
     this.value = this.modelValue;
   },
 

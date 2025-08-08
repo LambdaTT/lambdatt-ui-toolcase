@@ -11,7 +11,7 @@
       </template>
     </q-input>
     <div v-show="this.fileData.size != null" class="text-caption text-right">{{ (this.fileData.size / 1024).toFixed(2)
-      }}
+    }}
       kb
     </div>
     <input :disabled="readonly" :ref="inputRefId" :accept="accept" type="file" v-on:change="fileChange"
@@ -76,7 +76,7 @@ export default {
     async inputClicked() {
       if (!this.repetitionLock) {
         this.repetitionLock = true;
-        this.$toolcase.services.eventbroadcaster.$broadcast('fileupload-before-choose');
+        this.$getService('toolcase/eventbroadcaster').$broadcast('fileupload-before-choose');
         await this.sleep(100);
         this.dialogIsOpen = true;
         window.addEventListener('focus', this.onWindowFocus);
@@ -132,7 +132,7 @@ export default {
       }
 
       this.repetitionLock = false;
-      this.$toolcase.services.eventbroadcaster.$broadcast('fileupload-chosen')
+      this.$getService('toolcase/eventbroadcaster').$broadcast('fileupload-chosen')
     },
 
     onWindowFocus() {
@@ -147,7 +147,7 @@ export default {
 
   mounted() {
     this.$emit('activateFn', this.inputClicked);
-    this.inputRefId = `InputFileRef-${this.$toolcase.services.utils.uniqid()}`;
+    this.inputRefId = `InputFileRef-${this.$getService('toolcase/utils').uniqid()}`;
     this.$emit('expose-ref', this.$refs[this.inputRefId]);
   }
 }

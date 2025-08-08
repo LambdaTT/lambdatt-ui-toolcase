@@ -719,7 +719,7 @@ export default {
           if (this.BeforeLoad) await this.BeforeLoad(params);
 
           // fetch data from server
-          var response = await this.$toolcase.services.http.get(this.DataURL, params);
+          var response = await this.$getService('toolcase/http').get(this.DataURL, params);
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
