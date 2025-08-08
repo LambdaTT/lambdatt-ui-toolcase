@@ -153,7 +153,7 @@ export default {
   },
 
   notifyError: function (error) {
-    if (error.response && error.response.data && (error.response.data.user_friendly || error.response.data.userReadable)) {
+    if (error.response && error.response.data && (error.response.data.accessible || error.response.data.user_friendly || error.response.data.userReadable)) {
       Notify.create({
         message: error.response.data.message,
         type: 'negative',
