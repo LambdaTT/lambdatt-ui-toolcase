@@ -3,6 +3,13 @@
     <!-- Options and Controls -->
     <div class="row q-pb-sm">
       <div class="col-12 col-md-8">
+        <!-- Custom Resources -->
+        <q-btn v-for="(r, i) in CustomResources" :key="i" flat round color="primary" size="sm"
+          :icon="r.icon ?? 'fas fa-gear'" @click="r.fn">
+          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
+        </q-btn>
+
+        <!-- Options -->
         <q-btn v-if="columnFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
           @click="showFilterPanel = !showFilterPanel">
           <q-tooltip>Filtros da tabela</q-tooltip>
@@ -74,7 +81,6 @@
     </div>
 
     <q-separator></q-separator>
-
     <!-- Table -->
     <div class="datatable-container">
       <table>
@@ -129,6 +135,16 @@
                           </q-item-section>
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
+                        <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                          <q-item-section v-if="a.icon" side>
+                            <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
+                          </q-item-section>
+                          <q-item-section>
+                            {{ a.label }}
+                          </q-item-section>
+                          <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
+                        </q-item>
                       </q-list>
                     </q-menu>
                   </q-btn>
@@ -136,9 +152,10 @@
               </td>
             </tr>
             <tr v-else>
-              <td v-if="!('interval-row' in $slots)" :colspan="columns.length" class="q-pa-md"></td>
-              <slot v-else name="interval-row" :data="{ previous: data[idx - 1], current: row, next: data[idx + 1] }">
-              </slot>
+              <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
+                <slot name="interval-row" :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+                </slot>
+              </td>
             </tr>
           </template>
         </tbody>
@@ -259,9 +276,14 @@ export default {
     Printable: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
-    Interval: Function,
+    IntervalRule: Function,
     IgnorePagination: Boolean,
     dense: Boolean,
+    injectedRowActions: {
+      type: Function,
+      default: (row) => []
+    },
+    CustomResources: Array,
   },
 
   data() {
@@ -505,17 +527,16 @@ export default {
 
     rows() {
       var result = [...this.dataInPage];
-      let offset = 0;
 
-      if (!!this.Interval && typeof this.Interval == 'function') {
-        for (let i = -1; i < this.dataInPage.length; i++) {
+      if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
+        for (let i = 0; i < this.dataInPage.length; i++) {
           let previous = this.dataInPage[i - 1];
           let current = this.dataInPage[i];
           let next = this.dataInPage[i + 1];
 
-          if (this.Interval(previous, current, next) === true) {
-            result.splice(i + 1 + offset, 0, 'interval');
-            offset++;
+          if (this.IntervalRule(previous, current, next) === true) {
+            result.splice(i + 1, 0, 'interval');
+            i++;
           }
         }
       }
