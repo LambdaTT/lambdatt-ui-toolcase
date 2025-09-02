@@ -10,7 +10,7 @@
         </q-btn>
 
         <!-- Options -->
-        <q-btn v-if="columnFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
+        <q-btn v-if="tbFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
           @click="showFilterPanel = !showFilterPanel">
           <q-tooltip>Filtros da tabela</q-tooltip>
         </q-btn>
@@ -57,7 +57,7 @@
     <q-separator></q-separator>
 
     <!-- Filters Panel -->
-    <div v-if="columnFilters.length > 0" class="row">
+    <div v-if="tbFilters.length > 0" class="row">
       <div class="col-12">
         <q-expansion-item hide-expand-icon v-model="showFilterPanel" header-style="display:none;">
           <q-toolbar class="bg-grey-3">
@@ -70,7 +70,7 @@
             </q-btn>
           </q-toolbar>
           <div class="row q-py-sm">
-            <div v-for="(f, i) in columnFilters" :key="i" class="col-12 col-md-4">
+            <div v-for="(f, i) in tbFilters" :key="i" class="col-12 col-md-4">
               <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds"
                 :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]">
               </InputField>
@@ -87,14 +87,14 @@
         <thead>
           <tr>
             <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${column.sortable !==  false ? 'cursor-pointer' : ''}`"
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${column.sortable !== false ? 'cursor-pointer' : ''}`"
               v-for="column in columns" :key="column.field" @click="sort(column)"
               :style="column.width ? `width: ${column.width};` : ''">
               <span>{{ column.label }}</span>
-              <q-icon v-if="column.sortable !==  false" size="0.9em" :name="getSortIcon(column)"
+              <q-icon v-if="column.sortable !== false" size="0.9em" :name="getSortIcon(column)"
                 :color="getColumnNumber(column) == this.pagination.sortBy ? 'primary' : null">
               </q-icon>
-              <q-tooltip v-if="column.sortable !==  false">Clique para ordenar p/ {{ column.label }}</q-tooltip>
+              <q-tooltip v-if="column.sortable !== false">Clique para ordenar p/ {{ column.label }}</q-tooltip>
             </th>
           </tr>
         </thead>
@@ -136,7 +136,8 @@
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
                         <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
+                          @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
@@ -153,7 +154,8 @@
             </tr>
             <tr v-else>
               <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot name="interval-row" :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+                <slot name="interval-row"
+                  :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
                 </slot>
               </td>
             </tr>
@@ -283,6 +285,7 @@ export default {
       type: Function,
       default: (row) => []
     },
+    InjectedFilters: Array,
     CustomResources: Array,
   },
 
@@ -328,7 +331,7 @@ export default {
   watch: {
     searchTerm() {
       this.showLoader = true;
-      this.pagination.currentPage = 1;
+      this.pagination.currentPage >= 1;
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -337,7 +340,7 @@ export default {
         else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
 
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data;
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
@@ -351,7 +354,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data;
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
@@ -367,7 +370,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data;
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
@@ -381,7 +384,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data;
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
@@ -395,7 +398,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data;
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
@@ -464,8 +467,12 @@ export default {
       }).filter(item => item != null);
     },
 
+    tbFilters() {
+      return [...(this.InjectedFilters ?? []), ...this.columnFilters];
+    },
+
     columnFilters() {
-      return this.Columns.map(clm => {
+      return [...(this.InjectedFilters ?? []), ...this.Columns].map(clm => {
         if (!!clm.filter == false) return null;
 
         if (typeof clm.filter == 'string') {
@@ -583,7 +590,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data
+        if (response) this.rawData = response.data
       }, 200);
     },
 
@@ -627,7 +634,7 @@ export default {
       var filterParams = {};
       // Handle filters:
       for (let k in this.filterParams) {
-        let _f = this.columnFilters.find(x => x.field == k);
+        let _f = this.tbFilters.find(x => x.field == k);
         if (_f.type == 'text')
           filterParams[k] = `$lkof|${this.filterParams[k]}`;
         else if (_f.type == 'daterange' || _f.type == 'datetimerange')
@@ -648,7 +655,7 @@ export default {
       return result;
     },
 
-    getColumnNumber(column){
+    getColumnNumber(column) {
       var sortNumber = null;
       if (!!column.sortBy === false) {
         // Find sort number:
@@ -658,7 +665,7 @@ export default {
         if (idx == -1) return
 
         sortNumber = idx + 1
-      } else if(typeof column.sortBy == 'string'){
+      } else if (typeof column.sortBy == 'string') {
         // Find sort number:
         let columns = Object.keys(this.rawData[0] ?? {});
         let idx = columns.indexOf(column.sortBy);
@@ -689,7 +696,7 @@ export default {
       if (this.pagination.sortBy == sortNumber) {
         if (this.pagination.sortDir == 'ASC') this.pagination.sortDir = 'DESC';
         else if (this.pagination.sortDir == 'DESC') this.pagination.sortDir = 'ASC';
-        
+
       } else {
         this.pagination.sortBy = sortNumber;
         this.pagination.sortDir = 'ASC';
@@ -718,7 +725,7 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if(response) this.rawData = response.data;
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
@@ -988,7 +995,7 @@ export default {
     var persistedFilters = localStorage.getItem(`Datatable.${this.Name}.filters`);
     if (!!persistedFilters) {
       this.showFilterPanel = true;
-      setTimeout(() => this.filterParams = JSON.parse(persistedFilters), 100)
+      setTimeout(() => this.filterParams = JSON.parse(persistedFilters), 200)
       loadFirstData = false
     }
 
@@ -1020,7 +1027,7 @@ export default {
     // If no change occurred in any parameters, start the first load:
     if (loadFirstData) {
       const response = await this.loadData();
-      if(response) this.rawData = response.data;
+      if (response) this.rawData = response.data;
     }
   },
 }
