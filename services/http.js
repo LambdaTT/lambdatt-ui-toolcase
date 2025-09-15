@@ -138,7 +138,7 @@ export default {
       url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
 
     var reqConf = {
-      responseType: 'arrayBuffer',
+      responseType: 'arraybuffer',
       responseEncoding: 'utf8',
       headers: { ...headers }
     };
