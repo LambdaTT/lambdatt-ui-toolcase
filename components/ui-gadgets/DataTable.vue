@@ -86,7 +86,7 @@
       <table>
         <thead>
           <tr>
-            <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
+            <th v-show="visibleColumns.includes(column.field) || column.name == 'actions' && showColumnAction"
               :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${column.sortable !==  false ? 'cursor-pointer' : ''}`"
               v-for="column in columns" :key="column.field" @click="sort(column)"
               :style="column.width ? `width: ${column.width};` : ''">
@@ -102,8 +102,9 @@
         <!-- Ready State -->
         <tbody v-if="state == 'ready'">
           <template v-for="(row, idx) in rows" :key="idx">
+            {{ hasAnyActions(row) }}
             <tr v-if="row != 'interval'">
-              <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
+              <td v-show="visibleColumns.includes(column.field) || column.name == 'actions' && hasAnyActions(row)"
                 :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
                 v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
 
@@ -120,7 +121,7 @@
                 </div>
 
                 <!-- Especial td of actions -->
-                <div class="text-center" v-if="column.name == 'actions' && showActions">
+                <div class="text-center" v-if="column.name == 'actions'">
                   <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
                     <q-tooltip>Ações do registro</q-tooltip>
                     <q-menu>
@@ -311,6 +312,7 @@ export default {
       // Columns settings:
       visibleColumns: [],
       columns: [],
+      showColumnAction: true,
 
       // Data:
       rawData: [],
@@ -439,22 +441,6 @@ export default {
   },
 
   computed: {
-    showActions() {
-      for (let i = 0; i < this.RowActions.length; i++) {
-        let a = this.RowActions[i];
-        if (!!a.hide) {
-          if (typeof a.hide == 'function') {
-            for (let j = 0; j < this.dataInPage.length; i++) {
-              let row = this.dataInPage[j];
-              if (!a.hide(row)) return true;
-            }
-          } else return !a.hide;
-        } else return true;
-      }
-
-      return false;
-    },
-
     columnOptions() {
       return this.columns.map(clm => {
         return clm.name != 'actions' ? {
@@ -965,7 +951,22 @@ export default {
       ].join('\r\n'); // Separate rows with a newline
 
       return csvContent;
-    }
+    },
+
+    hasAnyActions(row) {
+      this.showColumnAction = true;
+      for (let i = 0; i < this.RowActions.length; i++) {
+        let a = this.RowActions[i];
+
+        // Validation
+        if(!a.hide) { return true; }
+        if(typeof a.hide !== 'function' && !a.hide) { return this.showColumnAction; }
+        if(!a.hide(row)) { return true; }
+      }
+
+      this.showColumnAction = false;
+      return false;
+    },
   },
 
   async mounted() {
