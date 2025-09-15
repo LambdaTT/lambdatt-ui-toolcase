@@ -102,7 +102,6 @@
         <!-- Ready State -->
         <tbody v-if="state == 'ready'">
           <template v-for="(row, idx) in rows" :key="idx">
-            {{ hasAnyActions(row) }}
             <tr v-if="row != 'interval'">
               <td v-show="visibleColumns.includes(column.field) || column.name == 'actions' && hasAnyActions(row)"
                 :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
