@@ -54,7 +54,7 @@ export default {
 
   watch: {
     selected(v) {
-      this.$emit('update:model-value', v?.value);
+      this.$emit('update:model-value', v?.value ?? null);
     },
 
     modelValue(v) {
