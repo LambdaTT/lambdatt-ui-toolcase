@@ -210,7 +210,6 @@ export default {
   },
 
   async mounted() {
-    this.loadData();
   }
 }
 </script>

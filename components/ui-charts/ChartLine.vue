@@ -247,8 +247,6 @@ export default {
         borderWidth: 3
       })
     }
-
-    this.loadData();
   }
 }
 </script>
