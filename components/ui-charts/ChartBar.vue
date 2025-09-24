@@ -11,7 +11,7 @@
     </div>
 
     <!-- Empty -->
-    <div class="text-center q-pa-xl" v-if="!showLoader && !error && data.length == 0">
+    <div class="text-center q-pa-xl text-grey-8" v-if="!showLoader && !error && data.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
@@ -62,7 +62,7 @@ export default {
     Configs: {
       type: Object,
       required: true,
-      validator: (v) => !!v.labelField
+      validator: (v) => !!v.xAxisKey
     },
     Datasets: {
       type: Array,
@@ -72,13 +72,13 @@ export default {
 
   data() {
     return {
+      chartElement: null,
       datasets: [],
       data: [],
       loading: false,
       showLoader: false,
       error: null,
       state: 'ready', // ready | loading | error
-      chartElement: null
     }
   },
 
@@ -134,9 +134,9 @@ export default {
           datasets: this.datasets
         },
         options: {
-          legend: { display: !!this.Configs.hideLegend },
-          maintainAspectRatio: false,
           responsive: true,
+          maintainAspectRatio: false,
+          legend: { display: !!this.Configs.hideLegend },
           tooltips: {
             mode: 'label',
             callbacks: {
@@ -170,7 +170,6 @@ export default {
             }]
           }
         },
-
       };
 
       // Clone datasets, detaching from reference:
@@ -178,7 +177,7 @@ export default {
 
       // (Re)Create datasets based on raw data:
       for (let i = 0; i < this.data.length; i++) {
-        let label = this.data[i][this.Configs.labelField];
+        let label = this.data[i][this.Configs.xAxisKey];
 
         chartObj.data.labels.push(label);
 
