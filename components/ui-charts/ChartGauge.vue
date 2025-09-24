@@ -1,10 +1,11 @@
 <template>
-  <div>
+  <!-- Content -->
+  <div v-show="!showLoader && data.length > 0" :id="`chart-${Name}-container`">
     <div v-if="ShowProgression" class="text-center text-bold text-h6" :style="`color:${gaugeColor}`">
       {{ FormatProgression ? FormatProgression(value) : value }} / {{ FormatProgression ? FormatProgression(maxValue) :
         maxValue }}
     </div>
-    <canvas style="width: 100%;" ref="gaugeChart"></canvas>
+    <canvas style="width: 100%;" :ref="`gauge${Name}Chart`"></canvas>
   </div>
 </template>
 
@@ -16,6 +17,7 @@ export default {
   name: "ui-charts-gauge",
 
   props: {
+    Name: String,
     ShowProgression: Boolean,
     FormatProgression: Function,
     value: {
@@ -34,20 +36,19 @@ export default {
 
   data() {
     return {
-      chartInstance: null,
+      chartObj: null,
       gaugeColor: '#000',
       debounceTimeoutId: null,
     };
   },
 
   mounted() {
-    const ctx = this.$refs.gaugeChart.getContext("2d");
+    const ctx = this.$refs[`gauge${Name}Chart`].getContext("2d");
     const gaugeValue = Math.min(
       Math.max(this.value, this.minValue),
       this.maxValue
     );
-    const normalizedValue =
-      ((gaugeValue - this.minValue) / (this.maxValue - this.minValue)) * 100;
+    const normalizedValue = ((gaugeValue - this.minValue) / (this.maxValue - this.minValue)) * 100;
 
     const gaugeColor =
       normalizedValue < 33
@@ -57,7 +58,7 @@ export default {
           : "#4CAF50"; // Green for high
     this.gaugeColor = gaugeColor;
 
-    this.chartInstance = new Chart(ctx, {
+    this.chartObj = new Chart(ctx, {
       type: "doughnut",
       data: {
         datasets: [
@@ -156,7 +157,7 @@ export default {
       if (!!this.debounceTimeoutId) clearTimeout(this.debounceTimeoutId);
 
       setTimeout(() => {
-        if (this.chartInstance) {
+        if (this.chartObj) {
           const gaugeValue = Math.min(
             Math.max(newValue, this.minValue),
             this.maxValue
@@ -174,23 +175,23 @@ export default {
 
           this.gaugeColor = gaugeColor;
 
-          this.chartInstance.data.datasets[0].data = [
+          this.chartObj.data.datasets[0].data = [
             normalizedValue,
             100 - normalizedValue,
           ];
-          this.chartInstance.data.datasets[0].backgroundColor = [
+          this.chartObj.data.datasets[0].backgroundColor = [
             gaugeColor,
             "#E0E0E0",
           ];
-          this.chartInstance.update();
+          this.chartObj.update();
         }
       }, 200)
     },
   },
 
   beforeUnmount() {
-    if (this.chartInstance) {
-      this.chartInstance.destroy();
+    if (this.chartObj) {
+      this.chartObj.destroy();
     }
   },
 };

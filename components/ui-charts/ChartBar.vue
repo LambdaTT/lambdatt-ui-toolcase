@@ -136,7 +136,7 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          legend: { display: !!this.Configs.hideLegend },
+          legend: { display: !(!!this.Configs.hideLegend) },
           tooltips: {
             mode: 'label',
             callbacks: {
