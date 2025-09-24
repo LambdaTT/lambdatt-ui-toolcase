@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Loading -->
-    <div class="text-center q-pa-xl text-grey-8" v-show="showLoader">
+    <div class="text-center q-pa-xl text-grey-8" v-if="showLoader">
       <div>
         <q-spinner-gears size="lg" />
       </div>
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Empty -->
-    <div class="text-center q-pa-xl" v-show="!showLoader && RawData.length == 0">
+    <div class="text-center q-pa-xl" v-if="!showLoader && !error && data.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
@@ -20,9 +20,20 @@
       </div>
     </div>
 
+    <!-- Error -->
+    <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
+      <div>
+        <q-icon size="lg" name="fas fa-bomb"></q-icon>
+      </div>
+      <div class="text-h6">
+        ERRO!
+      </div>
+      <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
+    </div>
+
     <!-- Content -->
-    <div v-show="!showLoader && RawData.length > 0" :id="`chart-${Name}-container`">
-      <canvas :style="this.CanvasStyle" :id="`chart-${Name}-canvas`"></canvas>
+    <div v-show="!showLoader && data.length > 0" :id="`chart-${Name}-container`">
+      <canvas :style="this.Configs.canvasStyle ?? ''" :id="`chart-${Name}-canvas`"></canvas>
     </div>
   </div>
 </template>
@@ -36,21 +47,38 @@ export default {
 
   props: {
     Name: String,
-    RawData: Object,
-    LoadDataFn: Function,
-    Filter: Function,
-    Datasets: Object,
-    LabelsField: String,
-    HideLegend: Boolean,
-    CanvasStyle: String,
+    DataURL: {
+      type: String,
+      required: true
+    },
+    modelValue: {
+      type: Object,
+      required: true
+    },
+    Filters: {
+      type: Object,
+      default: () => { }
+    },
+    Configs: {
+      type: Object,
+      required: true,
+      validator: (v) => !!v.labelField
+    },
+    Datasets: {
+      type: Array,
+      required: true
+    },
   },
 
   data() {
     return {
-      chartElement: null,
       datasets: [],
+      data: [],
       loading: false,
-      showLoader: false
+      showLoader: false,
+      error: null,
+      state: 'ready', // ready | loading | error
+      chartElement: null
     }
   },
 
@@ -61,23 +89,40 @@ export default {
       }
     },
 
-    RawData: {
+    data: {
       handler: function () {
+        this.exposeFactory();
         this.triggerChart();
       },
+      deep: false
+    },
+
+    Filters: {
+      handler: function () {
+        this.loadData();
+      },
+      deep: true
     },
   },
 
   methods: {
     async loadData() {
+      this.error = null;
+      this.state = 'loading';
+
       if (!this.loading) {
         this.loading = true;
 
-        var params = {};
-
-        if (!!this.Filter) params = this.Filter();
-
-        await this.LoadDataFn(params);
+        try {
+          const response = await this.$http.get(this.DataURL, this.Filters);
+          this.data = response.data;
+        } catch (error) {
+          console.error('An error occurred while attempting to read chart data.', error);
+          this.error = error;
+        } finally {
+          this.loading = false;
+          this.state = !!this.error ? 'error' : 'ready';
+        }
       }
     },
 
@@ -89,7 +134,7 @@ export default {
           datasets: this.datasets
         },
         options: {
-          legend: { display: !this.HideLegend },
+          legend: { display: !!this.Configs.hideLegend },
           maintainAspectRatio: false,
           responsive: true,
           tooltips: {
@@ -109,6 +154,7 @@ export default {
               ticks: {
                 autoSkip: false,
                 callback: function (tick) {
+                  if (!tick) return '';
                   var characterLimit = 12;
                   if (tick.length >= characterLimit) {
                     tick = tick.slice(0, tick.length).substring(0, characterLimit - 1).trim() + '...';;
@@ -131,13 +177,13 @@ export default {
       var datasets = JSON.parse(JSON.stringify(chartObj.data.datasets));
 
       // (Re)Create datasets based on raw data:
-      for (let i = 0; i < this.RawData.length; i++) {
-        let label = this.RawData[i][this.LabelsField];
+      for (let i = 0; i < this.data.length; i++) {
+        let label = this.data[i][this.Configs.labelField];
 
         chartObj.data.labels.push(label);
 
         for (let j = 0; j < this.Datasets.length; j++) {
-          datasets[j].data.push(this.RawData[i][this.Datasets[j].field]);
+          datasets[j].data.push(this.data[i][this.Datasets[j].field]);
         }
       }
 
@@ -146,8 +192,9 @@ export default {
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.config = chartObj;
-        this.chartElement.update();
+        this.chartElement.data.labels = chartObj.data.labels
+        this.chartElement.data.datasets = chartObj.data.datasets
+        this.chartElement.update(0);
       }
       // Start new chart:
       else {
@@ -157,11 +204,20 @@ export default {
 
       this.loading = false;
     },
+
+    exposeFactory() {
+      this.$emit('update:model-value', {
+        state: this.state,
+        filters: this.Filters,
+        data: this.data,
+        reload: this.reload
+      });
+    },
   },
 
   mounted() {
     for (let i = 0; i < this.Datasets.length; i++) {
-      let set = this.Datasets[i];
+      let set = { ...this.Datasets[i] };
 
       let color = this.$utils.randomHexColor()
 
@@ -175,8 +231,6 @@ export default {
     }
 
     this.loadData();
-
-    this.$emit('reload-fn', this.loadData);
   }
 }
 </script>
