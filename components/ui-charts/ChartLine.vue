@@ -33,7 +33,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && Object.keys(data).length > 0" :id="`chart-${Name}-container`">
-      <canvas :style="this.Configs.canvasStyle" :id="`chart-${Name}-canvas`"></canvas>
+      <canvas :style="this.Configs.canvasStyle ?? ''" :id="`chart-${Name}-canvas`"></canvas>
     </div>
   </div>
 </template>
@@ -183,6 +183,8 @@ export default {
       chartObj.data.labels = xAxisLabels;
       // Update reference with (re)created datasets:
       chartObj.data.datasets = datasets;
+      // console.log('chartObj.data',chartObj.data);
+      
 
       // Update chart:
       if (this.chartElement != null) {
@@ -222,6 +224,10 @@ export default {
         reload: this.reload
       });
     },
+
+    async reload() {
+      this.data = (await this.loadData()).data;
+    }
   },
 
   mounted() {

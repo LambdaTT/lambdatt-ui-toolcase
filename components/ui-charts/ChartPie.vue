@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Loading -->
-    <div class="text-center q-pa-xl text-grey-8" v-show="showLoader">
+    <div class="text-center q-pa-xl text-grey-8" v-if="showLoader">
       <div>
         <q-spinner-gears size="lg" />
       </div>
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Empty -->
-    <div class="text-center q-pa-xl" v-show="!showLoader && rawData?.length == 0">
+    <div class="text-center q-pa-xl text-grey-8" v-if="!showLoader && !error && data?.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
@@ -20,9 +20,20 @@
       </div>
     </div>
 
+    <!-- Error -->
+    <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
+      <div>
+        <q-icon size="lg" name="fas fa-bomb"></q-icon>
+      </div>
+      <div class="text-h6">
+        ERRO!
+      </div>
+      <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
+    </div>
+
     <!-- Content -->
-    <div v-show="!showLoader && rawData?.length > 0" :id="`chart-${Name}-container`">
-      <canvas :style="this.CanvasStyle" ref="chartCanvas"></canvas>
+    <div v-show="!showLoader && !error && data.length > 0" :id="`chart-${Name}-container`">
+      <canvas :style="this.Configs.canvasStyle ?? ''" :ref="`chart${Name}Canvas`"></canvas>
     </div>
   </div>
 </template>
@@ -36,40 +47,41 @@ export default {
 
   props: {
     Name: String,
+    DataURL: {
+      type: String,
+      required: true
+    },
     modelValue: {
       type: Object,
       required: true
     },
-    DataURL: String,
-    Filters: Object,
-    LabelsField: String,
-    ValueField: String,
-    CanvasStyle: String,
-    Percentage: Boolean,
-    BeforeLoad: Function,
-    OnLoaded: Function,
+    Filters: {
+      type: Object,
+      default: () => { }
+    },
+    Configs: {
+      type: Object,
+      required: true,
+      validator: (v) => !!v.key && !!v.valField
+    },
+    ShowPercentage: Boolean
   },
 
   data() {
     return {
       chartElement: null,
+      data: [],
       loading: false,
       showLoader: false,
-      rawData: [],
-      loadTimeout: null,
-      filters: {}
+      error: null,
+      state: 'ready', // ready | loading | error
     }
   },
 
   computed: {
-    factory() {
-      return {
-        data: this.rawData,
-        element: this.chartElement,
-        filters: this.filters,
-        reload: this.reload
-      }
-    }
+    total() {
+      return this.data.reduce((acc, item) => Number(acc) + Number(item[this.Configs.valField]), 0);
+    },
   },
 
   watch: {
@@ -79,68 +91,39 @@ export default {
       }
     },
 
+    data: {
+      handler: function () {
+        this.exposeFactory();
+        this.triggerChart();
+      },
+      deep: false
+    },
+
     Filters: {
-      handler(v) {
-        // Save filters state:
-        localStorage.removeItem(`ChartPie.${this.Name}.filters`);
-
-        var filters = JSON.parse(JSON.stringify(this.Filters));
-
-        if (Object.keys(filters).length > 0)
-          localStorage.setItem(`ChartPie.${this.Name}.filters`, JSON.stringify(filters));
-
-        clearTimeout(this.loadTimeout);
-
-        for (let k in filters) {
-          if (filters[k] == null)
-            delete filters[k] == null
-        }
-
-        this.filters = filters;
-
-        this.loadTimeout = setTimeout(async () => {
-          var response = await this.loadData();
-          this.rawData = response.data
-        }, 200);
+      handler: function () {
+        this.loadData();
       },
       deep: true
     },
-
-    rawData: {
-      handler() {
-        this.triggerChart();
-        this.$emit('update:model-value', this.factory);
-      }
-    }
   },
 
   methods: {
     async loadData() {
+      this.error = null;
+      this.state = 'loading';
+
       if (!this.loading) {
-        // turn on loading indicator
         this.loading = true;
 
-        var params = {};
-        if (!!this.filters)
-          for (let k in this.filters)
-            if (!!this.filters[k])
-              params[k] = this.filters[k];
-
         try {
-          // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(params);
-
-          // fetch data from server
-          var response = await this.$http.get(this.DataURL, params);
-
-          // On Loaded callback:
-          if (this.OnLoaded) await this.OnLoaded(response);
-
-          return response;
-        } catch (err) {
+          const response = await this.$http.get(this.DataURL, this.Filters);
+          this.data = response.data;
+        } catch (error) {
+          console.error('An error occurred while attempting to read chart data.', error);
+          this.error = error;
+        } finally {
           this.loading = false;
-          this.errorState = true;
-          this.$emit('error-thrown', err);
+          this.state = !!this.error ? 'error' : 'ready';
         }
       }
     },
@@ -163,48 +146,71 @@ export default {
           legend: { display: false },
           tooltips: {
             mode: 'label',
+            callbacks: {
+              label: (tooltipItem, data) => {
+                const i = tooltipItem.index;
+                const ds = data.datasets[tooltipItem.datasetIndex];
+                const val = Number(ds.data[i]) || 0;
+                const lbl = data.labels[i] || '';
+
+                if (this.ShowPercentage && this.total > 0) {
+                  const pct = ((val / this.total) * 100).toFixed(2);
+                  return `${lbl}: ${val} (${pct}%)`;
+                }
+                return `${lbl}: ${val}`;
+              }
+            }
           }
         },
 
       };
 
       // Clone datasets, detaching from reference:
-      var dataset = chartObj.data.datasets[0]
-      for (let i = 0; i < this.rawData.length; i++) {
-        let data = this.rawData[i];
-        chartObj.data.labels.push(data[this.LabelsField]);
+      var dataset = JSON.parse(JSON.stringify(chartObj.data.datasets[0]));
+
+      for (let i = 0; i < this.data.length; i++) {
+        let data = this.data[i];
+
+        chartObj.data.labels.push(data[this.Configs.key]);
 
         dataset.backgroundColor.push(this.$utils.randomHexColor())
 
-        dataset.data.push(data[this.ValueField]);
+        dataset.data.push(data[this.Configs.valField]);
       }
+
+      chartObj.data.datasets = [dataset];
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.config = chartObj;
-        this.chartElement.update();
+        this.chartElement.data.labels = chartObj.data.labels
+        this.chartElement.data.datasets = chartObj.data.datasets
+        this.chartElement.update(0);
       }
       // Start new chart: 
       else {
-        var ctx = this.$refs.chartCanvas;
+        var ctx = this.$refs[`chart${this.Name}Canvas`].getContext('2d');
         this.chartElement = new Chart(ctx, chartObj);
       }
 
       this.loading = false;
     },
 
-    reload() {
-      clearTimeout(this.loadTimeout);
+    exposeFactory() {
+      this.$emit('update:model-value', {
+        state: this.state,
+        filters: this.Filters,
+        data: this.data,
+        reload: this.reload
+      });
+    },
 
-      this.loadTimeout = setTimeout(async () => {
-        this.rawData = (await this.loadData()).data;
-      }, 200);
+    async reload() {
+      this.data = (await this.loadData()).data;
     }
   },
 
   async mounted() {
-    var response = await this.loadData();
-    this.rawData = response.data
+    this.loadData();
   }
 }
 </script>

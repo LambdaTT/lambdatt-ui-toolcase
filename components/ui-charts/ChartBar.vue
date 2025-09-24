@@ -212,6 +212,10 @@ export default {
         reload: this.reload
       });
     },
+
+    async reload() {
+      this.data = (await this.loadData()).data;
+    }
   },
 
   mounted() {
