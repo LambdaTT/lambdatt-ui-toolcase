@@ -194,14 +194,6 @@ export default {
     modelValue(v) {
       this.value = v;
     },
-
-    value(v) {
-      if(v instanceof String) {
-        if(!!this.maxlength && v.length > this.maxlength) {
-          this.value = v.substring(0, maxLength);
-        }
-      }
-    }
   },
 
   methods: {
