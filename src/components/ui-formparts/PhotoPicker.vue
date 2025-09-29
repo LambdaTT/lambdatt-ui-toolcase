@@ -1,6 +1,6 @@
 <template>
   <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
-    <q-card v-if="cover" class="q-pa-sm">
+    <q-card v-if="cover" class="q-pa-sm" :style="`box-sizing: content-box; width: ${coverWidth};`">
       <q-img class="bg-grey-3" 
         :src="setSrc" 
         :ratio="setRatio" 
