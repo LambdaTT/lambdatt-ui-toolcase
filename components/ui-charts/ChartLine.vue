@@ -11,7 +11,7 @@
     </div>
 
     <!-- Empty -->
-    <div class="text-center q-pa-xl" v-show="!showLoader && RawData?.length == 0">
+    <div class="text-center q-pa-xl" v-show="!showLoader && data?.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Content -->
-    <div v-show="!showLoader && RawData?.length > 0" :id="`chart-${Name}-container`">
+    <div v-show="!showLoader && data?.length > 0" :id="`chart-${Name}-container`">
       <canvas :style="this.CanvasStyle" :id="`chart-${Name}-canvas`"></canvas>
     </div>
   </div>
@@ -36,11 +36,12 @@ export default {
 
   props: {
     Name: String,
-    RawData: Object,
-    LoadDataFn: Function,
-    Filter: Function,
+    DataURL: {
+      type: String,
+      required: true
+    },
+    Filter: Object,
     Datasets: Object,
-    LabelsField: String,
     HideLegend: Boolean,
     CanvasStyle: String,
   },
@@ -50,7 +51,8 @@ export default {
       chartElement: null,
       datasets: [],
       loading: false,
-      showLoader: false
+      showLoader: false,
+      data: []
     }
   },
 
@@ -61,7 +63,14 @@ export default {
       }
     },
 
-    RawData: {
+    Filter: {
+     handler: function () {
+        this.loadData();
+      },
+      deep: true
+    },
+
+    data: {
       handler: function () {
         this.triggerChart();
       },
@@ -72,13 +81,13 @@ export default {
   methods: {
     async loadData() {
       if (!this.loading) {
-        this.loading = true;
-
-        var params = {};
-
-        if (!!this.Filter) params = this.Filter();
-
-        await this.LoadDataFn(params);
+        try {
+          const response = await this.$http.get(this.DataURL, this.Filter);
+          this.data = response.data;
+        } catch (error) {
+          this.$utils.notifyError(error);
+          console.error("An error has occurred on the attempt to retrieve chart data.", error);
+        }
       }
     },
 
@@ -87,7 +96,7 @@ export default {
         type: "line",
         data: {
           labels: [],
-          datasets: this.datasets
+          datasets: []
         },
         options: {
           responsive: true,
@@ -118,44 +127,22 @@ export default {
 
 
       // Clone datasets, detaching from reference:
-      var datasets = JSON.parse(JSON.stringify(chartObj.data.datasets));
       var labels = [];
 
-      if (this.RawData[0] instanceof Array) {
-        let setLabels = true;
-        for (let j = 0; j < this.Datasets.length; j++) {
-          let datasetData = [];
-          for (let i = 0; i < this.RawData[j].length; i++) {
-            let data = this.RawData[j][i];
+      for (let i = 0; i < this.data.length; i++) {
+        const row = this.data[i];
+        labels.push(row.date);
 
-            if (setLabels)
-              labels.push(data[this.LabelsField]);
-
-            datasetData.push(data[this.Datasets[j].field]);
-          }
-          setLabels = false;
-          datasets[j].data = datasetData;
-        }
-      } else {
-        for (let i = 0; i < this.RawData.length; i++) {
-          let data = this.RawData[i];
-          labels.push(data[this.LabelsField]);
-
-          for (let j = 0; j < this.Datasets.length; j++) {
-            let dataset = this.Datasets[j];
-            let indicator = !!dataset.indicator ? dataset.indicator.split('=') : null;
-
-            if (!!indicator && data[indicator[0]] != indicator[1])
-              continue;
-
-            datasets[j].data.push(data[dataset.field]);
-          }
+        for (let k in row) {
+          const dataset = this.findDataset(k);
+          if (!dataset) continue;
+          dataset.data.push(row[k]);
         }
       }
 
       chartObj.data.labels = labels;
       // Update reference with (re)created datasets:
-      chartObj.data.datasets = datasets;
+      chartObj.data.datasets = this.datasets;
 
       // Update chart:
       if (this.chartElement != null) {
@@ -170,6 +157,15 @@ export default {
 
       this.loading = false;
     },
+
+    findDataset(field) {
+      for (let i = 0; i < this.datasets; i++) {
+        const dataset = this.datasets[i];
+        if (dataset.field == field) return dataset;
+      }
+
+      return null;
+    }
   },
 
   mounted() {
@@ -184,7 +180,8 @@ export default {
         fill: false,
         backgroundColor: color,
         borderColor: color,
-        borderWidth: 3
+        borderWidth: 3,
+        field: set.field
       })
     }
 
