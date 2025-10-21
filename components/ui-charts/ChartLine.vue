@@ -201,8 +201,8 @@ export default {
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.configs.data.labels = chartObj.data.labels
-        this.chartElement.configs.data.datasets = chartObj.data.datasets
+        this.chartElement.config.data.labels = chartObj.data.labels
+        this.chartElement.config.data.datasets = chartObj.data.datasets
         this.chartElement.update(0);
       }
       // Start new chart: 
