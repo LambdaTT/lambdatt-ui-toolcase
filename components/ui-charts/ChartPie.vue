@@ -10,8 +10,19 @@
       </div>
     </div>
 
-    <!-- Empty -->
-    <div class="text-center q-pa-xl" v-show="!showLoader && rawData?.length == 0">
+    <!-- Error -->
+    <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
+      <div>
+        <q-icon size="lg" name="fas fa-bomb"></q-icon>
+      </div>
+      <div class="text-h6">
+        ERRO!
+      </div>
+      <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
+    </div>
+
+     <!-- Empty -->
+    <div class="text-center q-pa-xl" v-show="!showLoader && !error && data?.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
@@ -21,8 +32,8 @@
     </div>
 
     <!-- Content -->
-    <div v-show="!showLoader && rawData?.length > 0" :id="`chart-${Name}-container`">
-      <canvas :style="this.CanvasStyle" ref="chartCanvas"></canvas>
+    <div v-show="!showLoader && !error && data?.length > 0" :id="`chart-${computedName}-container`">
+      <canvas :style="this.Configs.CanvasStyle" ref="chartCanvas"></canvas>
     </div>
   </div>
 </template>
@@ -36,18 +47,19 @@ export default {
 
   props: {
     Name: String,
-    modelValue: {
-      type: Object,
-      required: true
-    },
     DataURL: {
       type: String,
       required: true
     },
-    Filters: Object,
-    LabelsField: String,
-    ValueField: String,
-    CanvasStyle: String,
+    Filters: {
+      type: Object,
+      default: () => { }
+    },
+    Configs: {
+      type: Object,
+      required: true,
+      validator: (v) => !!v.LabelField && !!v.ValueField
+    },
     Percentage: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
@@ -56,22 +68,17 @@ export default {
   data() {
     return {
       chartElement: null,
+      data: [],
       loading: false,
       showLoader: false,
-      rawData: [],
-      loadTimeout: null,
-      filters: {}
+      error: null,
+      state: 'ready', // ready | loading | error
     }
   },
 
   computed: {
-    factory() {
-      return {
-        data: this.rawData,
-        element: this.chartElement,
-        filters: this.filters,
-        reload: this.reload
-      }
+    computedName() {
+      return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
     }
   },
 
@@ -89,27 +96,30 @@ export default {
       deep: true
     },
 
-    rawData: {
-      handler() {
+    data: {
+      handler: function () {
         this.triggerChart();
-        this.$emit('update:model-value', this.factory);
-      }
-    }
+      },
+      deep: true
+    },
   },
 
   methods: {
     async loadData() {
+      this.error = null;
+      this.state = 'loading';
+
       if (!this.loading) {
         // turn on loading indicator
         this.loading = true;
 
         try {
           // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(params);
+          if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
 
           // fetch data from server
-          const response = await this.$http.get(this.DataURL, this.Filters);
-          this.rawData = response.data;
+          const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filters);
+          this.data = response.data;
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
@@ -117,13 +127,18 @@ export default {
           return response;
         } catch (err) {
           this.loading = false;
-          this.errorState = true;
+          this.$getService('toolcase/utils').notifyError(error);
+          console.error("An error has occurred on the attempt to retrieve chart data.", error);
+          this.error = error;
           this.$emit('error-thrown', err);
+        } finally {
+          this.state = !!this.error ? 'error' : 'ready';
         }
       }
     },
 
     triggerChart() {
+      // Initialize Chart Object:
       var chartObj = {
         type: "pie",
         data: {
@@ -146,21 +161,23 @@ export default {
 
       };
 
-      // Clone datasets, detaching from reference:
+      // Handles data:
+      var labels = chartObj.data.labels;
+
       var dataset = chartObj.data.datasets[0]
-      for (let i = 0; i < this.rawData.length; i++) {
-        let data = this.rawData[i];
-        chartObj.data.labels.push(data[this.LabelsField]);
+      for (let i = 0; i < this.data.length; i++) {
+        const row = this.data[i];
+        labels.push(row[this.Configs.LabelField]);
 
-        dataset.backgroundColor.push(this.$utils.randomHexColor())
+        dataset.backgroundColor.push(this.$getService('toolcase/utils').randomHexColor())
 
-        dataset.data.push(data[this.ValueField]);
+        dataset.data.push(row[this.Configs.ValueField]);
       }
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.config.data.labels = chartObj.data.labels;
-        this.chartElement.config.data.datasets = chartObj.data.datasets;
+        this.chartElement.data.labels = chartObj.data.labels
+        this.chartElement.data.datasets = chartObj.data.datasets
         this.chartElement.update(0);
       }
       // Start new chart: 
@@ -171,14 +188,6 @@ export default {
 
       this.loading = false;
     },
-
-    reload() {
-      clearTimeout(this.loadTimeout);
-
-      this.loadTimeout = setTimeout(async () => {
-        this.rawData = (await this.loadData()).data;
-      }, 200);
-    }
   },
 
   async mounted() {
