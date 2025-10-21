@@ -27,13 +27,14 @@
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
       <div class="text-h6">
-        Sem Dados.
+        Sem Dados
       </div>
+      <div class="text-caption">Nenhuma informação disponível para alimentar o gráfico</div>
     </div>
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data?.length > 0" :id="`chart-${computedName}-container`">
-      <canvas :style="this.Configs.canvasStyle" :id="`chart-${computedName}-canvas`"></canvas>
+      <canvas :style="Configs.CanvasStyle" :id="`chart-${computedName}-canvas`"></canvas>
     </div>
   </div>
 </template>
@@ -126,14 +127,14 @@ export default {
           // Before Load callback:
           if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
 
-          const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filter);
+          const response = await this.$http.get(this.DataURL, this.Filters);
           this.data = response.data;
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
         } catch (error) {
           this.loading = false;
-          this.$getService('toolcase/utils').notifyError(error);
+          this.$utils.notifyError(error);
           console.error("An error has occurred on the attempt to retrieve chart data.", error);
           this.error = error;
           this.$emit('error-thrown', err);
@@ -227,7 +228,7 @@ export default {
     for (let i = 0; i < this.Datasets.length; i++) {
       let set = this.Datasets[i];
 
-      let color = this.$getService('toolcase/utils').randomHexColor()
+      let color = this.$utils.randomHexColor()
 
       this.datasets.push({
         label: set.label,
