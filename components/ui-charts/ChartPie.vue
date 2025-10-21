@@ -21,7 +21,7 @@
       <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
     </div>
 
-     <!-- Empty -->
+    <!-- Empty -->
     <div class="text-center q-pa-xl" v-show="!showLoader && !error && data?.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
@@ -177,8 +177,8 @@ export default {
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.data.labels = chartObj.data.labels
-        this.chartElement.data.datasets = chartObj.data.datasets
+        this.chartElement.configs.data.labels = chartObj.data.labels
+        this.chartElement.configs.data.datasets = chartObj.data.datasets
         this.chartElement.update(0);
       }
       // Start new chart: 
