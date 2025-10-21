@@ -211,6 +211,9 @@ export default {
         this.chartElement = new Chart(ctx, chartObj);
       }
 
+      console.log(this.chartElement);
+      
+
       this.loading = false;
     },
 
