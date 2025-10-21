@@ -465,7 +465,7 @@ export default {
       <?xml version="1.0" encoding="UTF-8"?>
   <html xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="this.$http://www.w3.org/TR/REC-html40">
+        xmlns="http://www.w3.org/TR/REC-html40">
     <head>
       <style>
         table {
@@ -482,7 +482,7 @@ export default {
           text-align: center;
         }
       </style>
-      <meta this.$http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
   <table>

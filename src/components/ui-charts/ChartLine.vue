@@ -10,8 +10,19 @@
       </div>
     </div>
 
-    <!-- Empty -->
-    <div class="text-center q-pa-xl" v-show="!showLoader && RawData?.length == 0">
+    <!-- Error -->
+    <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
+      <div>
+        <q-icon size="lg" name="fas fa-bomb"></q-icon>
+      </div>
+      <div class="text-h6">
+        ERRO!
+      </div>
+      <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
+    </div>
+
+     <!-- Empty -->
+    <div class="text-center q-pa-xl" v-show="!showLoader && !error && data?.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
       </div>
@@ -21,8 +32,8 @@
     </div>
 
     <!-- Content -->
-    <div v-show="!showLoader && RawData?.length > 0" :id="`chart-${Name}-container`">
-      <canvas :style="this.CanvasStyle" :id="`chart-${Name}-canvas`"></canvas>
+    <div v-show="!showLoader && !error && data?.length > 0" :id="`chart-${computedName}-container`">
+      <canvas :style="this.Configs.canvasStyle" :id="`chart-${computedName}-canvas`"></canvas>
     </div>
   </div>
 </template>
@@ -36,21 +47,48 @@ export default {
 
   props: {
     Name: String,
-    RawData: Object,
-    LoadDataFn: Function,
-    Filter: Function,
-    Datasets: Object,
-    LabelsField: String,
-    HideLegend: Boolean,
-    CanvasStyle: String,
+    BeforeLoad: Function,
+    OnLoaded: Function,
+    DataURL: {
+      type: String,
+      required: true
+    },
+    Filters: {
+      type: Object,
+      default: () => { }
+    },
+    Datasets: {
+      type: Array,
+      required: true,
+      validator: (v) => {
+        for (let i = 0; i < v.length; i++)
+          if (!('field' in v[i])) return false;
+
+        return true;
+      }
+    },
+    Configs: {
+      type: Object,
+      required: true,
+      validator: (v) => !!v.xAxisKey
+    },
   },
 
   data() {
     return {
       chartElement: null,
       datasets: [],
+      data: [],
       loading: false,
-      showLoader: false
+      showLoader: false,
+      error: null,
+      state: 'ready', // ready | loading | error
+    }
+  },
+
+  computed:{
+    computedName(){
+      return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
     }
   },
 
@@ -61,7 +99,14 @@ export default {
       }
     },
 
-    RawData: {
+    Filters: {
+      handler: function () {
+        this.loadData();
+      },
+      deep: true
+    },
+
+    data: {
       handler: function () {
         this.triggerChart();
       },
@@ -71,28 +116,45 @@ export default {
 
   methods: {
     async loadData() {
+      this.error = null;
+      this.state = 'loading';
+
       if (!this.loading) {
         this.loading = true;
 
-        var params = {};
+        try {
+          // Before Load callback:
+          if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
 
-        if (!!this.Filter) params = this.Filter();
+          const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filter);
+          this.data = response.data;
 
-        await this.LoadDataFn(params);
+          // On Loaded callback:
+          if (this.OnLoaded) await this.OnLoaded(response);
+        } catch (error) {
+          this.loading = false;
+          this.$getService('toolcase/utils').notifyError(error);
+          console.error("An error has occurred on the attempt to retrieve chart data.", error);
+          this.error = error;
+          this.$emit('error-thrown', err);
+        } finally {
+          this.state = !!this.error ? 'error' : 'ready';
+        }
       }
     },
 
     triggerChart() {
+      // Initialize Chart Object:
       var chartObj = {
         type: "line",
         data: {
           labels: [],
-          datasets: this.datasets
+          datasets: []
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          legend: { display: !this.HideLegend },
+          legend: { display: !this.Configs.hideLegend },
           tooltips: {
             mode: 'label',
             callbacks: {
@@ -116,60 +178,49 @@ export default {
 
       };
 
-
-      // Clone datasets, detaching from reference:
-      var datasets = JSON.parse(JSON.stringify(chartObj.data.datasets));
+      // Handles data:
       var labels = [];
 
-      if (this.RawData[0] instanceof Array) {
-        let setLabels = true;
-        for (let j = 0; j < this.Datasets.length; j++) {
-          let datasetData = [];
-          for (let i = 0; i < this.RawData[j].length; i++) {
-            let data = this.RawData[j][i];
+      for (let i = 0; i < this.data.length; i++) {
+        const row = this.data[i];
+        labels.push(row[this.Configs.xAxisKey]);
 
-            if (setLabels)
-              labels.push(data[this.LabelsField]);
+        for (let k in row) {
+          if (k == this.Configs.xAxisKey) continue;
 
-            datasetData.push(data[this.Datasets[j].field]);
-          }
-          setLabels = false;
-          datasets[j].data = datasetData;
-        }
-      } else {
-        for (let i = 0; i < this.RawData.length; i++) {
-          let data = this.RawData[i];
-          labels.push(data[this.LabelsField]);
-
-          for (let j = 0; j < this.Datasets.length; j++) {
-            let dataset = this.Datasets[j];
-            let indicator = !!dataset.indicator ? dataset.indicator.split('=') : null;
-
-            if (!!indicator && data[indicator[0]] != indicator[1])
-              continue;
-
-            datasets[j].data.push(data[dataset.field]);
-          }
+          const dataset = this.findDataset(k);
+          if (!dataset) continue;
+          dataset.data.push(row[k]);
         }
       }
 
       chartObj.data.labels = labels;
       // Update reference with (re)created datasets:
-      chartObj.data.datasets = datasets;
+      chartObj.data.datasets = this.datasets;
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.config = chartObj;
-        this.chartElement.update();
+        this.chartElement.data.labels = chartObj.data.labels
+        this.chartElement.data.datasets = chartObj.data.datasets
+        this.chartElement.update(0);
       }
       // Start new chart: 
       else {
-        var ctx = document.getElementById(`chart-${this.Name}-canvas`);
+        var ctx = document.getElementById(`chart-${this.computedName}-canvas`);
         this.chartElement = new Chart(ctx, chartObj);
       }
 
       this.loading = false;
     },
+
+    findDataset(field) {
+      for (let i = 0; i < this.datasets; i++) {
+        const dataset = this.datasets[i];
+        if (dataset.field == field) return dataset;
+      }
+
+      return null;
+    }
   },
 
   mounted() {
@@ -184,13 +235,12 @@ export default {
         fill: false,
         backgroundColor: color,
         borderColor: color,
-        borderWidth: 3
+        borderWidth: 3,
+        field: set.field
       })
     }
 
     this.loadData();
-
-    this.$emit('reload-fn', this.loadData);
   }
 }
 </script>
