@@ -159,8 +159,9 @@ export default {
 
       // Update chart:
       if (this.chartElement != null) {
-        this.chartElement.config = chartObj;
-        this.chartElement.update();
+        this.chartElement.config.data.labels = chartObj.data.labels;
+        this.chartElement.config.data.datasets = chartObj.data.datasets;
+        this.chartElement.update(0);
       }
       // Start new chart: 
       else {
