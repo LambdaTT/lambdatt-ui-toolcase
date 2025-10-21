@@ -40,7 +40,10 @@ export default {
       type: Object,
       required: true
     },
-    DataURL: String,
+    DataURL: {
+      type: String,
+      required: true
+    },
     Filters: Object,
     LabelsField: String,
     ValueField: String,
@@ -80,28 +83,8 @@ export default {
     },
 
     Filters: {
-      handler(v) {
-        // Save filters state:
-        localStorage.removeItem(`ChartPie.${this.Name}.filters`);
-
-        var filters = JSON.parse(JSON.stringify(this.Filters));
-
-        if (Object.keys(filters).length > 0)
-          localStorage.setItem(`ChartPie.${this.Name}.filters`, JSON.stringify(filters));
-
-        clearTimeout(this.loadTimeout);
-
-        for (let k in filters) {
-          if (filters[k] == null)
-            delete filters[k] == null
-        }
-
-        this.filters = filters;
-
-        this.loadTimeout = setTimeout(async () => {
-          var response = await this.loadData();
-          this.rawData = response.data
-        }, 200);
+      handler: function () {
+        this.loadData();
       },
       deep: true
     },
@@ -120,18 +103,13 @@ export default {
         // turn on loading indicator
         this.loading = true;
 
-        var params = {};
-        if (!!this.filters)
-          for (let k in this.filters)
-            if (!!this.filters[k])
-              params[k] = this.filters[k];
-
         try {
           // Before Load callback:
           if (this.BeforeLoad) await this.BeforeLoad(params);
 
           // fetch data from server
-          var response = await this.$http.get(this.DataURL, params);
+          const response = await this.$http.get(this.DataURL, this.Filters);
+          this.rawData = response.data;
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
@@ -203,8 +181,7 @@ export default {
   },
 
   async mounted() {
-    var response = await this.loadData();
-    this.rawData = response.data
+    await this.loadData();
   }
 }
 </script>
