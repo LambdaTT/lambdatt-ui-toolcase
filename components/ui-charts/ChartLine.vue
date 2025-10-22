@@ -23,7 +23,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0" :id="`chart-${computedName}-container`">
-      <canvas :style="Configs.CanvasStyle" :id="`chart-${computedName}-canvas`" ref="canvas" :key="canvasKey"></canvas>
+      <canvas :style="`min-height: ${Height}px; height: ${Height}px; max-height: ${Height}px;`" :id="`chart-${computedName}-canvas`" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -39,6 +39,7 @@ export default {
     Name: String,
     BeforeLoad: Function,
     OnLoaded: Function,
+    Height: String,
     DataURL: { type: String, required: true },
     Filters: { type: Object, default: () => ({}) },
     Datasets: {
