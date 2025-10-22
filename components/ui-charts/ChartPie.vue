@@ -34,7 +34,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0">
-      <canvas :style="CanvasStyle" ref="canvas" :key="canvasKey"></canvas>
+      <canvas :style="{width: Size, Height: Size}" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -50,8 +50,10 @@ export default {
     Percentage: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
-    Height: String,
-    Width: String,
+    Size: {
+      type: String,
+      default: () => '100%'
+    },
     ChartType: { type: String, default: () => 'pie' },
     DataURL: {
       type: String,
@@ -77,15 +79,6 @@ export default {
       error: null,
       state: 'ready', // ready | loading | error
       canvasKey: 0
-    }
-  },
-
-  computed: {
-    CanvasStyle() {
-      const cssH = this.Height ? `min-height: ${this.Height}px; height: ${this.Height}px; max-height: ${this.Height}px;` : '';
-      const cssW = this.Width ? `min-height: ${this.Width}px; height: ${this.Width}px; max-height: ${this.Width}px;` : '';
-
-      return `${cssH} ${cssW}`;
     }
   },
 
