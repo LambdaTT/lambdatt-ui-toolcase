@@ -34,7 +34,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0">
-      <canvas :style="CanvasStyle" ref="canvas" :key="canvasKey"></canvas>
+      <canvas :style="{width: Size, Height: Size}" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -47,11 +47,13 @@ export default {
   name: 'ui-charts-pie',
 
   props: {
-    Percentage: Boolean,
+    ShowPercentage: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
-    Height: String,
-    Width: String,
+    Size: {
+      type: String,
+      default: () => '100%'
+    },
     ChartType: { type: String, default: () => 'pie' },
     DataURL: {
       type: String,
@@ -77,15 +79,6 @@ export default {
       error: null,
       state: 'ready', // ready | loading | error
       canvasKey: 0
-    }
-  },
-
-  computed: {
-    CanvasStyle() {
-      const cssH = this.Height ? `min-height: ${this.Height}px; height: ${this.Height}px; max-height: ${this.Height}px;` : '';
-      const cssW = this.Width ? `min-height: ${this.Width}px; height: ${this.Width}px; max-height: ${this.Width}px;` : '';
-
-      return `${cssH} ${cssW}`;
     }
   },
 
@@ -123,14 +116,14 @@ export default {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
 
         // fetch data from server
-        const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filters);
+        const response = await this.$getService('toolcase/http')	.get(this.DataURL, this.Filters);
         this.data = response.data;
 
         // On Loaded callback:
         if (this.OnLoaded) await this.OnLoaded(response);
         this.state = 'ready'
       } catch (error) {
-        this.$getService('toolcase/utils').notifyError(error);
+        this.$getService('toolcase/utils')	.notifyError(error);
         console.error("An error has occurred on the attempt to retrieve chart data.", error);
         this.error = error;
         this.state = 'error'
@@ -155,12 +148,17 @@ export default {
         hoverOffset: 4
       };
 
+      const key = this.Configs.ValueField;
+      const total = this.data.reduce((acc, row) => acc + Number(row[key]), 0);
+
       for (let i = 0; i < this.data.length; i++) {
         const row = this.data[i];
+        const percentage = `${((Number(row[key]) / total) * 100).toFixed(2)}%`;
+        const label = this.ShowPercentage ? `${row[this.Configs.LabelField]} - ${percentage}` : row[this.Configs.LabelField]
 
-        labels.push(row[this.Configs.LabelField]);
-        dataset.data.push(row[this.Configs.ValueField]);
-        dataset.backgroundColor.push(this.$getService('toolcase/utils').randomHexColor())
+        labels.push(label);
+        dataset.data.push(row[key]);
+        dataset.backgroundColor.push(this.$getService('toolcase/utils')	.randomHexColor())
       }
 
       // Initialize Chart Object:
@@ -204,7 +202,7 @@ export default {
     await this.loadData();
   },
 
-  beforeDestroy() {
+  beforeUnmount	() {
     this.destroyChart()
   }
 }

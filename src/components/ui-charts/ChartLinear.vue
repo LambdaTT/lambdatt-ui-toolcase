@@ -137,13 +137,13 @@ export default {
       try {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters)
 
-        const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filters)
+        const response = await this.$getService('toolcase/http')	.get(this.DataURL, this.Filters)
         this.data = response.data
 
         if (this.OnLoaded) await this.OnLoaded(response)
         this.state = 'ready'
       } catch (error) {
-        this.$getService('toolcase/utils') && this.$getService('toolcase/utils').notifyError && this.$getService('toolcase/utils').notifyError(error)
+        this.$getService('toolcase/utils')	 && this.$getService('toolcase/utils')	.notifyError && this.$getService('toolcase/utils')	.notifyError(error)
         console.error('An error has occurred on the attempt to retrieve chart data.', error)
         this.error = error
         this.$emit('error-thrown', error)
@@ -265,7 +265,7 @@ export default {
     // Initialize our **base** datasets once
     for (let i = 0; i < this.Datasets.length; i++) {
       const set = this.Datasets[i]
-      const color = this.$getService('toolcase/utils').randomHexColor()
+      const color = this.$getService('toolcase/utils')	.randomHexColor()
       this.datasets.push({
         label: set.label,
         data: [],
@@ -280,7 +280,7 @@ export default {
     this.loadData()
   },
 
-  beforeDestroy() {
+  beforeUnmount	() {
     this.destroyChart()
   }
 }
