@@ -190,20 +190,16 @@ export default {
           if (k == this.Configs.xAxisKey) continue;
 
           const datasetItem = this.findDataset(k);
-          console.log(k, datasetItem)
           if(!datasetItem) continue;
 
           const idx = datasetItem.idx;
           const dataset = datasetItem.dataset;
           if (!dataset) continue;
+
           dataset.data.push(row[k]);
-          console.log(dataset);
-          
           this.datasets[idx] = dataset;
-          
         }
       }
-      console.log(this.datasets);
 
       chartObj.data.labels = labels;
       // Update reference with (re)created datasets:
@@ -221,7 +217,6 @@ export default {
         this.chartElement = new Chart(ctx, chartObj);
       }
 
-      console.log(this.chartElement);
       
 
       this.loading = false;
@@ -230,7 +225,6 @@ export default {
     findDataset(field) {
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
-        console.log('findDataset',field, dataset);
         
         if (dataset.field == field) return {
           idx: i,

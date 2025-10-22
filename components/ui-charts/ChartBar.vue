@@ -9,7 +9,7 @@
         Carregando...
       </div>
     </div>
-    
+
     <!-- Error -->
     <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
       <div>
@@ -20,7 +20,7 @@
       </div>
       <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
     </div>
-    
+
     <!-- Empty -->
     <div class="text-center q-pa-xl" v-show="!showLoader && !error && data?.length == 0">
       <div>
@@ -62,7 +62,7 @@ export default {
       validator: (v) => {
         for (let i = 0; i < v.length; i++)
           if (!('field' in v[i])) return false;
-          
+
         return true;
       }
     },
@@ -85,8 +85,8 @@ export default {
     }
   },
 
-  computed:{
-    computedName(){
+  computed: {
+    computedName() {
       return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
     }
   },
@@ -197,11 +197,17 @@ export default {
         labels.push(row[this.Configs.xAxisKey]);
 
         for (let k in row) {
-          if(k == this.Configs.xAxisKey) continue;
-          
-          const dataset = this.findDataset(k);
+          if (k == this.Configs.xAxisKey) continue;
+
+          const datasetItem = this.findDataset(k);
+          if(!datasetItem) continue;
+
+          const idx = datasetItem.idx;
+          const dataset = datasetItem.dataset;
           if (!dataset) continue;
+
           dataset.data.push(row[k]);
+          this.datasets[idx] = dataset;
         }
       }
 
@@ -225,9 +231,13 @@ export default {
     },
 
     findDataset(field) {
-      for (let i = 0; i < this.datasets; i++) {
+      for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
-        if (dataset.field == field) return dataset;
+
+        if (dataset.field == field) return {
+          idx: i,
+          dataset
+        };
       }
 
       return null;
