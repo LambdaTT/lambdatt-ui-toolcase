@@ -34,7 +34,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0">
-      <canvas :style="{width: Size, Height: Size}" ref="canvas" :key="canvasKey"></canvas>
+      <canvas :style="{ width: Size, Height: Size }" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -192,6 +192,13 @@ export default {
 
     destroyChart() {
       if (this.chartElement) {
+        try {
+          // stop any pending animation frame
+          if (typeof this.chartElement.stop === 'function') {
+            this.chartElement.stop();
+          }
+        } catch (e) { /* no-op */ }
+
         this.chartElement.destroy()
         this.chartElement = null
       }
@@ -202,7 +209,7 @@ export default {
     await this.loadData();
   },
 
-  beforeUnmount	() {
+  beforeUnmount() {
     this.destroyChart()
   }
 }
