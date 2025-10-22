@@ -47,7 +47,7 @@ export default {
   name: 'ui-charts-pie',
 
   props: {
-    Percentage: Boolean,
+    ShowPercentage: Boolean,
     BeforeLoad: Function,
     OnLoaded: Function,
     Size: {
@@ -149,12 +149,12 @@ export default {
       };
 
       const key = this.Configs.ValueField;
-      const total = this.data.reduce((a, b) => Number(a[key]) + Number(b[key]), 0);
+      const total = this.data.reduce((acc, row) => acc + Number(row[key]), 0);
 
       for (let i = 0; i < this.data.length; i++) {
         const row = this.data[i];
         const percentage = `${((Number(row[key]) / total) * 100).toFixed(2)}%`;
-        const label = this.Percentage ? `${row[this.Configs.LabelField]} - ${percentage}` : row[this.Configs.LabelField]
+        const label = this.ShowPercentage ? `${row[this.Configs.LabelField]} - ${percentage}` : row[this.Configs.LabelField]
 
         labels.push(label);
         dataset.data.push(row[key]);
