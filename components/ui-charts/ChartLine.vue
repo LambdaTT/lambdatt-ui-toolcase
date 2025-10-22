@@ -2,38 +2,26 @@
   <div>
     <!-- Loading -->
     <div class="text-center q-pa-xl text-grey-8" v-show="showLoader">
-      <div>
-        <q-spinner-gears size="lg" />
-      </div>
-      <div class="text-caption">
-        Carregando...
-      </div>
+      <div><q-spinner-gears size="lg" /></div>
+      <div class="text-caption">Carregando...</div>
     </div>
 
     <!-- Error -->
     <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
-      <div>
-        <q-icon size="lg" name="fas fa-bomb"></q-icon>
-      </div>
-      <div class="text-h6">
-        ERRO!
-      </div>
-      <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
+      <div><q-icon size="lg" name="fas fa-bomb" /></div>
+      <div class="text-h6">ERRO!</div>
+      <div class="text-caption"><b>{{ error.response && error.response.status }}</b> {{ error.response && error.response.statusText }}</div>
     </div>
 
-     <!-- Empty -->
-    <div class="text-center q-pa-xl" v-show="!showLoader && !error && data?.length == 0">
-      <div>
-        <q-icon size="lg" name="far fa-folder-open"></q-icon> *
-      </div>
-      <div class="text-h6">
-        Sem Dados
-      </div>
+    <!-- Empty -->
+    <div class="text-center q-pa-xl" v-show="!showLoader && !error && data && data.length === 0">
+      <div><q-icon size="lg" name="far fa-folder-open" /></div>
+      <div class="text-h6">Sem Dados</div>
       <div class="text-caption">Nenhuma informação disponível para alimentar o gráfico</div>
     </div>
 
     <!-- Content -->
-    <div v-show="!showLoader && !error && data?.length > 0" :id="`chart-${computedName}-container`">
+    <div v-show="!showLoader && !error && data && data.length > 0" :id="`chart-${computedName}-container`">
       <canvas :style="Configs.CanvasStyle" :id="`chart-${computedName}-canvas`"></canvas>
     </div>
   </div>
@@ -41,7 +29,7 @@
 
 <script>
 // Libs:
-import Chart from 'chart.js'
+import Chart from 'chart.js' // v2.9.4
 
 export default {
   name: 'ui-charts-line',
@@ -50,23 +38,12 @@ export default {
     Name: String,
     BeforeLoad: Function,
     OnLoaded: Function,
-    DataURL: {
-      type: String,
-      required: true
-    },
-    Filters: {
-      type: Object,
-      default: () => { }
-    },
+    DataURL: { type: String, required: true },
+    Filters: { type: Object, default: () => ({}) },
     Datasets: {
       type: Array,
       required: true,
-      validator: (v) => {
-        for (let i = 0; i < v.length; i++)
-          if (!('field' in v[i])) return false;
-
-        return true;
-      }
+      validator: (v) => v.every(d => 'field' in d)
     },
     Configs: {
       type: Object,
@@ -75,9 +52,10 @@ export default {
     },
   },
 
-  data() {
+  data () {
     return {
       chartElement: null,
+      // Keep a "base" datasets spec under our control (reactive but NOT given to Chart.js directly)
       datasets: [],
       data: [],
       loading: false,
@@ -87,70 +65,94 @@ export default {
     }
   },
 
-  computed:{
-    computedName(){
-      return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+  computed: {
+    computedName () {
+      return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('')
     }
   },
 
   watch: {
-    loading: {
-      handler: function (v) {
-        this.showLoader = v;
+    loading (v) {
+      this.showLoader = v
+    },
+    Filters: {
+      deep: true,
+      handler () {
+        this.loadData()
       }
     },
-
-    Filters: {
-      handler: function () {
-        this.loadData();
-      },
-      deep: true
-    },
-
     data: {
-      handler: function () {
-        this.triggerChart();
-      },
-      deep: true
-    },
+      deep: true,
+      handler () {
+        this.triggerChart()
+      }
+    }
   },
 
   methods: {
-    async loadData() {
-      this.error = null;
-      this.state = 'loading';
+    async loadData () {
+      this.error = null
+      this.state = 'loading'
+      if (this.loading) return
+      this.loading = true
 
-      if (!this.loading) {
-        this.loading = true;
+      try {
+        if (this.BeforeLoad) await this.BeforeLoad(this.Filters)
 
-        try {
-          // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
+        const response = await this.$http.get(this.DataURL, this.Filters)
+        this.data = response.data
 
-          const response = await this.$http.get(this.DataURL, this.Filters);
-          this.data = response.data;
-
-          // On Loaded callback:
-          if (this.OnLoaded) await this.OnLoaded(response);
-        } catch (error) {
-          this.loading = false;
-          this.$utils.notifyError(error);
-          console.error("An error has occurred on the attempt to retrieve chart data.", error);
-          this.error = error;
-          this.$emit('error-thrown', err);
-        } finally {
-          this.state = !!this.error ? 'error' : 'ready';
-        }
+        if (this.OnLoaded) await this.OnLoaded(response)
+        this.state = 'ready'
+      } catch (error) {
+        this.$utils && this.$utils.notifyError && this.$utils.notifyError(error)
+        console.error('An error has occurred on the attempt to retrieve chart data.', error)
+        this.error = error
+        this.$emit('error-thrown', error)
+        this.state = 'error'
+      } finally {
+        this.loading = false
       }
     },
 
-    triggerChart() {
-      // Initialize Chart Object:
-      var chartObj = {
-        type: "line",
+    triggerChart () {
+      if (!this.data || this.data.length === 0) {
+        this.destroyChart()
+        return
+      }
+
+      // Reset labels and dataset data before refilling
+      const labels = []
+      this.datasets.forEach(d => { d.data = [] })
+
+      for (let i = 0; i < this.data.length; i++) {
+        const row = this.data[i]
+        labels.push(row[this.Configs.xAxisKey])
+
+        for (const k in row) {
+          if (k === this.Configs.xAxisKey) continue
+          const dsInfo = this.findDataset(k)
+          if (!dsInfo) continue
+          dsInfo.dataset.data.push(row[k])
+        }
+      }
+
+      // Build a **fresh clone** for Chart.js so it can mutate safely without touching our reactive copies
+      const datasetsForChart = this.datasets.map(d => ({
+        label: d.label,
+        data: d.data.slice(),
+        fill: false,
+        backgroundColor: d.backgroundColor,
+        borderColor: d.borderColor,
+        borderWidth: d.borderWidth,
+        // DO NOT pass custom fields (like `field`) if you don't want Chart.js to keep them
+      }))
+
+      const chartConfig = {
+        type: 'line',
         data: {
-          labels: [],
-          datasets: []
+          labels,
+          datasets: datasetsForChart
         },
         options: {
           responsive: true,
@@ -160,88 +162,57 @@ export default {
             mode: 'label',
             callbacks: {
               label: (tooltipItem, data) => {
-                var index = tooltipItem.datasetIndex;
-
-                if (!!this.Datasets[index].formatTooltip && typeof this.Datasets[index].formatTooltip == 'function')
-                  return this.Datasets[index].formatTooltip(data.datasets[index].label, tooltipItem.yLabel);
-                else return data.datasets[index].label + ": " + tooltipItem.yLabel;
+                const index = tooltipItem.datasetIndex
+                if (this.Datasets[index] && typeof this.Datasets[index].formatTooltip === 'function') {
+                  return this.Datasets[index].formatTooltip(
+                    data.datasets[index].label,
+                    tooltipItem.yLabel
+                  )
+                }
+                return data.datasets[index].label + ': ' + tooltipItem.yLabel
               }
             }
           },
           scales: {
             yAxes: [{
-              ticks: {
-                beginAtZero: true
-              }
+              ticks: { beginAtZero: true }
             }]
           }
-        },
-
-      };
-
-      // Handles data:
-      var labels = [];
-
-      for (let i = 0; i < this.data.length; i++) {
-        const row = this.data[i];
-        labels.push(row[this.Configs.xAxisKey]);
-
-        for (let k in row) {
-          if (k == this.Configs.xAxisKey) continue;
-
-          const datasetItem = this.findDataset(k);
-          if(!datasetItem) continue;
-
-          const idx = datasetItem.idx;
-          const dataset = datasetItem.dataset;
-          if (!dataset) continue;
-
-          dataset.data.push(row[k]);
-          this.datasets[idx] = dataset;
         }
       }
 
-      chartObj.data.labels = labels;
-      // Update reference with (re)created datasets:
-      chartObj.data.datasets = this.datasets;
-
-      // Update chart:
-      if (this.chartElement != null) {
-        this.chartElement.config.data.labels = chartObj.data.labels
-        this.chartElement.config.data.datasets = chartObj.data.datasets
-        this.chartElement.update(0);
+      // Recreate the chart each time to avoid Chart.js writing metadata back into our reactive objects
+      this.destroyChart()
+      const ctx = document.getElementById(`chart-${this.computedName}-canvas`)
+      if (ctx) {
+        this.chartElement = new Chart(ctx, chartConfig)
       }
-      // Start new chart: 
-      else {
-        var ctx = document.getElementById(`chart-${this.computedName}-canvas`);
-        this.chartElement = new Chart(ctx, chartObj);
-      }
-
-      
-
-      this.loading = false;
     },
 
-    findDataset(field) {
-      for (let i = 0; i < this.datasets.length; i++) {
-        const dataset = this.datasets[i];
-        
-        if (dataset.field == field) return {
-          idx: i,
-          dataset
-        };
+    destroyChart () {
+      if (this.chartElement) {
+        this.chartElement.destroy()
+        this.chartElement = null
       }
+    },
 
-      return null;
+    findDataset (field) {
+      // No deep clone here—return the live reactive reference we control
+      for (let i = 0; i < this.datasets.length; i++) {
+        const dataset = this.datasets[i]
+        if (dataset.field === field) {
+          return { idx: i, dataset }
+        }
+      }
+      return null
     }
   },
 
-  mounted() {
+  mounted () {
+    // Initialize our **base** datasets once
     for (let i = 0; i < this.Datasets.length; i++) {
-      let set = this.Datasets[i];
-
-      let color = this.$utils.randomHexColor()
-
+      const set = this.Datasets[i]
+      const color = this.$utils.randomHexColor()
       this.datasets.push({
         label: set.label,
         data: [],
@@ -253,7 +224,11 @@ export default {
       })
     }
 
-    this.loadData();
+    this.loadData()
+  },
+
+  beforeDestroy () {
+    this.destroyChart()
   }
 }
 </script>
