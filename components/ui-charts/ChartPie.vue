@@ -202,7 +202,7 @@ export default {
     await this.loadData();
   },
 
-  beforeDestroy() {
+  beforeUnmount	() {
     this.destroyChart()
   }
 }
