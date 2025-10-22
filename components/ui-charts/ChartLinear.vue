@@ -76,6 +76,7 @@ export default {
       error: null,
       state: 'ready', // ready | loading | error
       canvasKey: 0,
+      debounce: null
     }
   },
 
@@ -122,7 +123,12 @@ export default {
     data: {
       deep: true,
       handler() {
-        this.triggerChart()
+        if(!!this.debounce){
+          clearTimeout(this.debounce);
+          this.debounce = null
+        }
+
+        this.debounce = setTimeout(this.triggerChart, 200);
       }
     }
   },
@@ -172,6 +178,7 @@ export default {
           const dsInfo = this.findDataset(k)
           if (!dsInfo) continue
           dsInfo.dataset.data.push(row[k])
+          
         }
       }
 
