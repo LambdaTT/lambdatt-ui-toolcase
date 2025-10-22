@@ -230,7 +230,7 @@ export default {
     findDataset(field) {
       for (let i = 0; i < this.datasets; i++) {
         const dataset = this.datasets[i];
-        console.log(field, dataset);
+        console.log('findDataset',field, dataset);
         
         if (dataset.field == field) return {
           idx: i,
