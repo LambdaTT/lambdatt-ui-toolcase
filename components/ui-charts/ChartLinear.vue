@@ -23,7 +23,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0" class="chart-scroll">
-      <div :style="{ minHeight: '100%', minWidth:'100%', width: dynamicWidth, height: dynamicHeight }">
+      <div :style="{ minHeight: '100%', minWidth: '100%', width: dynamicWidth, height: dynamicHeight }">
         <canvas ref="canvas" :key="canvasKey"></canvas>
       </div>
     </div>
@@ -81,15 +81,15 @@ export default {
 
   computed: {
     dynamicWidth() {
-      if(this.orientation == 'vertical') return this.Width;
-      
+      if (this.orientation == 'vertical') return this.Width;
+
       // garante um mínimo e cresce por label (altura mín. da label = 25px)
       const w = Math.max(250, this.data.length * 25);
       return `${Math.ceil(w)}px`;
     },
-    
+
     dynamicHeight() {
-      if(this.orientation == 'horizontal') return this.Height;
+      if (this.orientation == 'horizontal') return this.Height;
 
       // garante um mínimo e cresce por label (largura mín. da label = 25px)
       const w = Math.max(250, this.data.length * 25);
@@ -244,6 +244,13 @@ export default {
 
     destroyChart() {
       if (this.chartElement) {
+        try {
+          // stop any pending animation frame
+          if (typeof this.chartElement.stop === 'function') {
+            this.chartElement.stop();
+          }
+        } catch (e) { /* no-op */ }
+
         this.chartElement.destroy()
         this.chartElement = null
       }
@@ -280,7 +287,7 @@ export default {
     this.loadData()
   },
 
-  beforeUnmount	() {
+  beforeUnmount() {
     this.destroyChart()
   }
 }
