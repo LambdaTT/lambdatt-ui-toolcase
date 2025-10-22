@@ -10,7 +10,8 @@
     <div class="text-center q-pa-xl text-red-3" v-if="!!error && !showLoader">
       <div><q-icon size="lg" name="fas fa-bomb" /></div>
       <div class="text-h6">ERRO!</div>
-      <div class="text-caption"><b>{{ error.response && error.response.status }}</b> {{ error.response && error.response.statusText }}</div>
+      <div class="text-caption"><b>{{ error.response && error.response.status }}</b> {{ error.response &&
+        error.response.statusText }}</div>
     </div>
 
     <!-- Empty -->
@@ -22,7 +23,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0" :id="`chart-${computedName}-container`">
-      <canvas :style="Configs.CanvasStyle" :id="`chart-${computedName}-canvas`"></canvas>
+      <canvas :style="Configs.CanvasStyle" :id="`chart-${computedName}-canvas`" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -52,7 +53,7 @@ export default {
     },
   },
 
-  data () {
+  data() {
     return {
       chartElement: null,
       // Keep a "base" datasets spec under our control (reactive but NOT given to Chart.js directly)
@@ -62,35 +63,36 @@ export default {
       showLoader: false,
       error: null,
       state: 'ready', // ready | loading | error
+      canvasKey: 0,
     }
   },
 
   computed: {
-    computedName () {
+    computedName() {
       return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('')
     }
   },
 
   watch: {
-    loading (v) {
+    loading(v) {
       this.showLoader = v
     },
     Filters: {
       deep: true,
-      handler () {
+      handler() {
         this.loadData()
       }
     },
     data: {
       deep: true,
-      handler () {
+      handler() {
         this.triggerChart()
       }
     }
   },
 
   methods: {
-    async loadData () {
+    async loadData() {
       this.error = null
       this.state = 'loading'
       if (this.loading) return
@@ -115,7 +117,7 @@ export default {
       }
     },
 
-    triggerChart () {
+    triggerChart() {
       if (!this.data || this.data.length === 0) {
         this.destroyChart()
         return
@@ -183,20 +185,23 @@ export default {
 
       // Recreate the chart each time to avoid Chart.js writing metadata back into our reactive objects
       this.destroyChart()
-      const ctx = document.getElementById(`chart-${this.computedName}-canvas`)
-      if (ctx) {
+      this.canvasKey++
+      this.$nextTick(() => {        // ensures the new canvas is in the DOM & visible
+        const canvas = this.$refs.canvas
+        if (!canvas) return
+        const ctx = canvas.getContext('2d')
         this.chartElement = new Chart(ctx, chartConfig)
-      }
+      })
     },
 
-    destroyChart () {
+    destroyChart() {
       if (this.chartElement) {
         this.chartElement.destroy()
         this.chartElement = null
       }
     },
 
-    findDataset (field) {
+    findDataset(field) {
       // No deep clone here—return the live reactive reference we control
       for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i]
@@ -208,7 +213,7 @@ export default {
     }
   },
 
-  mounted () {
+  mounted() {
     // Initialize our **base** datasets once
     for (let i = 0; i < this.Datasets.length; i++) {
       const set = this.Datasets[i]
@@ -227,7 +232,7 @@ export default {
     this.loadData()
   },
 
-  beforeDestroy () {
+  beforeDestroy() {
     this.destroyChart()
   }
 }
