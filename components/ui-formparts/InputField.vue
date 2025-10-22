@@ -48,8 +48,8 @@
     <!-- Input number: -->
     <q-input v-if="type == 'number'" :ref="inputRefId" square filled hide-bottom-space :step="step" :max="max"
       :min="min" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
-      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
-      @focus="() => $emit('focus')" type="number" @update:model-value="updModelValue" @click="inputClicked"
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" 
+      @focus="() => $emit('focus')" type="number" @update:model-value="(v) =>{value = value === '' ? null : value; updModelValue(value)}" @click="inputClicked"
       :error-message="ErrorMsg">
       <template v-slot:append>
         <slot name="buttons"></slot>
