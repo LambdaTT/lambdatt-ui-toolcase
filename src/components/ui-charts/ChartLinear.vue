@@ -22,8 +22,10 @@
     </div>
 
     <!-- Content -->
-    <div v-show="!showLoader && !error && data && data.length > 0">
-      <canvas :style="CanvasStyle" ref="canvas" :key="canvasKey"></canvas>
+    <div v-show="!showLoader && !error && data && data.length > 0" class="chart-scroll">
+      <div :style="{ minHeight: '100%', minWidth:'100%', width: dynamicWidth, height: dynamicHeight }">
+        <canvas ref="canvas" :key="canvasKey"></canvas>
+      </div>
     </div>
   </div>
 </template>
@@ -38,8 +40,14 @@ export default {
   props: {
     BeforeLoad: Function,
     OnLoaded: Function,
-    Height: String,
-    Width: String,
+    Height: {
+      type: String,
+      default: () => '100%'
+    },
+    Width: {
+      type: String,
+      default: () => '100%'
+    },
     ChartType: { type: String, default: () => 'line' },
     DataURL: { type: String, required: true },
     Filters: { type: Object, default: () => ({}) },
@@ -57,6 +65,8 @@ export default {
 
   data() {
     return {
+      vTypes: ['column'],
+      hTypes: ['line', 'bar', 'area'],
       chartElement: null,
       // Keep a "base" datasets spec under our control (reactive but NOT given to Chart.js directly)
       datasets: [],
@@ -70,11 +80,30 @@ export default {
   },
 
   computed: {
-    CanvasStyle() {
-      const cssH = this.Height ? `min-height: ${this.Height}px; height: ${this.Height}px; max-height: ${this.Height}px;` : '';
-      const cssW = this.Width ? `min-height: ${this.Width}px; height: ${this.Width}px; max-height: ${this.Width}px;` : '';
+    dynamicWidth() {
+      if(this.orientation == 'vertical') return this.Width;
+      
+      // garante um mínimo e cresce por label (altura mín. da label = 25px)
+      const w = Math.max(250, this.data.length * 25);
+      return `${Math.ceil(w)}px`;
+    },
+    
+    dynamicHeight() {
+      if(this.orientation == 'horizontal') return this.Height;
 
-      return `${cssH} ${cssW}`;
+      // garante um mínimo e cresce por label (largura mín. da label = 25px)
+      const w = Math.max(250, this.data.length * 25);
+      return `${Math.ceil(w)}px`;
+    },
+
+    orientation() {
+      if (this.vTypes.includes(this.ChartType))
+        return 'vertical';
+
+      if (this.hTypes.includes(this.ChartType))
+        return 'horizontal';
+
+      else throw 'Invalid chart type';
     }
   },
 
@@ -256,3 +285,17 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+</style>
