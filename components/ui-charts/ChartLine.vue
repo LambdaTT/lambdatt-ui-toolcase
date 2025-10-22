@@ -228,7 +228,7 @@ export default {
     },
 
     findDataset(field) {
-      for (let i = 0; i < this.datasets; i++) {
+      for (let i = 0; i < this.datasets.length; i++) {
         const dataset = this.datasets[i];
         console.log('findDataset',field, dataset);
         
