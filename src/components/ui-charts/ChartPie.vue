@@ -34,7 +34,7 @@
 
     <!-- Content -->
     <div v-show="!showLoader && !error && data && data.length > 0">
-      <canvas :style="{width: Size, Height: Size}" ref="canvas" :key="canvasKey"></canvas>
+      <canvas :style="{ width: Size, Height: Size }" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -116,14 +116,14 @@ export default {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
 
         // fetch data from server
-        const response = await this.$getService('toolcase/http')	.get(this.DataURL, this.Filters);
+        const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filters);
         this.data = response.data;
 
         // On Loaded callback:
         if (this.OnLoaded) await this.OnLoaded(response);
         this.state = 'ready'
       } catch (error) {
-        this.$getService('toolcase/utils')	.notifyError(error);
+        this.$getService('toolcase/utils').notifyError(error);
         console.error("An error has occurred on the attempt to retrieve chart data.", error);
         this.error = error;
         this.state = 'error'
@@ -158,7 +158,7 @@ export default {
 
         labels.push(label);
         dataset.data.push(row[key]);
-        dataset.backgroundColor.push(this.$getService('toolcase/utils')	.randomHexColor())
+        dataset.backgroundColor.push(this.$getService('toolcase/utils').randomHexColor())
       }
 
       // Initialize Chart Object:
@@ -192,6 +192,13 @@ export default {
 
     destroyChart() {
       if (this.chartElement) {
+        try {
+          // stop any pending animation frame
+          if (typeof this.chartElement.stop === 'function') {
+            this.chartElement.stop();
+          }
+        } catch (e) { /* no-op */ }
+
         this.chartElement.destroy()
         this.chartElement = null
       }
@@ -202,7 +209,7 @@ export default {
     await this.loadData();
   },
 
-  beforeUnmount	() {
+  beforeUnmount() {
     this.destroyChart()
   }
 }
