@@ -21,7 +21,7 @@
       <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
     </div>
 
-     <!-- Empty -->
+    <!-- Empty -->
     <div class="text-center q-pa-xl" v-show="!showLoader && !error && data?.length == 0">
       <div>
         <q-icon size="lg" name="far fa-folder-open"></q-icon> *
@@ -33,8 +33,8 @@
     </div>
 
     <!-- Content -->
-    <div v-show="!showLoader && !error && data?.length > 0" :id="`chart-${computedName}-container`">
-      <canvas :style="Configs.CanvasStyle" ref="chartCanvas"></canvas>
+    <div v-show="!showLoader && !error && data && data.length > 0">
+      <canvas :style="CanvasStyle" ref="canvas" :key="canvasKey"></canvas>
     </div>
   </div>
 </template>
@@ -47,7 +47,12 @@ export default {
   name: 'ui-charts-pie',
 
   props: {
-    Name: String,
+    Percentage: Boolean,
+    BeforeLoad: Function,
+    OnLoaded: Function,
+    Height: String,
+    Width: String,
+    ChartType: { type: String, default: () => 'pie' },
     DataURL: {
       type: String,
       required: true
@@ -61,9 +66,6 @@ export default {
       required: true,
       validator: (v) => !!v.LabelField && !!v.ValueField
     },
-    Percentage: Boolean,
-    BeforeLoad: Function,
-    OnLoaded: Function,
   },
 
   data() {
@@ -74,12 +76,16 @@ export default {
       showLoader: false,
       error: null,
       state: 'ready', // ready | loading | error
+      canvasKey: 0
     }
   },
 
   computed: {
-    computedName() {
-      return this.Name ?? [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+    CanvasStyle() {
+      const cssH = this.Height ? `min-height: ${this.Height}px; height: ${this.Height}px; max-height: ${this.Height}px;` : '';
+      const cssW = this.Width ? `min-height: ${this.Width}px; height: ${this.Width}px; max-height: ${this.Width}px;` : '';
+
+      return `${cssH} ${cssW}`;
     }
   },
 
@@ -109,47 +115,60 @@ export default {
     async loadData() {
       this.error = null;
       this.state = 'loading';
+      if (this.loading) return
+      this.loading = true
 
-      if (!this.loading) {
-        // turn on loading indicator
-        this.loading = true;
+      try {
+        // Before Load callback:
+        if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
 
-        try {
-          // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
+        // fetch data from server
+        const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filters);
+        this.data = response.data;
 
-          // fetch data from server
-          const response = await this.$http.get(this.DataURL, this.Filters);
-          this.data = response.data;
-
-          // On Loaded callback:
-          if (this.OnLoaded) await this.OnLoaded(response);
-
-          return response;
-        } catch (error) {
-          this.loading = false;
-          this.$utils.notifyError(error);
-          console.error("An error has occurred on the attempt to retrieve chart data.", error);
-          this.error = error;
-          this.$emit('error-thrown', error);
-        } finally {
-          this.state = !!this.error ? 'error' : 'ready';
-        }
+        // On Loaded callback:
+        if (this.OnLoaded) await this.OnLoaded(response);
+        this.state = 'ready'
+      } catch (error) {
+        this.$getService('toolcase/utils').notifyError(error);
+        console.error("An error has occurred on the attempt to retrieve chart data.", error);
+        this.error = error;
+        this.state = 'error'
+        this.$emit('error-thrown', error);
+      } finally {
+        this.loading = false;
       }
     },
 
     triggerChart() {
+      if (!this.data || this.data.length === 0) {
+        this.destroyChart()
+        return
+      }
+
+      // Handles data:
+      const labels = [];
+      const dataset = {
+        label: '',
+        data: [],
+        backgroundColor: [],
+        hoverOffset: 4
+      };
+
+      for (let i = 0; i < this.data.length; i++) {
+        const row = this.data[i];
+
+        labels.push(row[this.Configs.LabelField]);
+        dataset.data.push(row[this.Configs.ValueField]);
+        dataset.backgroundColor.push(this.$getService('toolcase/utils').randomHexColor())
+      }
+
       // Initialize Chart Object:
-      var chartObj = {
-        type: "pie",
+      var chartConfig = {
+        type: this.ChartType,
         data: {
-          labels: [],
-          datasets: [{
-            label: 'chart pie',
-            data: [],
-            backgroundColor: [],
-            hoverOffset: 4
-          }]
+          labels,
+          datasets: [dataset]
         },
         options: {
           responsive: true,
@@ -162,37 +181,31 @@ export default {
 
       };
 
-      // Handles data:
-      var labels = chartObj.data.labels;
+      this.destroyChart()
+      this.canvasKey++;
 
-      var dataset = chartObj.data.datasets[0]
-      for (let i = 0; i < this.data.length; i++) {
-        const row = this.data[i];
-        labels.push(row[this.Configs.LabelField]);
+      this.$nextTick(() => {        // ensures the new canvas is in the DOM & visible
+        const canvas = this.$refs.canvas
+        if (!canvas) return
+        const ctx = canvas.getContext('2d')
+        this.chartElement = new Chart(ctx, chartConfig)
+      })
+    },
 
-        dataset.backgroundColor.push(this.$utils.randomHexColor())
-
-        dataset.data.push(row[this.Configs.ValueField]);
+    destroyChart() {
+      if (this.chartElement) {
+        this.chartElement.destroy()
+        this.chartElement = null
       }
-
-      // Update chart:
-      if (this.chartElement != null) {
-        this.chartElement.data.labels = chartObj.data.labels
-        this.chartElement.data.datasets = chartObj.data.datasets
-        this.chartElement.update(0);
-      }
-      // Start new chart: 
-      else {
-        var ctx = this.$refs.chartCanvas;
-        this.chartElement = new Chart(ctx, chartObj);
-      }
-
-      this.loading = false;
     },
   },
 
   async mounted() {
     await this.loadData();
+  },
+
+  beforeDestroy() {
+    this.destroyChart()
   }
 }
 </script>
