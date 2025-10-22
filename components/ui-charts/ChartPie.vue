@@ -149,11 +149,11 @@ export default {
       };
 
       const key = this.Configs.ValueField;
-      const total = this.data.reduce((a, b) => a[key] + b[key], 0);
+      const total = this.data.reduce((a, b) => Number(a[key]) + Number(b[key]), 0);
 
       for (let i = 0; i < this.data.length; i++) {
         const row = this.data[i];
-        const percentage = `${((row[key] / total) * 100).toFixed(2)}%`;
+        const percentage = `${((Number(row[key]) / total) * 100).toFixed(2)}%`;
         const label = this.Percentage ? `${row[this.Configs.LabelField]} - ${percentage}` : row[this.Configs.LabelField]
 
         labels.push(label);
