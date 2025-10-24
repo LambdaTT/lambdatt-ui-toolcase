@@ -48,8 +48,9 @@
     <!-- Input number: -->
     <q-input v-if="type == 'number'" :ref="inputRefId" square filled hide-bottom-space :step="step" :max="max"
       :min="min" :label="Label" :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly"
-      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" 
-      @focus="() => $emit('focus')" type="number" @update:model-value="(v) =>{value = value === '' ? null : value; updModelValue(value)}" @click="inputClicked"
+      :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
+      @focus="() => $emit('focus')" type="number"
+      @update:model-value="(v) => { value = value === '' ? null : value; updModelValue(value) }" @click="inputClicked"
       :error-message="ErrorMsg">
       <template v-slot:append>
         <slot name="buttons"></slot>
@@ -63,9 +64,22 @@
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </Select2>
 
+    <!-- Input phone: -->
+    <InputPhone :Icon="Icon" v-if="type == 'phone'" :dense="dense" :clearable="clearable" :disable="disable"
+      :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue">
+    </InputPhone>
+
+    <!-- Input CPF/CNPJ: -->
+    <InputCpfCnpj :Icon="Icon" v-if="type == 'cpf' || type == 'cnpj' || type == 'cpf+cnpj'" :CpfOnly="type == 'cpf'"
+      :CnpjOnly="type == 'cnpj'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly"
+      v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+      @update:model-value="updModelValue">
+    </InputCpfCnpj>
+
     <!-- Input date: -->
-    <InputDate v-if="type == 'date'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly" v-model="value"
-      :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+    <InputDate v-if="type == 'date'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly"
+      v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
       @update:model-value="updModelValue">
     </InputDate>
 
