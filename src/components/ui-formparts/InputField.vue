@@ -63,6 +63,19 @@
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </Select2>
 
+    <!-- Input phone: -->
+    <InputPhone :Icon="Icon" v-if="type == 'phone'" :dense="dense" :clearable="clearable" :disable="disable"
+      :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
+      @focus="() => $emit('focus')" @update:model-value="updModelValue">
+    </InputPhone>
+
+    <!-- Input CPF/CNPJ: -->
+    <InputCpfCnpj :Icon="Icon" v-if="type == 'cpf' || type == 'cnpj' || type == 'cpf+cnpj'" :CpfOnly="type == 'cpf'"
+      :CnpjOnly="type == 'cnpj'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly"
+      v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"
+      @update:model-value="updModelValue">
+    </InputCpfCnpj>
+
     <!-- Input date: -->
     <InputDate v-if="type == 'date'" :dense="dense" :clearable="clearable" :disable="disable" :readonly="readonly"
       v-model="value" :Default="Default" :Label="Label" :Error="Error" @focus="() => $emit('focus')"

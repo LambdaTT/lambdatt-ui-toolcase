@@ -163,12 +163,12 @@ export default {
       try {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters)
 
-        const response = await this.this.$getService('toolcase/http').get(this.DataURL, this.Filters)
+        const response = await this.$getService('toolcase/http').get(this.DataURL, this.Filters)
         this.data = Array.isArray(response.data) ? response.data : []
         if (this.OnLoaded) await this.OnLoaded(response)
         this.state = 'ready'
       } catch (error) {
-        this.this.$getService('toolcase/utils')?.notifyError?.(error)
+        this.$getService('toolcase/utils')?.notifyError?.(error)
         console.error('An error has occurred on the attempt to retrieve chart data.', error)
         this.error = error
         this.$emit('error-thrown', error)
@@ -242,8 +242,8 @@ export default {
 
     makePlainDatasetFromSpec(spec) {
       // Gere uma cor determinística ou aleatória
-      const color = this.this.$getService('toolcase/utils')?.randomHexColor
-        ? this.this.$getService('toolcase/utils').randomHexColor()
+      const color = this.$getService('toolcase/utils')?.randomHexColor
+        ? this.$getService('toolcase/utils').randomHexColor()
         : '#3489db'
 
       // Retorne um objeto PLANO (não reativo)

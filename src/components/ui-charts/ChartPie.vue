@@ -124,13 +124,13 @@ export default {
       try {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters)
 
-        const resp = await this.this.$getService('toolcase/http').get(this.DataURL, this.Filters)
+        const resp = await this.$getService('toolcase/http').get(this.DataURL, this.Filters)
         this.data = Array.isArray(resp.data) ? resp.data : []
 
         if (this.OnLoaded) await this.OnLoaded(resp)
         this.state = 'ready'
       } catch (err) {
-        this.this.$getService('toolcase/utils')?.notifyError?.(err)
+        this.$getService('toolcase/utils')?.notifyError?.(err)
         console.error('Error fetching chart data', err)
         this.error = err
         this.$emit('error-thrown', err)

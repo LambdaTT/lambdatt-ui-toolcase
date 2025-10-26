@@ -105,12 +105,10 @@ export default {
         validate: this.validateFields,
         read: (data) => {
           for (let k in this.input)
-            if (k in data)
+            if (!!data && k in data)
               this.input[k] = data[k];
         },
-        input: {
-          ...this.input
-        }
+        ...this.input
       }
     }
   },
@@ -157,7 +155,7 @@ export default {
     modelValue: {
       handler(newValue) {
         for (let k in this.input) {
-          if (k in newValue) {
+          if (!!newValue && k in newValue) {
             this.input[k] = newValue[k];
           }
         }
