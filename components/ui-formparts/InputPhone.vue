@@ -50,14 +50,10 @@ export default {
 
   watch: {
     modelValue(val) {
-      console.log('modelValue', val);
-
       this.value = val ?? null;
     },
 
     value(val) {
-      console.log('value',val);
-      
       if (!val) return this.emit();
       else if (val.length < 14) return;
 
