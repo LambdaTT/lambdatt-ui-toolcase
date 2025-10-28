@@ -1,7 +1,13 @@
 <template>
-  <InputField ignorePadding :disable="disable" :Mask="mask" v-model="value" :Label="Label" :dense="dense" :Error="Error"
-    :readonly="readonly" :clearable="clearable" @focus="() => $emit('focus')" :Icon="Icon ?? 'fas fa-phone'"
-    maxlength="15" />
+  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
+    :disable="disable" :readonly="readonly" maxlength="15" :mask="mask"
+    :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" :error-message="ErrorMsg"
+    @focus="() => $emit('focus')" @update:model-value="emit">
+    <template v-slot:append>
+      <slot name="buttons"></slot>
+      <q-icon :name="Icon ?? 'fas fa-phone'" color="grey-8" />
+    </template>
+  </q-input>
 </template>
 
 <script>
@@ -18,6 +24,8 @@ export default {
     Default: String,
     Label: String,
     Error: Boolean,
+    ErrorMsg: String,
+    BgColor: String,
   },
 
   data() {
