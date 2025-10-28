@@ -1,8 +1,8 @@
 <template>
-  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
+  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="false" :dense="dense"
     :disable="disable" :readonly="readonly" maxlength="18" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" :error-message="ErrorMsg"
-    @focus="() => $emit('focus')" @update:model-value="emit">
+    @focus="() => $emit('focus')">
     <template v-slot:append>
       <slot name="buttons"></slot>
       <q-icon :name="Icon ?? 'fas fa-id-card'" color="grey-8" />
@@ -38,15 +38,17 @@ export default {
 
   computed: {
     mask() {
-      if (!this.value) return '';
-      if (!!this.CpfOnly) return '###.###.###-##';
-      if (!!this.CnpjOnly) return '##.###.###/####-##';
+      let mask = '###.###.###-###';
 
-      const onlyDigits = this.value.replace(/\D+/g, '');
-      if (onlyDigits.length <= 11 || !!this.CpjOnly)
-        return '###.###.###-##';
+      if (!!this.CpfOnly) mask = '###.###.###-##';
+      if (!!this.CnpjOnly) mask = '##.###.###/####-##';
 
-      return '##.###.###/####-##'
+      if (!!this.value) {
+        const onlyDigits = this.value.replace(/\D+/g, '');
+        if (onlyDigits.length > 11) mask = '##.###.###/####-##';
+      }
+
+      return mask;
     }
   },
 

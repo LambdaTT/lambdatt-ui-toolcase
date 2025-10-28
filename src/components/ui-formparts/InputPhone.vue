@@ -1,8 +1,8 @@
 <template>
-  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
+  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="false" @clear="clear" :dense="dense"
     :disable="disable" :readonly="readonly" maxlength="15" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" :error-message="ErrorMsg"
-    @focus="() => $emit('focus')" @update:model-value="emit">
+    @focus="() => $emit('focus')">
     <template v-slot:append>
       <slot name="buttons"></slot>
       <q-icon :name="Icon ?? 'fas fa-phone'" color="grey-8" />
@@ -36,22 +36,29 @@ export default {
 
   computed: {
     mask() {
-      if (!this.value) return '';
-      const onlyDigits = this.value.replace(/\D+/g, '');;
+      let mask = '(##) ####-#####'
 
-      if (onlyDigits.length <= 10) return '(##) ####-#####';
+      if (!!this.value) {
+        const onlyDigits = this.value.replace(/\D+/g, '');
 
-      return '(##) #####-####'
-    }
+        if (onlyDigits.length > 10) mask = '(##) #####-####';
+      }
+
+      return mask
+    },
   },
 
   watch: {
     modelValue(val) {
+      console.log('modelValue', val);
+
       this.value = val ?? null;
     },
 
     value(val) {
-      if (!val) return this.clear();
+      console.log('value',val);
+      
+      if (!val) return this.emit();
       else if (val.length < 14) return;
 
       this.emit();
@@ -60,7 +67,7 @@ export default {
 
   methods: {
     clear() {
-      this.value = this.Default || null;
+      this.value = this.Default ?? null;
       this.emit();
     },
 

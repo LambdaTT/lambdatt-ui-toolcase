@@ -2,7 +2,7 @@
   <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
     :disable="disable" :readonly="readonly" maxlength="10" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="hasError" :error-message="ErrorMsg"
-    @focus="() => $emit('focus')" @update:model-value="emit">
+    @focus="() => $emit('focus')">
     <template v-slot:append>
       <slot name="buttons"></slot>
       <q-icon :name="Icon ?? 'fas fa-calendar-alt'" color="grey-8" />
