@@ -38,11 +38,11 @@ export default {
     mask() {
       let mask = '(##) ####-#####'
 
-      if (!!this.value) {
-        const onlyDigits = this.value.replace(/\D+/g, '');
+      if (!this.value) return mask;
 
-        if (onlyDigits.length > 10) mask = '(##) #####-####';
-      }
+      const onlyDigits = this.value.replace(/\D+/g, '');
+
+      if (onlyDigits.length > 10) mask = '(##) #####-####';
 
       return mask
     },
@@ -56,8 +56,8 @@ export default {
     },
 
     value(val) {
-      console.log('value',val);
-      
+      console.log('value', val);
+
       if (!val) return this.emit();
       else if (val.length < 14) return;
 

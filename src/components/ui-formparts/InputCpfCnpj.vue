@@ -38,15 +38,13 @@ export default {
 
   computed: {
     mask() {
-      let mask = '###.###.###-###';
+      let mask = !this.CnpjOnly ? '###.###.###-###' : '##.###.###/####-##';
 
-      if (!!this.CpfOnly) mask = '###.###.###-##';
-      if (!!this.CnpjOnly) mask = '##.###.###/####-##';
+      if (!this.value) return mask;
 
-      if (!!this.value) {
-        const onlyDigits = this.value.replace(/\D+/g, '');
-        if (onlyDigits.length > 11) mask = '##.###.###/####-##';
-      }
+      const onlyDigits = this.value.replace(/\D+/g, '');
+      
+      if (onlyDigits.length > 11) mask = '##.###.###/####-##';
 
       return mask;
     }

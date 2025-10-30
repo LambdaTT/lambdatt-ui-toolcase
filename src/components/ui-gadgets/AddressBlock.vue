@@ -8,40 +8,40 @@
       <div class="col-12 row">
         <div :class="`col-12 ${wrapFields == true ? '' : 'col-md-6'}`">
           <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP*" Icon="fas fa-search"
-            v-model="input.ds_addresszipcode" :Error="inputError.ds_addresszipcode"
-            @focus="inputError.ds_addresszipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
+            v-model="input.ds_zipcode" :Error="inputError.ds_zipcode"
+            @focus="inputError.ds_zipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
           </InputField>
           <span class="q-ml-sm text-amber-9 text-caption text-bold" v-if="!!zipcodeWarning">{{ zipcodeWarning }}</span>
         </div>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
         <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Endereço*"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addressstreet" :Error="inputError.ds_addressstreet"
-          @focus="inputError.ds_addressstreet = false"></InputField>
+          Icon="fas fa-map-marker-alt" v-model="input.ds_street" :Error="inputError.ds_street"
+          @focus="inputError.ds_street = false"></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
         <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Número*"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addressnumber" :Error="inputError.ds_addressnumber"
-          @focus="inputError.ds_addressnumber = false"></InputField>
+          Icon="fas fa-map-marker-alt" v-model="input.ds_number" :Error="inputError.ds_number"
+          @focus="inputError.ds_number = false"></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
         <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Complemento"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addresscomplement"></InputField>
+          Icon="fas fa-map-marker-alt" v-model="input.ds_complement"></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
         <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Bairro*"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addressneighborhood" :Error="inputError.ds_addressneighborhood"
-          @focus="inputError.ds_addressneighborhood = false"></InputField>
+          Icon="fas fa-map-marker-alt" v-model="input.ds_neighborhood" :Error="inputError.ds_neighborhood"
+          @focus="inputError.ds_neighborhood = false"></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
         <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Cidade*" Icon="fas fa-building"
-          v-model="input.ds_addresscity" :Error="inputError.ds_addresscity" @focus="inputError.ds_addresscity = false">
+          v-model="input.ds_city" :Error="inputError.ds_city" @focus="inputError.ds_city = false">
         </InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
         <InputField type="select" clearable :dense="dense" :readonly="formReadonly" Label="UF*"
-          Icon="fas fa-map-marker-alt" v-model="input.do_addressuf" :Options="brazilianStates"
-          :Error="inputError.do_addressuf" @focus="inputError.do_addressuf = false"></InputField>
+          Icon="fas fa-map-marker-alt" v-model="input.do_state" :Options="brazilianStates"
+          :Error="inputError.do_state" @focus="inputError.do_state = false"></InputField>
       </div>
       <div class="col-12" v-if="!hideMap">
         <q-separator></q-separator>
@@ -74,21 +74,21 @@ export default {
   data() {
     return {
       input: {
-        ds_addresszipcode: null,
-        ds_addressstreet: null,
-        ds_addressnumber: null,
-        ds_addresscomplement: null,
-        ds_addressneighborhood: null,
-        ds_addresscity: null,
-        do_addressuf: null,
+        ds_zipcode: null,
+        ds_street: null,
+        ds_number: null,
+        ds_complement: null,
+        ds_neighborhood: null,
+        ds_city: null,
+        do_state: null,
       },
       inputError: {
-        ds_addresszipcode: false,
-        ds_addressstreet: false,
-        ds_addressnumber: false,
-        ds_addressneighborhood: false,
-        ds_addresscity: false,
-        do_addressuf: false,
+        ds_zipcode: false,
+        ds_street: false,
+        ds_number: false,
+        ds_neighborhood: false,
+        ds_city: false,
+        do_state: false,
       },
       formReadonly: !!this.readonly,
       zipcodeWarning: null
@@ -104,11 +104,13 @@ export default {
       return {
         validate: this.validateFields,
         read: (data) => {
-          for (let k in this.input)
-            if (!!data && k in data)
-              this.input[k] = data[k];
+          setTimeout(() => {
+            for (let k in this.input)
+              if (!!data && k in data)
+                this.input[k] = data[k];
+          }, 100)
         },
-        ...this.input
+        getInput: () => this.input
       }
     }
   },
@@ -124,7 +126,7 @@ export default {
     },
 
     async getAddressByZipcode() {
-      var address = await this.$getService('toolcase/utils').getAddressByZipCode(this.input.ds_addresszipcode, false);
+      var address = await this.$getService('toolcase/utils').getAddressByZipCode(this.input.ds_zipcode, false);
       if (address === null) return;
       if (address === false) {
         this.zipcodeWarning = 'CEP não encontrado. Preencha o endereço manualmente.'
@@ -132,15 +134,15 @@ export default {
       }
       this.zipcodeWarning = null
       // Updating Values
-      this.input.ds_addressstreet = address.logradouro;
-      this.input.ds_addressneighborhood = address.bairro;
-      this.input.ds_addresscity = address.localidade;
-      this.input.do_addressuf = address.uf;
+      this.input.ds_street = address.logradouro;
+      this.input.ds_neighborhood = address.bairro;
+      this.input.ds_city = address.localidade;
+      this.input.do_state = address.uf;
       // Updating Errors
-      this.inputError.ds_addressstreet = false;
-      this.inputError.ds_addressneighborhood = false;
-      this.inputError.ds_addresscity = false;
-      this.inputError.do_addressuf = false;
+      this.inputError.ds_street = false;
+      this.inputError.ds_neighborhood = false;
+      this.inputError.ds_city = false;
+      this.inputError.do_state = false;
     },
   },
 

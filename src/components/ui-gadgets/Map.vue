@@ -64,15 +64,15 @@ export default {
 
   methods: {
     buildFullAddress(address) {
-      if (!address || address.ds_addressstreet == null) return null;
+      if (!address || address.ds_street == null) return null;
 
-      var fullAddress = address.ds_addressstreet +
-        ", " + address.ds_addressnumber +
-        (address.ds_addresscomplement ? ", " + address.ds_addresscomplement : '') +
-        ", " + address.ds_addressneighborhood +
-        ", " + address.ds_addresscity +
-        "/" + address.do_addressuf +
-        " - CEP: " + address.ds_addresszipcode;
+      var fullAddress = address.ds_street +
+        ", " + address.ds_number +
+        (address.ds_complement ? ", " + address.ds_complement : '') +
+        ", " + address.ds_neighborhood +
+        ", " + address.ds_city +
+        "/" + address.do_state +
+        " - CEP: " + address.ds_zipcode;
 
       return fullAddress;
     },
@@ -144,7 +144,7 @@ export default {
     },
 
     handleAddressObj(val) {
-      if (!!val && !!val.ds_addressstreet && !!val.ds_addressnumber && !!val.ds_addressneighborhood && !!val.ds_addresscity && !!val.do_addressuf) {
+      if (!!val && !!val.ds_street && !!val.ds_number && !!val.ds_neighborhood && !!val.ds_city && !!val.do_state) {
         this.updMapAddress(true);
       } else this.mapState = 'empty';
     }
