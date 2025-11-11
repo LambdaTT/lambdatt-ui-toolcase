@@ -21,6 +21,7 @@ export default {
   name: 'ui-formparts-select2',
 
   props: {
+    EmitWholeOption: Boolean,
     BgColor: String,
     Options: Array,
     Label: String,
@@ -54,7 +55,8 @@ export default {
 
   watch: {
     selected(v) {
-      this.$emit('update:model-value', v?.value);
+      const emitVal = !!this.EmitWholeOption ? v : v?.value;
+      this.$emit('update:model-value', emitVal);
     },
 
     modelValue(v) {
