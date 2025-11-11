@@ -72,16 +72,16 @@ export default {
 
   methods: {
     setValue(v) {
-      if (this.Options !== null) {
+      if (!(this.Options?.length))
+        setTimeout(() => this.setValue(v), 100);
+      else {
         if (v === null || typeof v == 'undefined' || v === '') {
           this.selected = null;
         } else {
-          this.selected = this.Options.filter((opt) => {
+          this.selected = this.Options.find((opt) => {
             return String(opt.value).toLocaleLowerCase() == String(v).toLocaleLowerCase();
-          })[0] ?? null;
+          });
         }
-      } else {
-        setTimeout(() => this.setValue(v), 100);
       }
     },
 
