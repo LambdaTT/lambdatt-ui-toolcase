@@ -58,6 +58,7 @@ export default {
     },
     BeforeLoad: Function,
     AfterLoad: Function,
+    modelValue: {},
   },
 
   data() {
@@ -87,6 +88,14 @@ export default {
       if (!!this.errData) return 'error';
       if (!this.DataURL || this.data.length < 1) return 'empty';
       return 'ready';
+    },
+
+    output() {
+      return {
+        data: this.data,
+        params: this.params,
+        state: this.state
+      }
     }
   },
 
@@ -98,10 +107,18 @@ export default {
 
       if (!!this.DataURL)
         this.loadData()
+    },
+
+    state() {
+      this.emit()
     }
   },
 
   methods: {
+    emit() {
+      this.$emit('update:model-value', this.output)
+    },
+
     async loadData(idx, done) {
       if (this.loading) return;
 
@@ -113,10 +130,11 @@ export default {
         const response = await this.$http.get(this.DataURL, this.params);
 
         if (!!this.AfterLoad) this.AfterLoad(response, this.data);
-        this.hasMoreData = !!response.data?.length >= this.Limit;
 
         if (response.data?.length)
           this.data = [...this.data, ...response.data];
+
+        this.hasMoreData = !!response.data?.length;
 
         this.page++
         if (!!done) done();
