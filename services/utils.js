@@ -401,5 +401,14 @@ export default {
       (Array.isArray(value) && value.length === 0) ||
       (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
     );
+  },
+
+  filterObj(obj, fn) {
+    return Object.entries(obj)
+      .filter(fn)
+      .reduce((acc, [k, v]) => {
+        acc[k] = v
+        return acc
+      }, {});
   }
 }
