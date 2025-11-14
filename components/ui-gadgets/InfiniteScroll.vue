@@ -64,10 +64,11 @@ export default {
 
   data() {
     return {
-      // UI-State:
+      // Control:
       page: 1,
       hasMoreData: true,
-      loading: false,
+      startLoad: false,
+      isLoading: false,
       reloadCount: 0,
 
       // Data:
@@ -89,11 +90,11 @@ export default {
     state() {
       if (!!this.errData) return 'error';
 
-      const notLoading = !this.loading;
+      const loadIsNotStarted = !this.startLoad;
       const hasNoData = this.data.length < 1;
       const noDataOrNoURL = !this.DataURL || hasNoData;
 
-      if (notLoading && noDataOrNoURL) return 'empty';
+      if (loadIsNotStarted && noDataOrNoURL) return 'empty';
 
       return 'ready';
     },
@@ -109,14 +110,13 @@ export default {
 
   watch: {
     Filters() {
+      if (!this.DataURL || this.isLoading) return;
+
       this.page = 1;
       this.hasMoreData = true;
       this.data = [];
-
-      if (!!this.DataURL) {
-        this.loading = true;
-        this.reloadCount++;
-      }
+      this.startLoad = true;
+      this.reloadCount++;
     },
 
     state() {
@@ -137,11 +137,15 @@ export default {
     },
 
     async loadData(idx, done) {
-      if (!this.DataURL) return;
+      if (!this.DataURL || this.isLoading) return;
+
+      this.hasMoreData = false;
+      this.isLoading = true;
 
       try {
         let params = this.params
         if (!!this.BeforeLoad) params = this.BeforeLoad(this.params);
+
 
         const response = await this.$http.get(this.DataURL, params);
         var responseData = JSON.parse(JSON.stringify(response.data ?? []));
@@ -161,7 +165,8 @@ export default {
         this.errData = error
         console.error("There was a problem on the attempt to retrieve infinite scroll data.", error);
       } finally {
-        this.loading = false;
+        this.isLoading = false;
+        this.startLoad = false;
       }
     }
   },
