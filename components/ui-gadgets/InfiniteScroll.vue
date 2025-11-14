@@ -18,7 +18,7 @@
       <div class="text-h6">
         ERRO!
       </div>
-      <div class="text-caption"><b>{{ errData.response.status }}</b> {{ errData.response.statusText }}</div>
+      <div class="text-caption"><b>{{ errData.response?.status }}</b> {{ errData.response?.statusText }}</div>
       <small>Favor entrar em contato com o administrador do sistema.</small>
     </div>
 
@@ -65,8 +65,8 @@ export default {
     return {
       // UI-State:
       page: 1,
-      loading: false,
       hasMoreData: true,
+      loading: false,
 
       // Data:
       data: [],
@@ -86,7 +86,13 @@ export default {
 
     state() {
       if (!!this.errData) return 'error';
-      if (!this.DataURL || this.data.length < 1) return 'empty';
+
+      const notLoading = !this.loading;
+      const hasNoData = this.data.length < 1;
+      const noDataOrNoURL = !this.DataURL || hasNoData;
+
+      if (notLoading && noDataOrNoURL) return 'empty';
+
       return 'ready';
     },
 
@@ -106,7 +112,7 @@ export default {
       this.data = [];
 
       if (!!this.DataURL)
-        this.loadData()
+        this.loading = true;
     },
 
     state() {
@@ -119,27 +125,35 @@ export default {
       this.$emit('update:model-value', this.output)
     },
 
-    async loadData(idx, done) {
-      if (this.loading) return;
+    async checkForMoreData() {
+      const params = this.params;
+      params.$page++;
+      const response = await this.$http.get(this.DataURL, params);
+      return !!response.data?.length;
+    },
 
-      this.loading = true
+    async loadData(idx, done) {
+      if (!this.DataURL) return;
 
       try {
-        if (!!this.BeforeLoad) this.BeforeLoad(this.params);
+        let params = this.params
+        if (!!this.BeforeLoad) params = this.BeforeLoad(this.params);
 
-        const response = await this.$http.get(this.DataURL, this.params);
+        const response = await this.$http.get(this.DataURL, params);
+        var responseData = JSON.parse(JSON.stringify(response.data ?? []));
+        const cloneData = responseData;
 
-        if (!!this.AfterLoad) this.AfterLoad(response, this.data);
+        if (!!this.AfterLoad) responseData = this.AfterLoad(cloneData, response) ?? responseData;
 
-        if (response.data?.length)
-          this.data = [...this.data, ...response.data];
+        if (responseData.length)
+          this.data = [...this.data, ...responseData];
 
-        this.hasMoreData = !!response.data?.length;
+        this.hasMoreData = await this.checkForMoreData();
 
         this.page++
         if (!!done) done();
       } catch (error) {
-        this.page = 0;
+        this.page = 1;
         this.errData = error
         console.error("There was a problem on the attempt to retrieve infinite scroll data.", error);
       } finally {
