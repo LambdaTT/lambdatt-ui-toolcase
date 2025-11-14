@@ -24,7 +24,8 @@
 
     <!-- Ready -->
     <div v-if="state == 'ready'">
-      <q-infinite-scroll :disable="!hasMoreData" :scroll-target="$refs.scrollContainer" @load="loadData" :offset="250">
+      <q-infinite-scroll :key="reloadCount" :disable="!hasMoreData" :scroll-target="$refs.scrollContainer"
+        @load="loadData" :offset="250">
         <div class="q-pa-sm" v-for="(row, idx) in data" :key="idx">
           <slot :data="row"></slot>
         </div>
@@ -67,6 +68,7 @@ export default {
       page: 1,
       hasMoreData: true,
       loading: false,
+      reloadCount: 0,
 
       // Data:
       data: [],
@@ -111,8 +113,10 @@ export default {
       this.hasMoreData = true;
       this.data = [];
 
-      if (!!this.DataURL)
+      if (!!this.DataURL) {
         this.loading = true;
+        this.reloadCount++;
+      }
     },
 
     state() {
