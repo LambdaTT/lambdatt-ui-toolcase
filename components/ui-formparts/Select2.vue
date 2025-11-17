@@ -46,7 +46,7 @@ export default {
 
   computed: {
     options() {
-      if (!(!!this.rawData?.length)) {
+      if (!!this.rawData?.length) {
         return [...this.rawData].sort((a, b) =>
           String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
       }
