@@ -40,12 +40,13 @@ export default {
     return {
       rawData: [],
       selected: null,
+      debounceId: null,
     }
   },
 
   computed: {
     options() {
-      if (this.rawData.length > 0) {
+      if (!(!!this.rawData?.length)) {
         return [...this.rawData].sort((a, b) =>
           String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
       }
@@ -74,13 +75,18 @@ export default {
 
   methods: {
     setValue(v) {
-      if (!(this.Options?.length))
-        setTimeout(() => this.setValue(v), 100);
+      if(!!this.debounceId){
+        clearTimeout(this.debounceId);
+        this.debounceId = null;
+      }
+
+      if (!(this.rawData?.length))
+        this.debounceId = setTimeout(() => this.setValue(v), 100);
       else {
-        if (v === null || typeof v == 'undefined' || v === '') {
+        if (!(!!v)) {
           this.selected = null;
         } else {
-          this.selected = this.Options.find((opt) => {
+          this.selected = this.rawData.find((opt) => {
             return String(opt.value).toLocaleLowerCase() == String(v).toLocaleLowerCase();
           });
         }
@@ -88,7 +94,7 @@ export default {
     },
 
     filterFn(val, update) {
-      if (!!val == false || val === '') {
+      if (!(!!val)) {
         update(() => {
           this.rawData = this.Options;
         })
@@ -102,9 +108,8 @@ export default {
     },
   },
 
-  mounted() {
+  mounted(){
     this.rawData = this.Options;
-    this.setValue(this.modelValue);
   }
 }
 </script>
