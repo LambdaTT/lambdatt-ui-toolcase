@@ -162,7 +162,7 @@ export default {
 
   delete(datasetName, params, filterFunction) {
     var dataset = transactions[datasetName] ?? localStorage.getItem(datasetName);
-    if (dataset == null) throw `There's no dataset named ${datasetName}.`;
+    if (dataset == null) return;
     dataset = JSON.parse(dataset);
 
     if (!filterFunction) filterFunction = _filterFunction(params);

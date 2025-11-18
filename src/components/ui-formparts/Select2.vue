@@ -21,6 +21,7 @@ export default {
   name: 'ui-formparts-select2',
 
   props: {
+    EmitWholeOption: Boolean,
     BgColor: String,
     Options: Array,
     Label: String,
@@ -39,12 +40,13 @@ export default {
     return {
       rawData: [],
       selected: null,
+      debounceId: null,
     }
   },
 
   computed: {
     options() {
-      if (this.rawData.length > 0) {
+      if (!!this.rawData?.length) {
         return [...this.rawData].sort((a, b) =>
           String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
       }
@@ -54,7 +56,8 @@ export default {
 
   watch: {
     selected(v) {
-      this.$emit('update:model-value', v?.value);
+      const emitVal = !!this.EmitWholeOption ? v : v?.value;
+      this.$emit('update:model-value', emitVal);
     },
 
     modelValue(v) {
@@ -72,21 +75,26 @@ export default {
 
   methods: {
     setValue(v) {
-      if (this.Options !== null) {
-        if (v === null || typeof v == 'undefined' || v === '') {
+      if (!!this.debounceId) {
+        clearTimeout(this.debounceId);
+        this.debounceId = null;
+      }
+
+      if (!(this.rawData?.length))
+        this.debounceId = setTimeout(() => this.setValue(v), 100);
+      else {
+        if (!(!!v)) {
           this.selected = null;
         } else {
-          this.selected = this.Options.filter((opt) => {
+          this.selected = this.rawData.find((opt) => {
             return String(opt.value).toLocaleLowerCase() == String(v).toLocaleLowerCase();
-          })[0] ?? null;
+          });
         }
-      } else {
-        setTimeout(() => this.setValue(v), 100);
       }
     },
 
     filterFn(val, update) {
-      if (!!val == false || val === '') {
+      if (!(!!val)) {
         update(() => {
           this.rawData = this.Options;
         })
@@ -102,7 +110,6 @@ export default {
 
   mounted() {
     this.rawData = this.Options;
-    this.setValue(this.modelValue);
   }
 }
 </script>
