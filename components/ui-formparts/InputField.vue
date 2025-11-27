@@ -206,7 +206,7 @@ export default {
     return {
       value: null,
       inputRefId: null,
-      isPassword: false,
+      isPassword: true,
     }
   },
 
