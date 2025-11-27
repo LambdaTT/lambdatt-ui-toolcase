@@ -13,12 +13,17 @@
     </q-input>
 
     <!-- Input password: -->
-    <q-input v-if="type == 'password'" type="password" square filled hide-bottom-space :ref="inputRefId" :label="Label"
+    <q-input v-if="type == 'password'" :type="isPassword ? 'password' : 'text'" square filled hide-bottom-space :ref="inputRefId" :label="Label"
       :clearable="clearable" :dense="dense" :disable="disable" :readonly="readonly" :maxlength="maxlength"
       :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error"
       @focus="() => $emit('focus')" @update:model-value="updModelValue" @click="inputClicked" :error-message="ErrorMsg">
       <template v-slot:append>
         <slot name="buttons"></slot>
+        <q-icon
+          :name="isPassword ? 'visibility_off' : 'visibility'"
+          class="cursor-pointer"
+          @click="isPassword = !isPassword"
+        />
         <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
       </template>
     </q-input>
@@ -200,7 +205,8 @@ export default {
   data() {
     return {
       value: null,
-      inputRefId: null
+      inputRefId: null,
+      isPassword: false,
     }
   },
 
