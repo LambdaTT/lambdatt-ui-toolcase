@@ -1,10 +1,12 @@
 <template>
   <q-select behavior="menu" hide-bottom-space :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive"
-    :disable="disable" :hide-dropdown-icon="readonly" :dense="dense" filled square :clearable="clearable"
+    :disable="disable" hide-dropdown-icon :dense="dense" filled square :clearable="clearable"
     v-model="selected" use-input hide-selected fill-input input-debounce="300" :options="options" @filter="filterFn"
-    :label="Label" :error="Error" @focus="$emit('focus')" :readonly="readonly">
-    <template v-if="!!Icon" v-slot:append>
-      <q-icon :name="Icon" color="grey-8" />
+    :label="Label" :error="Error" @focus="$emit('focus')" :readonly="readonly"
+    @popup-show="isOpen = true" @popup-hide="isOpen = false">
+    <template v-slot:append>
+      <q-icon v-if="!readonly" :class="isOpen? 'rotate-180':''" name="arrow_drop_down" color="grey-8" style="transition: transform 0.28s" />
+      <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
     </template>
     <template v-slot:no-option>
       <q-item>
@@ -41,6 +43,7 @@ export default {
       rawData: [],
       selected: null,
       debounceId: null,
+      isOpen: false,
     }
   },
 
