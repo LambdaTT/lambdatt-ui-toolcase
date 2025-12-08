@@ -63,6 +63,9 @@
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </Select2>
 
+    <!-- Btn Selector -->
+     <BtnSelector :Label="Label" :Options="Options" v-if="type == 'btnselector'" v-model="value" @update:model-value="updModelValue" :readonly="readonly"></BtnSelector>
+
     <!-- Input phone: -->
     <InputPhone :Icon="Icon" v-if="type == 'phone'" :dense="dense" :clearable="clearable" :disable="disable"
       :readonly="readonly" v-model="value" :Default="Default" :Label="Label" :Error="Error"
@@ -144,6 +147,8 @@
 </template>
 
 <script>
+import BtnSelector from './BtnSelector.vue';
+
 export default {
   name: 'ui-formparts-inputfield',
 
@@ -206,7 +211,13 @@ export default {
   watch: {
     modelValue(v) {
       this.value = v;
-    }
+    },
+    /*value:{
+      handler(){
+        this.$emit('update:modelValue', this.value)
+      },
+      deep: true
+    }*/
   },
 
   methods: {

@@ -132,6 +132,7 @@ export default {
   },
 
   download: function ({ url, params, method, filename }) {
+    console.log(url)
     url = `${isExternal ? '' : process.env.API}${url}`;
 
     method = !!method ? method.toLowerCase() : 'get';
