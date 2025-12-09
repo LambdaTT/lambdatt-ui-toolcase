@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-input :disable="disable" :readonly="readonly" hide-bottom-space square filled :clearable="clearable" v-model="fileData.name"
-      @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'" @clear="clearFile"
+      @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'" @clear="clearFile" :hint="hint"
       :color="!!Color ? Color : 'primary'" @focus="$emit('focus')" :error="Error">
       <template v-slot:prepend>
         <q-icon name="cloud_upload" />
@@ -33,6 +33,7 @@ export default {
     Color: String,
     Error: Boolean,
     ReadAsURL: Boolean,
+    hint: String,
   },
 
   data() {

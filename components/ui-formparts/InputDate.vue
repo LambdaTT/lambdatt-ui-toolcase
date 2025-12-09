@@ -1,6 +1,7 @@
 <template>
+  {{ mask }}
   <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
-    :disable="disable" :readonly="readonly" maxlength="10" :mask="mask"
+    :disable="disable" :readonly="readonly" maxlength="10" :mask="mask" :hint="hint"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="hasError" :error-message="ErrorMsg"
     @focus="() => $emit('focus')">
     <template v-slot:append>
@@ -29,6 +30,7 @@ export default {
     Error: Boolean,
     ErrorMsg: String,
     BgColor: String,
+    hint: String,
   },
 
   data() {

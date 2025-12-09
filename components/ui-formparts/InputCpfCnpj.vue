@@ -1,5 +1,5 @@
 <template>
-  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="false" :dense="dense"
+  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="false" :dense="dense" :hint="hint"
     :disable="disable" :readonly="readonly" maxlength="18" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" :error-message="ErrorMsg"
     @focus="() => $emit('focus')">
@@ -28,6 +28,7 @@ export default {
     CpfOnly: Boolean,
     CnpjOnly: Boolean,
     BgColor: String,
+    hint: String,
   },
 
   data() {
