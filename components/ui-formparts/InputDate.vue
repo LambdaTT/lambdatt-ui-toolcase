@@ -1,5 +1,4 @@
 <template>
-  {{ mask }}
   <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
     :disable="disable" :readonly="readonly" maxlength="10" :mask="mask" :hint="hint"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="hasError" :error-message="ErrorMsg"
