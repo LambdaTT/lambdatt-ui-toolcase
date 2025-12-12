@@ -1,5 +1,5 @@
 <template>
-  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :dense="dense" readonly filled
+  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :dense="dense" readonly filled :hint="hint"
     square v-model="formattedDate" :error="Error" :label="Label">
     <template v-slot:append>
       <q-icon id="clear-button" v-if="!!formattedDate && !readonly" name="cancel" clickable @click="clear()"
@@ -54,6 +54,7 @@ export default {
     todayBtn: Boolean,
     minDatePage: String,
     maxDatePage: String,
+    hint: String,
   },
 
   data() {

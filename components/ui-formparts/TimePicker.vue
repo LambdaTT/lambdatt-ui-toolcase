@@ -1,5 +1,5 @@
 <template>
-  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :label="Label" :dense="dense"
+  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :label="Label" :dense="dense" :hint="hint"
     readonly filled v-model="value" :error="Error">
     <template v-slot:append>
       <q-icon id="clear-button" v-if="!!value && !readonly" name="cancel" clickable @click="clear()"
@@ -34,7 +34,8 @@ export default {
     modelValue: String,
     readonly: Boolean,
     Default: String,
-    withSeconds: Boolean
+    withSeconds: Boolean,
+    hint: String,
   },
 
   data() {
