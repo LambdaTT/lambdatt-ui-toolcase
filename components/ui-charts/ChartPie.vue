@@ -39,6 +39,7 @@ export default {
   name: 'ui-charts-pie',
 
   props: {
+    ShowLegend: { type: Boolean, default: false },
     ShowPercentage: { type: Boolean, default: false },
     BeforeLoad: Function,
     OnLoaded: Function,
@@ -167,7 +168,7 @@ export default {
       return {
         responsive: true,
         maintainAspectRatio: false,
-        legend: { display: false },
+        legend: { display: this.ShowLegend },
         tooltips: {
           callbacks: {
             label: function (tooltipItem, data) {
