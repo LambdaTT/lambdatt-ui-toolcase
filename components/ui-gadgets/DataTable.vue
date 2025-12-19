@@ -941,8 +941,8 @@ export default {
         for (let i = 0; i < this.Columns.length; i++) {
           let clm = this.Columns[i];
           if (!(this.visibleColumns.includes(clm.field))) continue;
-
-          rowValues.push(row[clm.field]);
+          const f = clm.export ?? clm.field
+          rowValues.push(row[f]);
         }
         data.push(rowValues);
       }
