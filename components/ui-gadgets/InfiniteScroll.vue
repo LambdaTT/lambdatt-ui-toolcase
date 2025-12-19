@@ -121,6 +121,13 @@ export default {
 
     state() {
       this.emit()
+    },
+
+    data:{
+      handler(){
+        this.emit()
+      }, 
+      deep: true
     }
   },
 
