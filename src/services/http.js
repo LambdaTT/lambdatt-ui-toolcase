@@ -39,7 +39,12 @@ export default {
     }
 
     isExternal = false;
-    var reqPromise = axios.get(url, reqConf);
+    try {
+      var reqPromise = axios.get(url, reqConf);
+    } catch (error) {
+      console.error(`HTTP SERVICE ERROR: on url (GET)'${url}':`, error);
+      throw error;
+    }
 
     // Evt Trigger
     eventbroadcaster.$broadcast('http-request-sent', reqPromise);
@@ -65,7 +70,12 @@ export default {
     }
 
     isExternal = false;
-    var reqPromise = axios.post(url, data, reqConf);
+    try {
+      var reqPromise = axios.post(url, data, reqConf);
+    } catch (error) {
+      console.error(`HTTP SERVICE ERROR: on url (POST)'${url}':`, error);
+      throw error;
+    }
 
     // Evt Trigger
     eventbroadcaster.$broadcast('http-request-sent', reqPromise);
@@ -91,7 +101,12 @@ export default {
     }
 
     isExternal = false;
-    var reqPromise = axios.put(url, data, reqConf);
+    try{
+      var reqPromise = axios.put(url, data, reqConf);
+    } catch(error){
+      console.error(`HTTP SERVICE ERROR: on url (PUT)'${url}':`, error);
+      throw error;
+    }
 
     // Evt Trigger
     eventbroadcaster.$broadcast('http-request-sent', reqPromise);
@@ -123,7 +138,12 @@ export default {
     }
 
     isExternal = false;
-    var reqPromise = axios.delete(url, reqConf);
+    try{
+      var reqPromise = axios.delete(url, reqConf);
+    } catch(error){
+      console.error(`HTTP SERVICE ERROR: on url (DELETE)'${url}':`, error);
+      throw error;
+    }
 
     // Evt Trigger
     eventbroadcaster.$broadcast('http-request-sent', reqPromise);
@@ -156,27 +176,32 @@ export default {
     }
 
     isExternal = false;
-    var reqPromise = axios[method](url, reqConf)
-      .then((response) => {
-        let fname;
-        if (!!filename) {
-          fname = filename;
-        } else if (!!response.headers['content-filename']) {
-          fname = decodeURI(response.headers['content-filename']).replaceAll('+', ' ');
-        } else fname = 'downloaded_file';
-
-        let blob = new Blob([response.data], { type: response.headers['content-type'] })
-        var _url = window.URL.createObjectURL(blob);
-
-        let anchorElement = document.createElement('a');
-        anchorElement.style.display = 'none';
-        anchorElement.href = _url;
-        anchorElement.download = fname;
-        anchorElement.click();
-
-        window.URL.revokeObjectURL(_url);
-        anchorElement.remove();
-      });
+    try{
+      var reqPromise = axios[method](url, reqConf)
+        .then((response) => {
+          let fname;
+          if (!!filename) {
+            fname = filename;
+          } else if (!!response.headers['content-filename']) {
+            fname = decodeURI(response.headers['content-filename']).replaceAll('+', ' ');
+          } else fname = 'downloaded_file';
+  
+          let blob = new Blob([response.data], { type: response.headers['content-type'] })
+          var _url = window.URL.createObjectURL(blob);
+  
+          let anchorElement = document.createElement('a');
+          anchorElement.style.display = 'none';
+          anchorElement.href = _url;
+          anchorElement.download = fname;
+          anchorElement.click();
+  
+          window.URL.revokeObjectURL(_url);
+          anchorElement.remove();
+        });
+    } catch(error){
+      console.error(`HTTP SERVICE ERROR: on url (DOWNLOAD/${method})'${url}':`, error);
+      throw error;
+    }
 
     // Evt Trigger
     eventbroadcaster.$broadcast('http-request-sent', reqPromise);
@@ -209,7 +234,12 @@ export default {
     }
 
     isExternal = false;
-    var reqPromise = axios[method](url, reqConf);
+    try{
+      var reqPromise = axios[method](url, reqConf);
+    } catch(error){
+      console.error(`HTTP SERVICE ERROR: on url (UPLOAD/${method})'${url}':`, error);
+      throw error;
+    }
 
     // Evt Trigger
     eventbroadcaster.$broadcast('http-request-sent', reqPromise);
