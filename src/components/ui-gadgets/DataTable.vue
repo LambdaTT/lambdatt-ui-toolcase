@@ -630,8 +630,8 @@ export default {
         }
       }
 
-      var filterParams = {};
       // Handle filters:
+      var filterParams = {};
       for (let k in this.filterParams) {
         let _f = this.columnFilters.find(x => x.field == k);
         if (_f.type == 'text')
