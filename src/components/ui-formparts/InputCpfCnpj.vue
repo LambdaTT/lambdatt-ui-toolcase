@@ -1,5 +1,5 @@
 <template>
-  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="false" :dense="dense"
+  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
     :disable="disable" :readonly="readonly" maxlength="18" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" :error-message="ErrorMsg"
     @focus="() => $emit('focus')">
@@ -32,20 +32,17 @@ export default {
 
   data() {
     return {
-      redundance: null,
       value: null,
     }
   },
 
   computed: {
     mask() {
-      let mask = !this.CnpjOnly ? '###.###.###-###' : '##.###.###/####-##';
+      let mask = '###.###.###-###';
 
-      const control = this.value ?? this.redundance
+      if (!this.value) return mask;
 
-      if (!control) return mask;
-
-      const onlyDigits = control.replace(/\D+/g, '');
+      const onlyDigits = this.value.replace(/\D+/g, '');
 
       if (onlyDigits.length > 11) mask = '##.###.###/####-##';
 
@@ -55,13 +52,7 @@ export default {
 
   watch: {
     modelValue(val) {
-      if (this.redundance !== false)
-        this.redundance = val ?? null;
-
-      setTimeout(() => {
-        this.redundance = false
-        this.value = val ?? null
-      }, 200)
+      this.value = val ?? null
     },
 
     value(val) {
