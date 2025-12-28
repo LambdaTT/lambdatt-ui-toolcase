@@ -32,6 +32,7 @@ export default {
 
   data() {
     return {
+      redundance: null,
       value: null,
     }
   },
@@ -40,10 +41,12 @@ export default {
     mask() {
       let mask = !this.CnpjOnly ? '###.###.###-###' : '##.###.###/####-##';
 
-      if (!this.value) return mask;
+      const control = this.value ?? this.redundance
 
-      const onlyDigits = this.value.replace(/\D+/g, '');
-      
+      if (!control) return mask;
+
+      const onlyDigits = control.replace(/\D+/g, '');
+
       if (onlyDigits.length > 11) mask = '##.###.###/####-##';
 
       return mask;
@@ -52,7 +55,13 @@ export default {
 
   watch: {
     modelValue(val) {
-      this.value = val ?? null;
+      if (this.redundance !== false)
+        this.redundance = val ?? null;
+
+      setTimeout(() => {
+        this.redundance = false
+        this.value = val ?? null
+      }, 200)
     },
 
     value(val) {
@@ -60,12 +69,12 @@ export default {
       else if (val.length < 14) return;
 
       this.emit();
-    }
+    },
   },
 
   methods: {
     clear() {
-      this.value = this.Default || null;
+      this.value = this.Default ?? null;
       this.emit();
     },
 
