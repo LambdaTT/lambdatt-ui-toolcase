@@ -1,6 +1,6 @@
 <template>
   <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
-    :disable="disable" :readonly="readonly" maxlength="10" :mask="mask"
+    :disable="disable" :readonly="readonly" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="hasError" :error-message="ErrorMsg"
     @focus="() => $emit('focus')">
     <template v-slot:append>
@@ -34,7 +34,6 @@ export default {
   data() {
     return {
       value: null,
-      mask: `${this.withTime ? `##/##/#### ##:##${this.withSeconds ? ':##' : ''}` : '##/##/####'}`,
       state: 'pending',
       error: false,
       errormsg: '',
@@ -44,6 +43,10 @@ export default {
   computed: {
     hasError() {
       return this.state === 'error' || this.error || this.Error;
+    },
+
+    mask() {
+      return this.withTime ? `##/##/#### ##:##${this.withSeconds ? ':##' : ''}` : '##/##/####';
     }
   },
 
