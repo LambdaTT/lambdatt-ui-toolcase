@@ -121,7 +121,7 @@
                 </div>
 
                 <!-- Especial td of actions -->
-                <div class="text-center" v-if="column.name == 'actions' && showActions">
+                <div class="text-center" v-if="column.name == 'actions' && showActionsColumn">
                   <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
                     <q-tooltip>Ações do registro</q-tooltip>
                     <q-menu>
@@ -131,20 +131,15 @@
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
-                          <q-item-section>
-                            {{ a.label }}
-                          </q-item-section>
+                          <q-item-section>{{ a.label }}</q-item-section>
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
                         <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
-                          @click="a.fn(row)">
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
-                          <q-item-section>
-                            {{ a.label }}
-                          </q-item-section>
+                          <q-item-section>{{ a.label }}</q-item-section>
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
                       </q-list>
@@ -155,8 +150,7 @@
             </tr>
             <tr v-else>
               <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot name="interval-row"
-                  :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+                <slot name="interval-row" :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
                 </slot>
               </td>
             </tr>
@@ -168,12 +162,8 @@
           <tr>
             <td class="q-pa-lg text-center text-red-3" :colspan="columns.length">
               <div>
-                <div>
-                  <q-icon size="lg" name="fas fa-bomb"></q-icon>
-                </div>
-                <div class="text-h6">
-                  ERRO!
-                </div>
+                <div><q-icon size="lg" name="fas fa-bomb"></q-icon></div>
+                <div class="text-h6">ERRO!</div>
                 <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
                 <small>Favor entrar em contato com o administrador do sistema.</small>
               </div>
@@ -186,12 +176,8 @@
           <tr>
             <td class="q-pa-lg text-center text-grey-8" :colspan="columns.length">
               <div>
-                <div>
-                  <q-icon size="lg" name="far fa-folder-open"></q-icon> *
-                </div>
-                <div class="text-h6">
-                  Lista Vazia.
-                </div>
+                <div><q-icon size="lg" name="far fa-folder-open"></q-icon> *</div>
+                <div class="text-h6">Lista Vazia.</div>
               </div>
             </td>
           </tr>
@@ -201,12 +187,8 @@
         <tbody v-if="state == 'loading'">
           <tr>
             <td class="q-pa-lg text-center text-grey-8" :colspan="columns.length">
-              <div>
-                <q-spinner-gears size="lg" />
-              </div>
-              <div class="text-caption">
-                Carregando...
-              </div>
+              <div><q-spinner-gears size="lg" /></div>
+              <div class="text-caption">Carregando...</div>
             </td>
           </tr>
         </tbody>
@@ -442,21 +424,26 @@ export default {
   },
 
   computed: {
-    showActions() {
-      for (let i = 0; i < this.RowActions.length; i++) {
-        let a = this.RowActions[i];
-        if (!!a.hide) {
-          if (typeof a.hide == 'function') {
-            for (let j = 0; j < this.dataInPage.length; i++) {
-              let row = this.dataInPage[j];
-              if (!a.hide(row)) return true;
-            }
-          } else return !a.hide;
-        } else return true;
-      }
-
-      return false;
+    showActionsColumn() {
+      // Show the actions column if at least one row has a visible action
+      return this.dataInPage.some(row => this.showActionsBtnInRow(row));
     },
+
+    // showActions() {
+    //   for (let i = 0; i < this.RowActions.length; i++) {
+    //     let a = this.RowActions[i];
+    //     if (!!a.hide) {
+    //       if (typeof a.hide == 'function') {
+    //         for (let j = 0; j < this.dataInPage.length; i++) {
+    //           let row = this.dataInPage[j];
+    //           if (!a.hide(row)) return true;
+    //         }
+    //       } else return !a.hide;
+    //     } else return true;
+    //   }
+
+    //   return false;
+    // },
 
     columnOptions() {
       return this.columns.map(clm => {
@@ -519,56 +506,69 @@ export default {
     },
 
     searchableColumns() {
-      var searchableColumns = [];
-      for (let i = 0; i < this.columns.length; i++) {
-        let column = this.columns[i];
-        if (!column.field || column.field == '' || column.searchable === false) continue;
-        if (column.field in this.filterParams) continue;
+      return this.columns.filter(col => {
+        const hasValidField = col.field && col.field !== '';
+        const isSearchable = col.searchable !== false;
+        const isNotFiltered = !(col.field in this.filterParams);
+    
+        return hasValidField && isSearchable && isNotFiltered;
+      })
 
-        searchableColumns.push(column);
-      }
-
-      return searchableColumns;
+      // Legacy Code:
+      // var searchableColumns = [];
+      // for (let i = 0; i < this.columns.length; i++) {
+      //   let column = this.columns[i];
+      //   if (!column.field || column.field == '' || column.searchable === false) continue;
+      //   if (column.field in this.filterParams) continue;
+      //   searchableColumns.push(column);
+      // }
+      // return searchableColumns;
     },
 
     rows() {
-      var result = [...this.dataInPage];
+      if(typeof this.IntervalRule !== 'function') return [...this.dataInPage];
 
-      if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
-        for (let i = 0; i < this.dataInPage.length; i++) {
-          let previous = this.dataInPage[i - 1];
-          let current = this.dataInPage[i];
-          let next = this.dataInPage[i + 1];
+      const result = [];
 
-          if (this.IntervalRule(previous, current, next) === true) {
-            result.splice(i + 1, 0, 'interval');
-            i++;
-          }
-        }
-      }
+      this.dataInPage.forEach((current, i) => {
+        const prev = this.dataInPage[i - 1];
+        const next = this.dataInPage[i + 1];
+
+        result.push(current);
+        if(this.IntervalRule(prev, current, next) === true) result.push('interval');
+      });
 
       return result;
+
+      // Legacy Code:
+      // var result = [...this.dataInPage];
+      // if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
+      //   for (let i = 0; i < this.dataInPage.length; i++) {
+      //     let previous = this.dataInPage[i - 1];
+      //     let current = this.dataInPage[i];
+      //     let next = this.dataInPage[i + 1];
+      //     if (this.IntervalRule(previous, current, next) === true) {
+      //       result.splice(i + 1, 0, 'interval');
+      //       i++;
+      //     }
+      //   }
+      // }
+      // return result;
     }
   },
 
   methods: {
     showActionsBtnInRow(row) {
-      var show = false;
-      for (let i = 0; i < this.RowActions.length; i++) {
-        let a = this.RowActions[i];
-        if ('hide' in a) {
-          if (typeof a.hide == 'function') {
-            if (!a.hide(row)) {
-              show = true;
-            }
-          } else {
-            if (!a.hide) {
-              show = true;
-            }
-          }
-        } else show = true;
-      }
-      return show;
+      return this.RowActions.some(action => {
+        const hide = action.hide;
+
+        // Execution
+        if (hide === undefined) return true;
+        if (hide === Boolean) return !hide;
+        if (typeof hide === 'function') return !hide(row, action);
+
+        return true;
+      });
     },
 
     filterHandler(filtersObject, name) {
@@ -630,8 +630,8 @@ export default {
         }
       }
 
-      // Handle filters:
       var filterParams = {};
+      // Handle filters:
       for (let k in this.filterParams) {
         let _f = this.columnFilters.find(x => x.field == k);
         if (_f.type == 'text')
