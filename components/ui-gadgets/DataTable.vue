@@ -81,6 +81,7 @@
     </div>
 
     <q-separator></q-separator>
+
     <!-- Table -->
     <div class="datatable-container">
       <table>
@@ -134,7 +135,8 @@
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
                         <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
+                          @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
@@ -149,7 +151,8 @@
             </tr>
             <tr v-else>
               <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot name="interval-row" :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+                <slot name="interval-row"
+                  :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
                 </slot>
               </td>
             </tr>
@@ -191,6 +194,23 @@
             </td>
           </tr>
         </tbody>
+
+        <tfoot v-if="hasAnyColumnFooter">
+          <tr class="text-bold">
+            <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
+              v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
+              <div v-if="!!column.footer">
+                <div v-if="`foot-${column.name}` in $slots">
+                  <slot :name="`foot-${column.name}`"></slot>
+                </div>
+                <div v-else>
+                  {{ typeof column.footer == 'function' ? column.footer() : column.footer }}
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
 
       </table>
 
@@ -493,7 +513,7 @@ export default {
         const hasValidField = col.field && col.field !== '';
         const isSearchable = col.searchable !== false;
         const isNotFiltered = !(col.field in this.filterParams);
-    
+
         return hasValidField && isSearchable && isNotFiltered;
       })
 
@@ -509,7 +529,7 @@ export default {
     },
 
     rows() {
-      if(typeof this.IntervalRule !== 'function') return [...this.dataInPage];
+      if (typeof this.IntervalRule !== 'function') return [...this.dataInPage];
 
       const result = [];
 
@@ -518,7 +538,7 @@ export default {
         const next = this.dataInPage[i + 1];
 
         result.push(current);
-        if(this.IntervalRule(prev, current, next) === true) result.push('interval');
+        if (this.IntervalRule(prev, current, next) === true) result.push('interval');
       });
 
       return result;
@@ -537,6 +557,10 @@ export default {
       //   }
       // }
       // return result;
+    },
+
+    hasAnyColumnFooter() {
+      return this.Columns.some(column => !!column.footer);
     }
   },
 
@@ -548,7 +572,7 @@ export default {
         // Execution
         if (hide === undefined) return true;
         if (hide === Boolean) return !hide;
-        if(typeof hide === 'function') return !hide(row, action);
+        if (typeof hide === 'function') return !hide(row, action);
 
         return true;
       });
