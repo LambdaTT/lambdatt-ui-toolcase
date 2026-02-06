@@ -195,7 +195,7 @@
           </tr>
         </tbody>
 
-        <tfoot v-if="hasAnyColumnFooter">
+        <tfoot v-if="hasAnyColumnFooter || 'footer' in $slots">
           <tr class="text-bold">
             <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
               :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
@@ -205,10 +205,13 @@
                   <slot :name="`foot-${column.name}`"></slot>
                 </div>
                 <div v-else>
-                  {{ typeof column.footer == 'function' ? column.footer() : column.footer }}
+                  {{ typeof column.footer == 'function' ? column.footer(rawData) : column.footer }}
                 </div>
               </div>
             </td>
+          </tr>
+          <tr v-if="'footer' in $slots">
+            <slot :name="`footer`"></slot>
           </tr>
         </tfoot>
 
