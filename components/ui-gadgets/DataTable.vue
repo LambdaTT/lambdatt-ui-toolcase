@@ -1070,12 +1070,16 @@ th {
   /* Adjusts width to fit the content */
 }
 
+tbody>tr:nth-child(even) {
+  background-color: #e2e2e2;
+}
+
 td {
   min-width: 125px;
 }
 
-tbody>tr:nth-child(even) {
-  background-color: #e2e2e2;
+tfoot {
+  position: sticky;
 }
 
 select {
