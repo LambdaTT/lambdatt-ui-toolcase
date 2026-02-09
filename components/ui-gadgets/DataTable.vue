@@ -23,7 +23,8 @@
             <q-option-group v-model="visibleColumns" type="checkbox" :options="columnOptions"></q-option-group>
           </q-menu>
         </q-btn>
-        <q-btn :disable="this.fullData.length === 0" v-if="!!Export" flat round color="primary" size="sm" icon="fas fa-file-download">
+        <q-btn :disable="this.fullData.length === 0" v-if="!!Export" flat round color="primary" size="sm"
+          icon="fas fa-file-download">
           <q-tooltip>Opções de Exportação</q-tooltip>
           <q-menu class="q-pa-sm">
             <q-list class="text-primary">
@@ -39,7 +40,8 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn :disable="this.fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm" icon="fas fa-print" @click="printData()">
+        <q-btn :disable="this.fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm"
+          icon="fas fa-print" @click="printData()">
           <q-tooltip>Imprimir</q-tooltip>
         </q-btn>
       </div>
@@ -205,7 +207,7 @@
                   <slot :name="`foot-${column.name}`"></slot>
                 </div>
                 <div v-else>
-                  {{ typeof column.footer == 'function' ? column.footer(rawData) : column.footer }}
+                  {{ typeof column.footer == 'function' ? column.footer(fullData) : column.footer }}
                 </div>
               </div>
             </td>
@@ -230,10 +232,16 @@
             <option value="25">25</option>
             <option value="50">50</option>
           </select>
-          registros
+          registros de um total de
+          <b v-if="fullData.length">{{ fullData.length }}</b>
+          <q-spinner-gears v-else size="xs" />.
         </div>
       </div>
       <div :class="`col-12 col-md-6 ${$q.screen.gt.sm ? 'text-right' : 'text-center q-mt-md'}`">
+        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(1)">
+          <q-tooltip>Primeira Página</q-tooltip>
+          <q-icon size="xs" name="fas fa-angles-left"></q-icon>
+        </q-btn>
         <q-btn color="primary" @click="goToPage('prev')">
           <q-tooltip>Página Anterior</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-left"></q-icon>
@@ -246,6 +254,10 @@
         <q-btn color="primary" @click="goToPage('next')">
           <q-tooltip>Próxima Página</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-right"></q-icon>
+        </q-btn>
+        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(this.pagination.finalPage)">
+          <q-tooltip>Última Página</q-tooltip>
+          <q-icon size="xs" name="fas fa-angles-right"></q-icon>
         </q-btn>
       </div>
     </div>
@@ -444,6 +456,16 @@ export default {
       },
       deep: true
     },
+
+    fullData: {
+      handler(data) {
+        if (data.length > 0) {
+          this.pagination.finalPage = Math.ceil(data.length / this.pagination.limit);
+        } else {
+          this.pagination.finalPage = this.pagination.currentPage + (Math.ceil(this.rawData.length / this.pagination.limit) - 1);
+        }
+      }
+    }
   },
 
   computed: {
@@ -520,16 +542,6 @@ export default {
 
         return hasValidField && isSearchable && isNotFiltered;
       })
-
-      // Legacy Code:
-      // var searchableColumns = [];
-      // for (let i = 0; i < this.columns.length; i++) {
-      //   let column = this.columns[i];
-      //   if (!column.field || column.field == '' || column.searchable === false) continue;
-      //   if (column.field in this.filterParams) continue;
-      //   searchableColumns.push(column);
-      // }
-      // return searchableColumns;
     },
 
     rows() {
@@ -546,21 +558,6 @@ export default {
       });
 
       return result;
-
-      // Legacy Code:
-      // var result = [...this.dataInPage];
-      // if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
-      //   for (let i = 0; i < this.dataInPage.length; i++) {
-      //     let previous = this.dataInPage[i - 1];
-      //     let current = this.dataInPage[i];
-      //     let next = this.dataInPage[i + 1];
-      //     if (this.IntervalRule(previous, current, next) === true) {
-      //       result.splice(i + 1, 0, 'interval');
-      //       i++;
-      //     }
-      //   }
-      // }
-      // return result;
     },
 
     hasAnyColumnFooter() {
@@ -742,6 +739,7 @@ export default {
     async loadData(ignorePagination) {
       if (!this.loading) {
         this.loadFullData();
+
         // turn on loading indicator
         this.loading = true;
         this.error = null;
@@ -869,15 +867,31 @@ export default {
       const data = this.fullData;
       this.loading = false;
 
-      const content = `${this.buildContentTable(data)}`;
+      const html = this.buildContentTableForPrint(data);
 
-      // Open a new window or tab for printing
-      const newWindow = window.open();
-      newWindow.document.open();
-      newWindow.document.write(content);
-      newWindow.document.close();
-      newWindow.print();
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // dá um tempo pro layout e reflow terminarem
+      await new Promise(r => setTimeout(r, 500));
+
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+
+      setTimeout(() => iframe.remove(), 1500);
     },
+
 
     exposeFactory() {
       this.$emit('update:model-value', {
@@ -956,6 +970,60 @@ export default {
   `;
 
       return content;
+    },
+
+    buildContentTableForPrint(data) {
+      const visible = this.Columns.filter(c => this.visibleColumns.includes(c.field));
+
+      let content = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Impressão</title>
+  <style>
+    @page { margin: 10mm; }
+    body { font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #000; padding: 4px; text-align: left; }
+    th { background: #f4f4f4; text-align: center; }
+
+    thead { display: table-header-group; } /* repete header */
+    tfoot { display: table-footer-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+<table>
+  <thead>
+    <tr>${visible.map(c => `<th>${this.escapeXml(c.label)}</th>`).join("")}</tr>
+  </thead>
+  <tbody>`;
+
+      for (let j = 0; j < data.length; j++) {
+        const row = data[j];
+        content += "<tr>";
+        for (const clm of visible) {
+          const val = clm.format ? clm.format(row) : (row?.[clm.field] ?? "");
+          content += `<td>${this.escapeHtml(String(val))}</td>`;
+        }
+        content += "</tr>";
+      }
+
+      content += `</tbody>
+</table>
+</body>
+</html>`;
+
+      return content;
+    },
+
+    escapeHtml(s) {
+      return s
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     },
 
     buildCsvContent(rawdata) {
