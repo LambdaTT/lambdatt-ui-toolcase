@@ -225,7 +225,7 @@
     <div v-if="!IgnorePagination" class="row q-mt-lg" v-show="state == 'ready'">
       <div :class="`col-12 col-md-6 ${$q.screen.lt.md ? 'text-center' : ''}`">
         <div>
-          Mostrar
+          Mostrar até
           <select class="q-pa-xs" v-model="pagination.limit">
             <option value="5">5</option>
             <option value="10">10</option>
