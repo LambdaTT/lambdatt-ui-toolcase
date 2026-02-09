@@ -23,7 +23,7 @@
             <q-option-group v-model="visibleColumns" type="checkbox" :options="columnOptions"></q-option-group>
           </q-menu>
         </q-btn>
-        <q-btn v-if="!!Export" flat round color="primary" size="sm" icon="fas fa-file-download">
+        <q-btn :disable="this.fullData.length === 0" v-if="!!Export" flat round color="primary" size="sm" icon="fas fa-file-download">
           <q-tooltip>Opções de Exportação</q-tooltip>
           <q-menu class="q-pa-sm">
             <q-list class="text-primary">
@@ -39,7 +39,7 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn v-if="!!Printable" flat round color="primary" size="sm" icon="fas fa-print" @click="printData()">
+        <q-btn :disable="this.fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm" icon="fas fa-print" @click="printData()">
           <q-tooltip>Imprimir</q-tooltip>
         </q-btn>
       </div>
@@ -134,7 +134,8 @@
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
                         <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
+                          @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
@@ -149,7 +150,8 @@
             </tr>
             <tr v-else>
               <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot name="interval-row" :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+                <slot name="interval-row"
+                  :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
                 </slot>
               </td>
             </tr>
@@ -297,6 +299,7 @@ export default {
       columns: [],
 
       // Data:
+      fullData: [],
       rawData: [],
       dataInPage: [],
       loadTimeout: null,
@@ -493,7 +496,7 @@ export default {
         const hasValidField = col.field && col.field !== '';
         const isSearchable = col.searchable !== false;
         const isNotFiltered = !(col.field in this.filterParams);
-    
+
         return hasValidField && isSearchable && isNotFiltered;
       })
 
@@ -509,7 +512,7 @@ export default {
     },
 
     rows() {
-      if(typeof this.IntervalRule !== 'function') return [...this.dataInPage];
+      if (typeof this.IntervalRule !== 'function') return [...this.dataInPage];
 
       const result = [];
 
@@ -518,7 +521,7 @@ export default {
         const next = this.dataInPage[i + 1];
 
         result.push(current);
-        if(this.IntervalRule(prev, current, next) === true) result.push('interval');
+        if (this.IntervalRule(prev, current, next) === true) result.push('interval');
       });
 
       return result;
@@ -548,7 +551,7 @@ export default {
         // Execution
         if (hide === undefined) return true;
         if (hide === Boolean) return !hide;
-        if(typeof hide === 'function') return !hide(row, action);
+        if (typeof hide === 'function') return !hide(row, action);
 
         return true;
       });
@@ -713,6 +716,7 @@ export default {
 
     async loadData(ignorePagination) {
       if (!this.loading) {
+        this.loadFullData();
         // turn on loading indicator
         this.loading = true;
         this.error = null;
@@ -729,7 +733,7 @@ export default {
           if (this.BeforeLoad) await this.BeforeLoad(params);
 
           // fetch data from server
-          var response = await this.$http.get(this.DataURL, params);
+          const response = await this.$http.get(this.DataURL, params);
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
@@ -743,6 +747,16 @@ export default {
           throw err;
         }
       }
+    },
+
+    async loadFullData() {
+      this.fullData = [];
+      var params = this.setParams();
+      delete params.$page;
+      delete params.$limit;
+
+      const response = await this.$http.get(this.DataURL, params);
+      this.fullData = response.data;
     },
 
     paginate(data) {
@@ -789,8 +803,7 @@ export default {
     async exportFile(filetype, filename) {
       filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`;
 
-      const response = await this.loadData(true);
-      var data = response.data;
+      var data = this.fullData;
       var blobType;
       var content;
 
@@ -828,8 +841,7 @@ export default {
     },
 
     async printData() {
-      const response = await this.loadData(true);
-      var data = response.data;
+      const data = this.fullData;
       this.loading = false;
 
       const content = `${this.buildContentTable(data)}`;
