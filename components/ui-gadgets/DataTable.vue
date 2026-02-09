@@ -81,6 +81,7 @@
     </div>
 
     <q-separator></q-separator>
+
     <!-- Table -->
     <div class="datatable-container">
       <table>
@@ -193,6 +194,26 @@
             </td>
           </tr>
         </tbody>
+
+        <tfoot v-if="hasAnyColumnFooter || 'footer' in $slots">
+          <tr class="text-bold">
+            <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
+              v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
+              <div v-if="!!column.footer">
+                <div v-if="`foot-${column.name}` in $slots">
+                  <slot :name="`foot-${column.name}`"></slot>
+                </div>
+                <div v-else>
+                  {{ typeof column.footer == 'function' ? column.footer(rawData) : column.footer }}
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="'footer' in $slots">
+            <slot :name="`footer`"></slot>
+          </tr>
+        </tfoot>
 
       </table>
 
@@ -540,6 +561,10 @@ export default {
       //   }
       // }
       // return result;
+    },
+
+    hasAnyColumnFooter() {
+      return this.Columns.some(column => !!column.footer);
     }
   },
 
@@ -1055,12 +1080,16 @@ th {
   /* Adjusts width to fit the content */
 }
 
+tbody>tr:nth-child(even) {
+  background-color: #e2e2e2;
+}
+
 td {
   min-width: 125px;
 }
 
-tbody>tr:nth-child(even) {
-  background-color: #e2e2e2;
+tfoot {
+  position: sticky;
 }
 
 select {
