@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-xs q-pa-md-none">
     <!-- Options and Controls -->
-    <div class="row q-pb-sm">
+    <div class="row q-pb-sm items-center">
       <div class="col-12 col-md-8">
         <!-- Custom Resources -->
         <q-btn v-for="(r, i) in CustomResources" :key="i" flat round color="primary" size="sm"
