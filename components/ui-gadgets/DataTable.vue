@@ -223,6 +223,9 @@
 
     <!-- Pagination -->
     <div v-if="!IgnorePagination" class="row q-mt-lg" v-show="state == 'ready'">
+      <div class="col-12 q-py-sm">
+        <q-separator></q-separator>
+      </div>
       <div :class="`col-12 col-md-6 ${$q.screen.lt.md ? 'text-center' : ''}`">
         <div>
           Mostrar até
