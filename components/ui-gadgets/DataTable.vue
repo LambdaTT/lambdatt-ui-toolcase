@@ -113,7 +113,7 @@
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
                   <div v-if="!(`cell-${column.name}` in $slots)">
-                    {{ column.format ? column.format(row) : row[column.field] }}
+                    {{ column.format ? column.format(row[column.field]) : row[column.field] }}
                   </div>
 
                   <!-- In case a template is set for the td-->
