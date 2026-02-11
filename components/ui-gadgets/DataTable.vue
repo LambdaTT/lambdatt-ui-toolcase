@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-xs q-pa-md-none">
     <!-- Options and Controls -->
-    <div class="row q-pb-sm">
+    <div class="row q-pb-sm items-center">
       <div class="col-12 col-md-8">
         <!-- Custom Resources -->
         <q-btn v-for="(r, i) in CustomResources" :key="i" flat round color="primary" size="sm"
@@ -113,7 +113,7 @@
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
                   <div v-if="!(`cell-${column.name}` in $slots)">
-                    {{ column.format ? column.format(row) : row[column.field] }}
+                    {{ column.format ? column.format(row[column.field]) : row[column.field] }}
                   </div>
 
                   <!-- In case a template is set for the td-->
@@ -223,6 +223,9 @@
 
     <!-- Pagination -->
     <div v-if="!IgnorePagination" class="row q-mt-lg" v-show="state == 'ready'">
+      <div class="col-12 q-py-sm">
+        <q-separator></q-separator>
+      </div>
       <div :class="`col-12 col-md-6 ${$q.screen.lt.md ? 'text-center' : ''}`">
         <div>
           Mostrar até

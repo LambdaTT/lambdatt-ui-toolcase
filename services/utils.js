@@ -390,6 +390,14 @@ export default {
     });
   },
 
+  years(startYear) {
+    const currentYear = new Date().getFullYear();
+    return Array.from(
+      { length: currentYear - startYear + 1 },
+      (_, i) => startYear + i
+    );
+  },
+
   empty(value) {
     return (
       value === undefined ||
@@ -414,11 +422,13 @@ export default {
 
   // Format Number Functions:
   formatMoney(value) {
-    if (value == null) return '-'
-    return new Intl.NumberFormat('pt-BR', {
+    const moneyFormatter = new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value)
+    });
+
+    if (value == null || isNaN(value)) return 'R$ 0,00';
+    return moneyFormatter.format(value);
   },
 
   formatPercent(value) {

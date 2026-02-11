@@ -44,7 +44,9 @@ export default {
 
     Multiple: Boolean,
     UseChips: Boolean,
-    StackLabel: Boolean
+    StackLabel: Boolean,
+
+    Default: [String, Object, Number],
   },
 
   data() {
@@ -58,6 +60,7 @@ export default {
 
   watch: {
     selected(v) {
+      v = v ?? this.Default ?? null;
       this.emitValue(v)
     },
 
@@ -122,12 +125,22 @@ export default {
         return
       }
 
-      const payload = v ? v.value : null
+      if(v instanceof Object && "value" in v) v = v.value;
+
+      const payload = v ? v : null
       if (payload === this.modelValue) return
 
       this.internalUpdate = true
       this.$emit('update:model-value', payload)
     }
   },
+
+  mounted() {
+    setTimeout(() => {
+      if (this.Default) {
+        this.selected = this.Default;
+      }
+    }, 200);
+  }
 }
 </script>
