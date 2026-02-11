@@ -562,6 +562,14 @@ export default {
 
     hasAnyColumnFooter() {
       return this.Columns.some(column => !!column.footer);
+    },
+
+    filtersValues(){
+      return {
+        searchTerm: this.searchTerm,
+        ...this.filterParams,
+        ...this.ExtraFilters
+      }
     }
   },
 
@@ -892,12 +900,11 @@ export default {
       setTimeout(() => iframe.remove(), 1500);
     },
 
-
     exposeFactory() {
       this.$emit('update:model-value', {
         state: this.state,
         params: this.setParams(),
-        rawData: this.rawData,
+        filterValues: this.filtersValues,
         dataInPage: this.dataInPage,
         visibleColumns: this.visibleColumns,
         reload: this.reload
