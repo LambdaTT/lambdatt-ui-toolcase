@@ -356,8 +356,8 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         if (!!this.searchTerm)
-          localStorage.setItem(`Datatable.${this.Name}.searchTerm`, this.searchTerm)
-        else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
+          localStorage.setItem(`Datatable.${this.sluggedName}.searchTerm`, this.searchTerm)
+        else localStorage.removeItem(`Datatable.${this.sluggedName}.searchTerm`)
 
         const response = await this.loadData(this.IgnorePagination);
         if (response) this.rawData = response.data;
@@ -365,11 +365,11 @@ export default {
     },
 
     'pagination.currentPage'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.currentPage = this.pagination.currentPage;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -380,12 +380,12 @@ export default {
 
     'pagination.limit'() {
       this.pagination.currentPage = 1;
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.currentPage = this.pagination.currentPage;
       persistedPagination.limit = this.pagination.limit;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -395,11 +395,11 @@ export default {
     },
 
     'pagination.sortBy'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.sortBy = this.pagination.sortBy;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -409,11 +409,11 @@ export default {
     },
 
     'pagination.sortDir'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.sortDir = this.pagination.sortDir;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -441,7 +441,7 @@ export default {
         this.visibleColumns = [this.Columns[0].field];
       }
 
-      localStorage.setItem(`Datatable.${this.Name}.visibleColumns`, JSON.stringify(newVal));
+      localStorage.setItem(`Datatable.${this.sluggedName}.visibleColumns`, JSON.stringify(newVal));
     },
 
     loading(isLoading) {
@@ -567,12 +567,17 @@ export default {
       return this.Columns.some(column => !!column.footer);
     },
 
-    filtersValues(){
+    filtersValues() {
       return {
         searchTerm: this.searchTerm,
         ...this.filterParams,
         ...this.ExtraFilters
       }
+    },
+
+    sluggedName() {
+      // Remove spaces, lowercases and replace accents and special chars:
+      return this.Name.toSlug();
     }
   },
 
@@ -592,10 +597,10 @@ export default {
 
     filterHandler(filtersObject, name) {
       // Save filters state:
-      localStorage.removeItem(`Datatable.${this.Name}.${name}`);
+      localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
 
       if (Object.keys(filtersObject).length > 0)
-        localStorage.setItem(`Datatable.${this.Name}.${name}`, JSON.stringify(filtersObject));
+        localStorage.setItem(`Datatable.${this.sluggedName}.${name}`, JSON.stringify(filtersObject));
 
       this.showLoader = true;
       this.pagination.currentPage = 1;
@@ -696,6 +701,11 @@ export default {
       }
 
       return sortNumber;
+    },
+
+    getColumnLabel(field){
+      let column = this.Columns.find(c => c.field == field);
+      return column?.label ?? field;
     },
 
     getSortIcon(column) {
@@ -984,12 +994,16 @@ export default {
 
     buildContentTableForPrint(data) {
       const visible = this.Columns.filter(c => this.visibleColumns.includes(c.field));
+      var filters = Object.entries(this.filtersValues)
+        .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+        .map(([key, value]) => `<li>&#8250; ${this.escapeXml(this.getColumnLabel(key))}: <span style="font-weight: normal;">"${this.escapeXml(value)}"</span></li>`).join("");
+      if (filters.length == 0) filters = "<li>Nenhum filtro aplicado</li>";
 
       let content = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Impressão</title>
+  <title>${this.Name}</title>
   <style>
     @page { margin: 10mm; }
     body { font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial; }
@@ -1003,9 +1017,16 @@ export default {
   </style>
 </head>
 <body>
-<table>
-  <thead>
-    <tr>${visible.map(c => `<th>${this.escapeXml(c.label)}</th>`).join("")}</tr>
+  <table>
+    <thead>
+      <tr><th colspan="${visible.length}" style="text-align: center; font-size: 16px;">${this.Name}</th></tr>
+      <tr><th colspan="${visible.length}" style="text-align: left; font-size: 12px;">
+        <span style="text-decoration:underline;">Filtros:</span>
+        <br>
+        <br>
+        <ul style="list-style-type: none; padding: 0; margin: 0;">${filters}</ul></th>
+      </tr>
+      <tr>${visible.map(c => `<th>${this.escapeXml(c.label)}</th>`).join("")}</tr>
   </thead>
   <tbody>`;
 
@@ -1022,6 +1043,11 @@ export default {
       content += `</tbody>
 </table>
 </body>
+<tfoot>
+  <tr><td colspan="${visible.length}">
+    <em>Total de registros: ${data.length}</em>
+  </td></tr>
+</tfoot>
 </html>`;
 
       return content;
@@ -1075,7 +1101,7 @@ export default {
   async mounted() {
     // Set columns:
     this.columns = [...this.Columns];
-    this.visibleColumns = JSON.parse(localStorage.getItem(`Datatable.${this.Name}.visibleColumns`)) ?? this.Columns.map(clm => clm.field)
+    this.visibleColumns = JSON.parse(localStorage.getItem(`Datatable.${this.sluggedName}.visibleColumns`)) ?? this.Columns.map(clm => clm.field)
 
     // Set Actions:
     if (this.RowActions && this.RowActions?.length > 0)
@@ -1089,7 +1115,7 @@ export default {
 
     var loadFirstData = true;
     // Set persisted filters:
-    var persistedFilters = localStorage.getItem(`Datatable.${this.Name}.filters`);
+    var persistedFilters = localStorage.getItem(`Datatable.${this.sluggedName}.filters`);
     if (!!persistedFilters) {
       this.showFilterPanel = true;
       setTimeout(() => this.filterParams = JSON.parse(persistedFilters), 100)
@@ -1097,7 +1123,7 @@ export default {
     }
 
     // Set persisted search term:
-    this.searchTerm = localStorage.getItem(`Datatable.${this.Name}.searchTerm`) ?? null;
+    this.searchTerm = localStorage.getItem(`Datatable.${this.sluggedName}.searchTerm`) ?? null;
     if (!!this.searchTerm) loadFirstData = false;
 
     // Set sorting:
@@ -1108,7 +1134,7 @@ export default {
     }
 
     // Set persisted pagination:
-    var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+    var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
     if (!!persistedPagination) {
       persistedPagination = JSON.parse(persistedPagination);
       for (let k in persistedPagination)
