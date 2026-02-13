@@ -3,12 +3,6 @@
     <!-- Options and Controls -->
     <div class="row q-pb-sm items-center">
       <div class="col-12 col-md-8">
-        <!-- Custom Resources -->
-        <q-btn v-for="(r, i) in CustomResources" :key="i" flat round color="primary" size="sm"
-          :icon="r.icon ?? 'fas fa-gear'" @click="r.fn">
-          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
-        </q-btn>
-
         <!-- Options -->
         <q-btn v-if="columnFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
           @click="showFilterPanel = !showFilterPanel">
@@ -43,6 +37,12 @@
         <q-btn :disable="this.fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm"
           icon="fas fa-print" @click="printData()">
           <q-tooltip>Imprimir</q-tooltip>
+        </q-btn>
+
+        <!-- Custom Resources -->
+        <q-btn v-for="(r, i) in CustomResources" :key="i" :disable="this.fullData.length === 0" flat round color="primary" size="sm"
+          :icon="r.icon ?? 'fas fa-gear'" @click="() => r.fn(fullData, rawData, filtersValues)">
+          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
         </q-btn>
       </div>
 
