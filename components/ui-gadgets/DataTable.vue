@@ -40,9 +40,19 @@
         </q-btn>
 
         <!-- Custom Resources -->
-        <q-btn v-for="(r, i) in CustomResources" :key="i" :disable="this.fullData.length === 0" flat round color="primary" size="sm"
-          :icon="r.icon ?? 'fas fa-gear'" @click="() => r.fn(fullData, rawData, filtersValues)">
+        <q-btn v-for="(r, i) in CustomResources" :key="i" 
+          :disable="this.fullData.length === 0" flat round color="primary" size="sm" :icon="r.icon ?? 'fas fa-gear'" 
+          @click="handleItemClick(r)">
           <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
+          <q-menu v-if="itemHasChildren(r)" class="q-pa-sm">
+            <q-list class="text-primary">
+              <q-item v-for="(opt, idx) in r.children" :key="idx" v-close-popup dense clickable
+                @click="opt.fn({fullData, rawData, filters: filtersValues, ...opt.params})">
+                <q-item-section v-if="opt.icon" avatar><q-icon :name="opt.icon" size="xs" /></q-item-section>
+                <q-item-section>{{ opt.label }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </div>
 
@@ -582,19 +592,110 @@ export default {
   },
 
   methods: {
-    showActionsBtnInRow(row) {
-      return this.RowActions.some(action => {
-        const hide = action.hide;
-
-        // Execution
-        if (hide === undefined) return true;
-        if (hide === Boolean) return !hide;
-        if (typeof hide === 'function') return !hide(row, action);
-
-        return true;
+    /////////////
+    // Factory:
+    /////////////
+    exposeFactory() {
+      this.$emit('update:model-value', {
+        state: this.state,
+        params: this.setParams(),
+        filterValues: this.filtersValues,
+        dataInPage: this.dataInPage,
+        visibleColumns: this.visibleColumns,
+        reload: this.reload
       });
     },
 
+    /////////////
+    // Getters:
+    /////////////
+    async loadData(ignorePagination) {
+      if (!this.loading) {
+        this.loadFullData();
+
+        // turn on loading indicator
+        this.loading = true;
+        this.error = null;
+        this.errorState = false;
+
+        var params = this.setParams();
+        if (!!ignorePagination) {
+          delete params.$page;
+          delete params.$limit;
+        }
+
+        try {
+          // Before Load callback:
+          if (this.BeforeLoad) await this.BeforeLoad(params);
+
+          // fetch data from server
+          const response = await this.$http.get(this.DataURL, params);
+
+          // On Loaded callback:
+          if (this.OnLoaded) await this.OnLoaded(response);
+
+          return response;
+        } catch (err) {
+          this.loading = false;
+          this.errorState = true;
+          this.error = err;
+          this.$emit('error-thrown', err);
+          throw err;
+        }
+      }
+    },
+
+    async loadFullData() {
+      this.fullData = [];
+      var params = this.setParams();
+      delete params.$page;
+      delete params.$limit;
+
+      const response = await this.$http.get(this.DataURL, params);
+      this.fullData = response.data;
+    },
+
+    getColumnNumber(column) {
+      var sortNumber = null;
+      if (!!column.sortBy === false) {
+        // Find sort number:
+        let columns = Object.keys(this.rawData[0] ?? {});
+        let idx = columns.indexOf(column.field);
+
+        if (idx == -1) return
+
+        sortNumber = idx + 1
+      } else if (typeof column.sortBy == 'string') {
+        // Find sort number:
+        let columns = Object.keys(this.rawData[0] ?? {});
+        let idx = columns.indexOf(column.sortBy);
+
+        if (idx == -1) return
+
+        sortNumber = idx + 1
+      } else {
+        sortNumber = column.sortBy
+      }
+
+      return sortNumber;
+    },
+
+    getColumnLabel(field){
+      let column = this.Columns.find(c => c.field == field);
+      return column?.label ?? field;
+    },
+
+    getSortIcon(column) {
+      if (this.getColumnNumber(column) == this.pagination.sortBy) {
+        if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up';
+        else if (this.pagination.sortDir == 'DESC') return 'fas fa-sort-down';
+        else return 'fas fa-ban';
+      } else return 'fas fa-sort';
+    },
+
+    /////////////////////
+    // Sort and Filter:
+    /////////////////////
     filterHandler(filtersObject, name) {
       // Save filters state:
       localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
@@ -678,44 +779,6 @@ export default {
       return result;
     },
 
-    getColumnNumber(column) {
-      var sortNumber = null;
-      if (!!column.sortBy === false) {
-        // Find sort number:
-        let columns = Object.keys(this.rawData[0] ?? {});
-        let idx = columns.indexOf(column.field);
-
-        if (idx == -1) return
-
-        sortNumber = idx + 1
-      } else if (typeof column.sortBy == 'string') {
-        // Find sort number:
-        let columns = Object.keys(this.rawData[0] ?? {});
-        let idx = columns.indexOf(column.sortBy);
-
-        if (idx == -1) return
-
-        sortNumber = idx + 1
-      } else {
-        sortNumber = column.sortBy
-      }
-
-      return sortNumber;
-    },
-
-    getColumnLabel(field){
-      let column = this.Columns.find(c => c.field == field);
-      return column?.label ?? field;
-    },
-
-    getSortIcon(column) {
-      if (this.getColumnNumber(column) == this.pagination.sortBy) {
-        if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up';
-        else if (this.pagination.sortDir == 'DESC') return 'fas fa-sort-down';
-        else return 'fas fa-ban';
-      } else return 'fas fa-sort';
-    },
-
     sort(column) {
       if (column.sortable === false || (!!column.sortBy === false && this.rawData.length == 0)) return;
 
@@ -732,22 +795,22 @@ export default {
 
     },
 
-    async goToPage(page) {
-      switch (page) {
-        case 'next':
-          if ((this.pagination.currentPage + 1) > this.pagination.finalPage) return;
-          this.pagination.currentPage++;
-          break;
-        case 'prev':
-          if ((this.pagination.currentPage - 1) < 1) return;
-          this.pagination.currentPage--;
-          break;
-        default:
-          if (page != this.pagination.currentPage)
-            this.pagination.currentPage = page;
-      }
+    showActionsBtnInRow(row) {
+      return this.RowActions.some(action => {
+        const hide = action.hide;
+
+        // Execution
+        if (hide === undefined) return true;
+        if (hide === Boolean) return !hide;
+        if (typeof hide === 'function') return !hide(row, action);
+
+        return true;
+      });
     },
 
+    ///////////////////////////
+    // Operational Functions:
+    ///////////////////////////
     reload() {
       clearTimeout(this.loadTimeout);
 
@@ -755,52 +818,6 @@ export default {
         const response = await this.loadData(this.IgnorePagination);
         if (response) this.rawData = response.data;
       }, 200);
-    },
-
-    async loadData(ignorePagination) {
-      if (!this.loading) {
-        this.loadFullData();
-
-        // turn on loading indicator
-        this.loading = true;
-        this.error = null;
-        this.errorState = false;
-
-        var params = this.setParams();
-        if (!!ignorePagination) {
-          delete params.$page;
-          delete params.$limit;
-        }
-
-        try {
-          // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(params);
-
-          // fetch data from server
-          const response = await this.$http.get(this.DataURL, params);
-
-          // On Loaded callback:
-          if (this.OnLoaded) await this.OnLoaded(response);
-
-          return response;
-        } catch (err) {
-          this.loading = false;
-          this.errorState = true;
-          this.error = err;
-          this.$emit('error-thrown', err);
-          throw err;
-        }
-      }
-    },
-
-    async loadFullData() {
-      this.fullData = [];
-      var params = this.setParams();
-      delete params.$page;
-      delete params.$limit;
-
-      const response = await this.$http.get(this.DataURL, params);
-      this.fullData = response.data;
     },
 
     paginate(data) {
@@ -844,6 +861,22 @@ export default {
       }
     },
 
+    async goToPage(page) {
+      switch (page) {
+        case 'next':
+          if ((this.pagination.currentPage + 1) > this.pagination.finalPage) return;
+          this.pagination.currentPage++;
+          break;
+        case 'prev':
+          if ((this.pagination.currentPage - 1) < 1) return;
+          this.pagination.currentPage--;
+          break;
+        default:
+          if (page != this.pagination.currentPage)
+            this.pagination.currentPage = page;
+      }
+    },
+
     async exportFile(filetype, filename) {
       filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`;
 
@@ -882,46 +915,6 @@ export default {
       document.body.removeChild(link);
 
       this.loading = false;
-    },
-
-    async printData() {
-      const data = this.fullData;
-      this.loading = false;
-
-      const html = this.buildContentTableForPrint(data);
-
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      // dá um tempo pro layout e reflow terminarem
-      await new Promise(r => setTimeout(r, 500));
-
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-
-      setTimeout(() => iframe.remove(), 1500);
-    },
-
-    exposeFactory() {
-      this.$emit('update:model-value', {
-        state: this.state,
-        params: this.setParams(),
-        filterValues: this.filtersValues,
-        dataInPage: this.dataInPage,
-        visibleColumns: this.visibleColumns,
-        reload: this.reload
-      });
     },
 
     escapeXml(value) {
@@ -1095,7 +1088,54 @@ export default {
       ].join('\r\n'); // Separate rows with a newline
 
       return csvContent;
-    }
+    },
+
+    async printData() {
+      const data = this.fullData;
+      this.loading = false;
+
+      const html = this.buildContentTableForPrint(data);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // dá um tempo pro layout e reflow terminarem
+      await new Promise(r => setTimeout(r, 500));
+
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+
+      setTimeout(() => iframe.remove(), 1500);
+    },
+
+    //////////////////
+    // Item Functions:
+    //////////////////
+    handleItemClick(item) {
+      if (this.itemHasChildren(item)) return;
+
+      item.fn({
+        fullData: this.fullData,
+        rawData: this.rawData,
+        filters: this.filtersValues,
+        ...item.params
+      });
+    },
+
+    itemHasChildren(item) {
+      return !!item?.children;
+    },
   },
 
   async mounted() {
