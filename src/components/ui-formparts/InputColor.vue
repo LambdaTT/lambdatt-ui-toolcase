@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square filled :dense="dense" readonly v-model="value" :error="Error"
+    <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" square filled :dense="dense" readonly v-model="value" :error="Error" :hint="hint"
       @focus="() => $emit('focus')" :label="Label">
       <template v-slot:append>
         <span v-if="!!value" :style="`background-color:${value};`" id="color-preview"></span>
@@ -33,6 +33,7 @@ export default {
     Label: String,
     Error: Boolean,
     Default: String,
+    hint: String, 
   },
 
   data() {

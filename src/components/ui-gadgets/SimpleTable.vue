@@ -225,11 +225,23 @@ export default {
       var result = [...this.Data];
       let offset = 0;
 
+      if(this.searchTerm) {
+        result = result.filter(row => {
+          for(let i = 0; i < this.searchableColumns.length; i++) {
+            let column = this.searchableColumns[i];
+            if(String(row[column.field]).toLowerCase().includes(this.searchTerm.toLowerCase())) {
+              return true;
+            }
+          }
+          return false;
+        });
+      }
+
       if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
-        for (let i = -1; i < this.Data.length; i++) {
-          let previous = this.Data[i - 1];
-          let current = this.Data[i];
-          let next = this.Data[i + 1];
+        for (let i = -1; i < result.length; i++) {
+          let previous = result[i - 1];
+          let current = result[i];
+          let next = result[i + 1];
 
           if (this.IntervalRule(previous, current, next) === true) {
             result.splice(i + 1 + offset, 0, 'interval');
@@ -246,7 +258,7 @@ export default {
         let a = this.RowActions[i];
         if (!!a.hide) {
           if (typeof a.hide == 'function') {
-            for (let j = 0; j < this.dataInPage.length; i++) {
+            for (let j = 0; j < this.dataInPage.length; j++) {
               let row = this.dataInPage[j];
               if (!a.hide(row)) return true;
             }
@@ -293,8 +305,8 @@ export default {
     state() {
       if (this.showLoader) return 'loading';
       if (this.errorState) return 'error';
-      if (this.Data.length > 0) return 'ready';
-      if (this.Data.length == 0) return 'empty';
+      if (this.data.length > 0) return 'ready';
+      if (this.data.length == 0) return 'empty';
       return null;
     },
 
@@ -330,45 +342,22 @@ export default {
       this.$emit('update:state', v);
     },
 
-    searchTerm(term) {
-      if (!!this.searchDebounceTimeout) {
-        clearTimeout(this.searchDebounceTimeout)
-        this.searchDebounceTimeout = null;
-      }
+    // searchTerm(term) {
+    //   if (!!this.searchDebounceTimeout) {
+    //     clearTimeout(this.searchDebounceTimeout)
+    //     this.searchDebounceTimeout = null;
+    //   }
 
-      this.searchDebounceTimeout = setTimeout(() => {
-        var result = {};
+    //   this.searchDebounceTimeout = setTimeout(() => {
+    //     var result = {};
 
-        if (term) {
-          let f = null;
+    //     if (term) {
+          
+    //     }
 
-          for (let i = 0; i < this.searchableColumns.length; i++) {
-            let column = this.searchableColumns[i];
-
-            f = column.field;
-
-            // First field:
-            if (i == 0) {
-              if (i == this.searchableColumns.length - 1) {
-                result[f] = '$startFilterGroup$lkof$endFilterGroup|' + term;
-              } else {
-                result[f] = '$startFilterGroup$lkof|' + term;
-              }
-            }
-            // All fields in the middle:
-            else if (i < (this.searchableColumns.length - 1)) {
-              result[f] = '$or$lkof|' + term;
-            }
-            // Last field:
-            else {
-              result[f] = '$endFilterGroup$or$lkof|' + term;
-            }
-          }
-        }
-
-        this.$emit('search', result);
-      }, 200)
-    }
+    //     this.$emit('search', result);
+    //   }, 200)
+    // }
   },
 
   methods: {
@@ -465,7 +454,7 @@ export default {
       <?xml version="1.0" encoding="UTF-8"?>
   <html xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="http://www.w3.org/TR/REC-html40">
+        xmlns="this.$http://www.w3.org/TR/REC-html40">
     <head>
       <style>
         table {
@@ -482,7 +471,7 @@ export default {
           text-align: center;
         }
       </style>
-      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta this.$http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
   <table>

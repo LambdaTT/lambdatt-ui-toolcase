@@ -1,8 +1,8 @@
 <template>
   <div>
-    <q-input :disable="disable" :readonly="readonly" hide-bottom-space square filled :clearable="clearable"
-      v-model="fileData.name" @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'"
-      @clear="clearFile" :color="!!Color ? Color : 'primary'" @focus="$emit('focus')" :error="Error">
+    <q-input :disable="disable" :readonly="readonly" hide-bottom-space square filled :clearable="clearable" v-model="fileData.name"
+      @click="inputClicked()" type="text" :label="!!Label ? Label : 'Selecione o arquivo'" @clear="clearFile" :hint="hint"
+      :color="!!Color ? Color : 'primary'" @focus="$emit('focus')" :error="Error">
       <template v-slot:prepend>
         <q-icon name="cloud_upload" />
       </template>
@@ -34,6 +34,7 @@ export default {
     Color: String,
     Error: Boolean,
     ReadAsURL: Boolean,
+    hint: String,
   },
 
   data() {
@@ -76,7 +77,7 @@ export default {
     async inputClicked() {
       if (!this.repetitionLock) {
         this.repetitionLock = true;
-        this.$getService('toolcase/eventbroadcaster').$broadcast('fileupload-before-choose');
+        this.$eventbroadcaster.$broadcast('fileupload-before-choose');
         await this.sleep(100);
         this.dialogIsOpen = true;
         window.addEventListener('focus', this.onWindowFocus);
@@ -132,7 +133,7 @@ export default {
       }
 
       this.repetitionLock = false;
-      this.$getService('toolcase/eventbroadcaster').$broadcast('fileupload-chosen')
+      this.$eventbroadcaster.$broadcast('fileupload-chosen')
     },
 
     onWindowFocus() {
@@ -147,7 +148,7 @@ export default {
 
   mounted() {
     this.$emit('activateFn', this.inputClicked);
-    this.inputRefId = `InputFileRef-${this.$getService('toolcase/utils').uniqid()}`;
+    this.inputRefId = `InputFileRef-${this.$utils.uniqid()}`;
     this.$emit('expose-ref', this.$refs[this.inputRefId]);
   }
 }

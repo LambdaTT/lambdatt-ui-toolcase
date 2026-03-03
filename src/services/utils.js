@@ -2,6 +2,9 @@ import { Notify } from 'quasar'
 
 // UTILS:
 export default {
+  //////////////////
+  // Data Functions:
+  //////////////////
   uniqid: function () {
     var ts = String(new Date().getTime()), i = 0, out = '';
     for (i = 0; i < ts.length; i += 2) {
@@ -10,26 +13,184 @@ export default {
     return ('d' + out);
   },
 
-  validatePasswordStrengh: function (obj) {
-    var strongRegularExp = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
-    var mediumRegularExp = new RegExp("^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})");
-
-    if (strongRegularExp.test(obj)) {
-      return 'forte';
-    } else if (mediumRegularExp.test(obj)) {
-      return 'medio';
-    } else {
-      return 'fraco';
-    }
-
+  brazilianStates() {
+    return [
+      { label: 'Acre(AC)', value: 'AC' },
+      { label: 'Alagoas(AL)', value: 'AL' },
+      { label: 'Amapá(AP)', value: 'AP' },
+      { label: 'Amazonas(AM)', value: 'AM' },
+      { label: 'Bahia(BA)', value: 'BA' },
+      { label: 'Ceará(CE)', value: 'CE' },
+      { label: 'Distrito Federal(DF)', value: 'DF' },
+      { label: 'Espírito Santo(ES)', value: 'ES' },
+      { label: 'Goías(GO)', value: 'GO' },
+      { label: 'Maranhão(MA)', value: 'MA' },
+      { label: 'Mato Grosso(MT)', value: 'MT' },
+      { label: 'Mato Grosso do Sul(MS)', value: 'MS' },
+      { label: 'Minas Gerais(MG)', value: 'MG' },
+      { label: 'Pará(PA)', value: 'PA' },
+      { label: 'Paraíba(PB)', value: 'PB' },
+      { label: 'Paraná(PR)', value: 'PR' },
+      { label: 'Pernambuco(PE)', value: 'PE' },
+      { label: 'Piauí(PI)', value: 'PI' },
+      { label: 'Rio de Janeiro(RJ)', value: 'RJ' },
+      { label: 'Rio Grande do Norte(RN)', value: 'RN' },
+      { label: 'Rio Grande do Sul(RS)', value: 'RS' },
+      { label: 'Rondônia(RO)', value: 'RO' },
+      { label: 'Santa Catarina(SC)', value: 'SC' },
+      { label: 'São Paulo(SP)', value: 'SP' },
+      { label: 'Sergipe(SE)', value: 'SE' },
+      { label: 'Tocantins(TO)', value: 'TO' },
+    ];
   },
 
+  /**
+   * Retorna um array de objetos, onde cada objeto contém o nome do mês (label) e o número do mês (value).
+   * @param {boolean} [stringfy=false] - Define se o valor do mês será retornado como uma string de dois dígitos.
+   *                                   - Se `true`, o número do mês será uma string no formato "01", "02", ..., "12".
+   *                                   - Por padrão, o número do mês será retornado como um número inteiro.
+   * @returns {Array<{label: string, value: string | number}>}  - Um array de objetos representando os meses do ano. Cada objeto possui:
+   *                                                            - `label`: o nome do mês (ex: "Janeiro").
+   *                                                            - `value`: o número do mês como string ou número.
+   */
+  months(stringfy = false) {
+    const months = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+
+    return months.map((month, index) => {
+      const value = index + 1; // Número do mês
+      return {
+        label: month,
+        value: stringfy ? value.toString().padStart(2, "0") : value
+      };
+    });
+  },
+
+  years(startYear) {
+    const currentYear = new Date().getFullYear();
+    return Array.from(
+      { length: currentYear - startYear + 1 },
+      (_, i) => startYear + i
+    );
+  },
+
+  currentDatetime: () => {
+    var UTC_now = new Date();
+
+    return new Date(UTC_now.toLocaleString('en', { timeZone: 'America/Sao_Paulo' }));
+  },
+
+  currentDatetimeLabel() {
+    const now = new Date();
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(now)
+    .replace(',', '');
+  },
+
+  randomHexColor() {
+    let n = (Math.random() * 0xfffff * 1000000).toString(16);
+    return '#' + n.slice(0, 6);
+  },
+
+  //////////////////
+  // Aux Functions:
+  //////////////////
   cloneObj: function (obj) {
     return { ...obj }
   },
 
   sleep: function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  },
+
+  debounce(fn, delay) {
+    let timer;
+
+    return function (...args) {
+      // Retorna uma nova Promise que resolve o resultado da função passada
+      return new Promise((resolve, reject) => {
+        // Limpa o timer anterior se a função for chamada antes do delay
+        if (timer) clearTimeout(timer);
+
+        // Define um novo timeout
+        timer = setTimeout(async () => {
+          try {
+            // Resolve a Promise com o resultado da função
+            const result = await fn(...args);
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        }, delay);
+      });
+    };
+  },
+
+  async waitFor(condition) {
+    if (condition !== true)
+      await this.waitFor(condition);
+
+    return true;
+  },
+
+  readFile: function (file, callback, readAsText) {
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      callback({
+        "src": evt.target.result,
+        "file": file
+      });
+    };
+
+    if (readAsText) reader.readAsText(file);
+    else reader.readAsDataURL(file);
+  },
+
+  notify: function (options) {
+    Notify.create(options);
+  },
+
+  notifyError: function (error) {
+    if (error.response && error.response.data && (error.response.data.user_friendly || error.response.data.userReadable)) {
+      Notify.create({
+        message: error.response.data.message,
+        type: 'negative',
+        position: 'top-right'
+      })
+    } else {
+      Notify.create({
+        message: "Houve um problema para executar esta ação. Tente novamente mais tarde.",
+        type: 'negative',
+        position: 'top-right'
+      })
+    }
+  },
+
+  dateDiffDays(date1, date2) {
+    let Difference_In_Time = date2.getTime() - date1.getTime();
+
+    return Math.round(Difference_In_Time / (1000 * 3600 * 24));
+  },
+
+  empty(value) {
+    return (
+      value === undefined ||
+      value === null ||
+      value === false ||
+      value === 0 ||
+      value === '' ||
+      value === '0' ||
+      (Array.isArray(value) && value.length === 0) ||
+      (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
+    );
   },
 
   objToSerialString: function (object, skipKeys, joint) {
@@ -46,17 +207,111 @@ export default {
     }).join(joint ?? '&');
   },
 
-  readFile: function (file, callback, readAsText) {
-    var reader = new FileReader();
-    reader.onload = function (evt) {
-      callback({
-        "src": evt.target.result,
-        "file": file
-      });
-    };
+  async getAddressByZipCode(zipcode, notifyNotFound) {
+    notifyNotFound = notifyNotFound ?? true
 
-    if (readAsText) reader.readAsText(file);
-    else reader.readAsDataURL(file);
+    if (!zipcode || zipcode.length < 9) return null;
+    zipcode = zipcode.replace(/-/g, "");
+    if (!/^[0-9]{8}$/.test(zipcode)) {
+      this.notify({
+        message: "O CEP informado é inválido",
+        type: 'negative',
+        position: 'top-right'
+      });
+      return false;
+    }
+
+    var response = await fetch(`https://viacep.com.br/ws/${encodeURIComponent(zipcode)}/json/`);
+    var result = await response.json();
+    if ("erro" in result) {
+      if (notifyNotFound)
+        this.notify({
+          message: "CEP não encontrado.",
+          type: 'negative',
+          position: 'top-right'
+        });
+
+      return false;
+    } else {
+      return result;
+    }
+  },
+
+  filterObj(obj, fn) {
+    return Object.entries(obj)
+      .filter(fn)
+      .reduce((acc, [k, v]) => {
+        acc[k] = v
+        return acc
+      }, {});
+  },
+
+  printHtml(html) {
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => iframe.remove(), 1500);
+      }, 500);
+  },
+
+  escapeHtml(s) {
+    return s
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  },
+
+  getURLParam: function (param, std) {
+    var rgex = new RegExp(param + '=([^&]+)');
+    var res = rgex.exec(location.href);
+    return res ? res[1] : std || null;
+  },
+
+  objectSize: function (obj) {
+    return !obj ? 0 : Object.keys(obj).length;
+  },
+
+  fileFromURL: async (url) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const fileName = url.split("/").at(-1);
+    const file = new File([blob], fileName, { type: blob.type });
+    return file;
+  },
+
+  /////////////////////////
+  // Validation Functions:
+  /////////////////////////
+
+  validatePasswordStrengh: function (obj) {
+    var strongRegularExp = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
+    var mediumRegularExp = new RegExp("^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{6,})");
+
+    if (strongRegularExp.test(obj)) {
+      return 'forte';
+    } else if (mediumRegularExp.test(obj)) {
+      return 'medio';
+    } else {
+      return 'fraco';
+    }
+
   },
 
   validateCPF: function (cpf) {
@@ -148,30 +403,57 @@ export default {
     return true;
   },
 
-  notify: function (options) {
-    Notify.create(options);
-  },
-
-  notifyError: function (error) {
-    if (error.response && error.response.data && (error.response.data.accessible || error.response.data.user_friendly || error.response.data.userReadable)) {
-      Notify.create({
-        message: error.response.data.message,
-        type: 'negative',
-        position: 'top-right'
-      })
-    } else {
-      Notify.create({
-        message: "Houve um problema para executar esta ação. Tente novamente mais tarde.",
-        type: 'negative',
-        position: 'top-right'
-      })
+  validateForm(input, inputError, customRules) {
+    var isInvalid = false;
+    for (let k in input) {
+      let field = input[k];
+      if ((field === null || typeof field == 'undefined' || field === '') && k in inputError) {
+        console.error(`The field "${k}" is invalid. Value: ${field}`);
+        inputError[k] = true;
+        isInvalid = true;
+      }
     }
+
+    if (!!customRules && typeof customRules == 'function') {
+      isInvalid = customRules(input, inputError);
+    }
+
+    if (isInvalid) {
+      this.notify({
+        message: "Preencha o formulário corretamente",
+        type: "negative",
+        position: 'top-right'
+      });
+      return false;
+    }
+
+    return true;
   },
 
-  getURLParam: function (param, std) {
-    var rgex = new RegExp(param + '=([^&]+)');
-    var res = rgex.exec(location.href);
-    return res ? res[1] : std || null;
+  /////////////////////
+  // Format Functions:
+  /////////////////////
+  formatMoney(value) {
+    const moneyFormatter = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+
+    if (value == null || isNaN(value)) return 'R$ 0,00';
+    return moneyFormatter.format(value);
+  },
+
+  formatPercent(value) {
+    if (value == null) return '-'
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value) + '%'
+  },
+
+  formatNumber(value) {
+    if (value == null) return '-'
+    return new Intl.NumberFormat('pt-BR').format(value)
   },
 
   dateFormat: function (date, format) {
@@ -218,197 +500,4 @@ export default {
     };
     return obj;
   },
-
-  objectSize: function (obj) {
-    return !obj ? 0 : Object.keys(obj).length;
-  },
-
-  fileFromURL: async (url) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const fileName = url.split("/").at(-1);
-    const file = new File([blob], fileName, { type: blob.type });
-    return file;
-  },
-
-  currentDatetime: () => {
-    var UTC_now = new Date();
-
-    return new Date(UTC_now.toLocaleString('en', { timeZone: 'America/Sao_Paulo' }));
-  },
-
-  validateForm(input, inputError, customRules) {
-    var isInvalid = false;
-    for (let k in input) {
-      let field = input[k];
-      if ((field === null || typeof field == 'undefined' || field === '') && k in inputError) {
-        console.error(`The field "${k}" is invalid. Value: ${field}`);
-        inputError[k] = true;
-        isInvalid = true;
-      }
-    }
-
-    if (!!customRules && typeof customRules == 'function') {
-      isInvalid = customRules(input, inputError);
-    }
-
-    if (isInvalid) {
-      this.notify({
-        message: "Preencha o formulário corretamente",
-        type: "negative",
-        position: 'top-right'
-      });
-      return false;
-    }
-
-    return true;
-  },
-
-  randomHexColor() {
-    let n = (Math.random() * 0xfffff * 1000000).toString(16);
-    return '#' + n.slice(0, 6);
-  },
-
-  dateDiffDays(date1, date2) {
-    let Difference_In_Time = date2.getTime() - date1.getTime();
-
-    return Math.round(Difference_In_Time / (1000 * 3600 * 24));
-  },
-
-  brazilianStates() {
-    return [
-      { label: 'Acre(AC)', value: 'AC' },
-      { label: 'Alagoas(AL)', value: 'AL' },
-      { label: 'Amapá(AP)', value: 'AP' },
-      { label: 'Amazonas(AM)', value: 'AM' },
-      { label: 'Bahia(BA)', value: 'BA' },
-      { label: 'Ceará(CE)', value: 'CE' },
-      { label: 'Distrito Federal(DF)', value: 'DF' },
-      { label: 'Espírito Santo(ES)', value: 'ES' },
-      { label: 'Goías(GO)', value: 'GO' },
-      { label: 'Maranhão(MA)', value: 'MA' },
-      { label: 'Mato Grosso(MT)', value: 'MT' },
-      { label: 'Mato Grosso do Sul(MS)', value: 'MS' },
-      { label: 'Minas Gerais(MG)', value: 'MG' },
-      { label: 'Pará(PA)', value: 'PA' },
-      { label: 'Paraíba(PB)', value: 'PB' },
-      { label: 'Paraná(PR)', value: 'PR' },
-      { label: 'Pernambuco(PE)', value: 'PE' },
-      { label: 'Piauí(PI)', value: 'PI' },
-      { label: 'Rio de Janeiro(RJ)', value: 'RJ' },
-      { label: 'Rio Grande do Norte(RN)', value: 'RN' },
-      { label: 'Rio Grande do Sul(RS)', value: 'RS' },
-      { label: 'Rondônia(RO)', value: 'RO' },
-      { label: 'Santa Catarina(SC)', value: 'SC' },
-      { label: 'São Paulo(SP)', value: 'SP' },
-      { label: 'Sergipe(SE)', value: 'SE' },
-      { label: 'Tocantins(TO)', value: 'TO' },
-    ];
-  },
-
-  async getAddressByZipCode(zipcode, notifyNotFound) {
-    notifyNotFound = notifyNotFound ?? true
-
-    if (!zipcode || zipcode.length < 9) return null;
-    zipcode = zipcode.replace(/-/g, "");
-    if (!/^[0-9]{8}$/.test(zipcode)) {
-      this.notify({
-        message: "O CEP informado é inválido",
-        type: 'negative',
-        position: 'top-right'
-      });
-      return false;
-    }
-
-    var response = await fetch(`https://viacep.com.br/ws/${encodeURIComponent(zipcode)}/json/`);
-    var result = await response.json();
-    if ("erro" in result) {
-      if (notifyNotFound)
-        this.notify({
-          message: "CEP não encontrado.",
-          type: 'negative',
-          position: 'top-right'
-        });
-
-      return false;
-    } else {
-      return result;
-    }
-  },
-
-  debounce(fn, delay) {
-    let timer;
-
-    return function (...args) {
-      // Retorna uma nova Promise que resolve o resultado da função passada
-      return new Promise((resolve, reject) => {
-        // Limpa o timer anterior se a função for chamada antes do delay
-        if (timer) clearTimeout(timer);
-
-        // Define um novo timeout
-        timer = setTimeout(async () => {
-          try {
-            // Resolve a Promise com o resultado da função
-            const result = await fn(...args);
-            resolve(result);
-          } catch (error) {
-            reject(error);
-          }
-        }, delay);
-      });
-    };
-  },
-
-  async waitFor(condition) {
-    if (condition !== true)
-      await this.waitFor(condition);
-
-    return true;
-  },
-
-  /**
-   * Retorna um array de objetos, onde cada objeto contém o nome do mês (label) e o número do mês (value).
-   * @param {boolean} [stringfy=false] - Define se o valor do mês será retornado como uma string de dois dígitos.
-   *                                   - Se `true`, o número do mês será uma string no formato "01", "02", ..., "12".
-   *                                   - Por padrão, o número do mês será retornado como um número inteiro.
-   * @returns {Array<{label: string, value: string | number}>}  - Um array de objetos representando os meses do ano. Cada objeto possui:
-   *                                                            - `label`: o nome do mês (ex: "Janeiro").
-   *                                                            - `value`: o número do mês como string ou número.
-   */
-  months(stringfy = false) {
-    const months = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
-
-    return months.map((month, index) => {
-      const value = index + 1; // Número do mês
-      return {
-        label: month,
-        value: stringfy ? value.toString().padStart(2, "0") : value
-      };
-    });
-  },
-
-  empty(value) {
-    return (
-      value === undefined ||
-      value === null ||
-      value === false ||
-      value === 0 ||
-      value === '' ||
-      value === '0' ||
-      (Array.isArray(value) && value.length === 0) ||
-      (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0)
-    );
-  },
-
-  filterObj(obj, fn) {
-    return Object.entries(obj)
-      .filter(fn)
-      .reduce((acc, [k, v]) => {
-        acc[k] = v
-        return acc
-      }, {});
-  }
 }

@@ -39,6 +39,7 @@ export default {
   name: 'ui-charts-pie',
 
   props: {
+    ShowLegend: { type: Boolean, default: false },
     ShowPercentage: { type: Boolean, default: false },
     BeforeLoad: Function,
     OnLoaded: Function,
@@ -124,13 +125,13 @@ export default {
       try {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters)
 
-        const resp = await this.$getService('toolcase/http').get(this.DataURL, this.Filters)
+        const resp = await this.$http.get(this.DataURL, this.Filters)
         this.data = Array.isArray(resp.data) ? resp.data : []
 
         if (this.OnLoaded) await this.OnLoaded(resp)
         this.state = 'ready'
       } catch (err) {
-        this.$getService('toolcase/utils')?.notifyError?.(err)
+        this.$utils?.notifyError?.(err)
         console.error('Error fetching chart data', err)
         this.error = err
         this.$emit('error-thrown', err)
@@ -167,7 +168,7 @@ export default {
       return {
         responsive: true,
         maintainAspectRatio: false,
-        legend: { display: false },
+        legend: { display: this.ShowLegend },
         tooltips: {
           callbacks: {
             label: function (tooltipItem, data) {
