@@ -63,6 +63,11 @@
       </template>
     </q-input>
 
+    <!-- Input Checkbox -->
+    <q-checkbox v-if="type == 'checkbox'" :ref="inputRefId" :label="Label" :disable="disable" :readonly="readonly"
+      v-model="value" :error="Error" @focus="() => $emit('focus')" @update:model-value="updModelValue">
+    </q-checkbox>
+
     <!-- Input select: -->
     <Select2 v-if="type == 'select'" :BgColor="BgColor" :clearable="clearable" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" :Options="Options" :Label="Label" :Icon="Icon" :Error="Error"
@@ -196,7 +201,7 @@ export default {
       default: false,
     },
     // Others
-    Default: [String, Object, Number],
+    Default: [String, Object, Number, Boolean],
     accept: String,
     ReadAsURL: Boolean,
     placeholder: String,
@@ -246,6 +251,9 @@ export default {
 
   mounted() {
     this.$emit('expose-ref', this.$refs[this.inputRefId]);
+    if(this.Default !== null && typeof this.Default != 'undefined'){
+      this.updModelValue(this.Default);
+    }
   }
 }
 </script>

@@ -10,7 +10,7 @@
         </q-btn>
 
         <!-- Options -->
-        <q-btn v-if="columnFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
+        <q-btn v-if="availableFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
           @click="showFilterPanel = !showFilterPanel">
           <q-tooltip>Filtros da tabela</q-tooltip>
         </q-btn>
@@ -59,7 +59,7 @@
     <q-separator></q-separator>
 
     <!-- Filters Panel -->
-    <div v-if="columnFilters.length > 0" class="row">
+    <div v-if="availableFilters.length > 0" class="row">
       <div class="col-12">
         <q-expansion-item hide-expand-icon v-model="showFilterPanel" header-style="display:none;">
           <q-toolbar class="bg-grey-3">
@@ -72,9 +72,9 @@
             </q-btn>
           </q-toolbar>
           <div class="row q-py-sm">
-            <div v-for="(f, i) in columnFilters" :key="i" class="col-12 col-md-4">
+            <div v-for="(f, i) in availableFilters" :key="i" class="col-12 col-md-4">
               <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds"
-                :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]">
+                :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]" :Default="f.default !== null && typeof f.default != 'undefined' ? f.default : null">
               </InputField>
             </div>
           </div>
@@ -293,6 +293,10 @@ export default {
       validator: (v) => ('by' in v) && ('direction' in v)
     },
     RowActions: Object,
+    Filters:{
+      type: Array,
+      default: () => []
+    },
     ExtraFilters: Object,
     Export: Object,
     Printable: Boolean,
@@ -578,6 +582,10 @@ export default {
     sluggedName() {
       // Remove spaces, lowercases and replace accents and special chars:
       return this.Name.toSlug();
+    },
+
+    availableFilters() {
+      return [...this.columnFilters, ...this.Filters]
     }
   },
 
@@ -619,63 +627,68 @@ export default {
 
     setParams() {
       // Pagination Params:
-      var result = {
+      const pagination = {
         '$sort_by': this.pagination.sortBy ?? '1',
         '$sort_direction': this.pagination.sortDir ?? 'ASC',
         '$page': this.pagination.currentPage,
         '$limit': Number(this.pagination.limit)
       };
 
-      // Search:
+      // Search Filter:
+      const search = {};
       if (this.searchTerm) {
-        let f = null;
-
         for (let i = 0; i < this.searchableColumns.length; i++) {
           let column = this.searchableColumns[i];
 
-          f = column.field;
+          const f = column.field;
 
           // First field:
           if (i == 0) {
             if (i == this.searchableColumns.length - 1) {
-              result[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm;
+              search[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm;
             } else {
-              result[f] = '$startFilterGroup$lkof|' + this.searchTerm;
+              search[f] = '$startFilterGroup$lkof|' + this.searchTerm;
             }
           }
           // All fields in the middle:
           else if (i < (this.searchableColumns.length - 1)) {
-            result[f] = '$or$lkof|' + this.searchTerm;
+            search[f] = '$or$lkof|' + this.searchTerm;
           }
           // Last field:
           else {
-            result[f] = '$endFilterGroup$or$lkof|' + this.searchTerm;
+            search[f] = '$endFilterGroup$or$lkof|' + this.searchTerm;
           }
         }
       }
 
-      var filterParams = {};
-      // Handle filters:
+      // Filters:
+      const filters = {};
       for (let k in this.filterParams) {
-        let _f = this.columnFilters.find(x => x.field == k);
-        if (_f.type == 'text')
-          filterParams[k] = `$lkof|${this.filterParams[k]}`;
-        else if (_f.type == 'daterange' || _f.type == 'datetimerange')
-          filterParams[k] = `$btwn|${this.filterParams[k].from}|${this.filterParams[k].to}`;
-        else filterParams[k] = this.filterParams[k]
+        let filterConfig = this.availableFilters.find(x => x.field == k);
+        let value = (!!filterConfig?.modifierFn && typeof filterConfig?.modifierFn === 'function') ? filterConfig?.modifierFn(this.filterParams[k]) : this.filterParams[k];
+        if(value == null) continue;
+
+        if (filterConfig?.type == 'text')
+          filters[k] = `$lkof|${value}`;
+        else if (filterConfig?.type == 'daterange' || filterConfig?.type == 'datetimerange')
+          filters[k] = `$btwn|${value.from}|${value.to}`;
+        else filters[k] = value;
       }
 
-      result = { ...result, ...filterParams };
-
-      var extraFilters = {};
-      if (!!this.ExtraFilters)
+      // Extra filters:
+      const extraFilters = {};
+      if (!!this.ExtraFilters) {
         for (let k in this.ExtraFilters)
           if (!!this.ExtraFilters[k])
             extraFilters[k] = this.ExtraFilters[k];
+      }
 
-      result = { ...result, ...extraFilters };
-
-      return result;
+      return {
+        ...pagination,
+        ...search,
+        ...filters,
+        ...extraFilters
+      };
     },
 
     getColumnNumber(column) {
@@ -703,9 +716,14 @@ export default {
       return sortNumber;
     },
 
-    getColumnLabel(field){
-      let column = this.Columns.find(c => c.field == field);
-      return column?.label ?? field;
+    getColumnLabel(field) {
+      const columns = this.Columns.map(c => ({label: c.label, field: c.field}));
+      const filters = this.Filters.map(f => ({label: f.label, field: f.field}));
+      const available = [...columns, ...filters];
+
+      let target = available.find(item => item.field == field);
+
+      return target?.label ?? field;
     },
 
     getSortIcon(column) {
@@ -926,6 +944,9 @@ export default {
 
     escapeXml(value) {
       if (value === null || value === undefined) return "";
+      if (value === false) return "Não";
+      if (value === true) return "Sim";
+
       return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
