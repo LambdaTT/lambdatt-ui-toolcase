@@ -1,20 +1,20 @@
 // src/index.js
 
 // Enpoints:
-import ENDPOINTS from './src/ENDPOINTS.js'
+import ENDPOINTS from "./src/ENDPOINTS.js";
 
-export const NAME = 'toolcase'
+export const NAME = "toolcase";
 
 function mapServices() {
-  const services = import.meta.globEager('./src/services/**/*.js');
+  const services = import.meta.globEager("./src/services/**/*.js");
 
   const servicesMap = {};
   for (const path in services) {
     const mod = services[path];
     // Extract the service name from the file path
-    const parts = path.split('/');
-    const serviceName = parts.pop().replace(/\.\w+$/, '');
-    const serviceUri = [...parts.slice(3), serviceName].join('.');
+    const parts = path.split("/");
+    const serviceName = parts.pop().replace(/\.\w+$/, "");
+    const serviceUri = [...parts.slice(3), serviceName].join(".");
     servicesMap[serviceUri] = mod.default;
   }
 
@@ -22,20 +22,37 @@ function mapServices() {
 }
 
 function mapComponents() {
-  const components = import.meta.globEager('./src/components/**/*.vue');
+  const components = import.meta.globEager("./src/components/**/*.vue");
 
   const componentsMap = {};
   for (const path in components) {
     const mod = components[path];
     // Extract the component name from the file path
-    const componentName = path.split('/').pop().replace(/\.\w+$/, '');
+    const componentName = path
+      .split("/")
+      .pop()
+      .replace(/\.\w+$/, "");
     componentsMap[componentName] = mod.default;
   }
   return componentsMap;
 }
 
+function mapIcons() {
+  const icons = import.meta.globEager("./src/components/ui-icons/**/*.vue");
+
+  const iconsList = [];
+  for (const path in icons) {
+    const iconName = path
+      .split("/")
+      .pop()
+      .replace(/\.\w+$/, "");
+    iconsList.push(iconName);
+  }
+  return iconsList;
+}
+
 function mapPages() {
-  const pages = import.meta.globEager('./src/pages/**/*.vue');
+  const pages = import.meta.globEager("./src/pages/**/*.vue");
 
   const pagesMap = {};
   for (const path in pages) {
@@ -44,30 +61,35 @@ function mapPages() {
     const extras = configs.extras ?? {};
     const params = configs.params ?? [];
     // Extract the page name from the file path
-    const parts = path.split('/');
-    const pageName = parts.pop().replace(/\.\w+$/, '');
-    const pageUrl = `${NAME}/${[...parts.slice(3), pageName.toLowerCase()].join('/')}`;
-    const pageRoute = configs.route ?? `${pageUrl}${params.length > 0 ? `/:${params.join('/:')}` : ''}`
-
-
+    const parts = path.split("/");
+    const pageName = parts.pop().replace(/\.\w+$/, "");
+    const pageUrl = `${NAME}/${[...parts.slice(3), pageName.toLowerCase()].join(
+      "/",
+    )}`;
+    const pageRoute =
+      configs.route ??
+      `${pageUrl}${params.length > 0 ? `/:${params.join("/:")}` : ""}`;
 
     pagesMap[pageUrl] = {
       path: pageRoute,
       component: mod.default,
-      extras
+      extras,
     };
   }
   return pagesMap;
 }
 
 function mapLayouts() {
-  const layouts = import.meta.globEager('./src/layouts/**/*.vue');
+  const layouts = import.meta.globEager("./src/layouts/**/*.vue");
 
   const layoutsMap = {};
   for (const path in layouts) {
     const mod = layouts[path];
     // Extract the layout name from the file path
-    const layoutName = path.split('/').pop().replace(/\.\w+$/, '');
+    const layoutName = path
+      .split("/")
+      .pop()
+      .replace(/\.\w+$/, "");
     layoutsMap[layoutName] = mod.default;
   }
   return layoutsMap;
@@ -77,6 +99,7 @@ export default {
   ENDPOINTS,
   SERVICES: mapServices(),
   COMPONENTS: mapComponents(),
+  UI_ICONS: mapIcons(),
   PAGES: mapPages(),
   LAYOUTS: mapLayouts(),
-}
+};
