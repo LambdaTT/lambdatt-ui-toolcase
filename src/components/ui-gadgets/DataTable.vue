@@ -1,16 +1,10 @@
 <template>
   <div class="q-pa-xs q-pa-md-none">
     <!-- Options and Controls -->
-    <div class="row q-pb-sm">
+    <div class="row q-pb-sm items-center">
       <div class="col-12 col-md-8">
-        <!-- Custom Resources -->
-        <q-btn v-for="(r, i) in CustomResources" :key="i" flat round color="primary" size="sm"
-          :icon="r.icon ?? 'fas fa-gear'" @click="r.fn">
-          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
-        </q-btn>
-
         <!-- Options -->
-        <q-btn v-if="columnFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
+        <q-btn v-if="availableFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
           @click="showFilterPanel = !showFilterPanel">
           <q-tooltip>Filtros da tabela</q-tooltip>
         </q-btn>
@@ -23,7 +17,8 @@
             <q-option-group v-model="visibleColumns" type="checkbox" :options="columnOptions"></q-option-group>
           </q-menu>
         </q-btn>
-        <q-btn v-if="!!Export" flat round color="primary" size="sm" icon="fas fa-file-download">
+        <q-btn :disable="this.fullData.length === 0" v-if="!!Export" flat round color="primary" size="sm"
+          icon="fas fa-file-download">
           <q-tooltip>Opções de Exportação</q-tooltip>
           <q-menu class="q-pa-sm">
             <q-list class="text-primary">
@@ -39,8 +34,25 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn v-if="!!Printable" flat round color="primary" size="sm" icon="fas fa-print" @click="printData()">
+        <q-btn :disable="this.fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm"
+          icon="fas fa-print" @click="printData()">
           <q-tooltip>Imprimir</q-tooltip>
+        </q-btn>
+
+        <!-- Custom Resources -->
+        <q-btn v-for="(r, i) in CustomResources" :key="i" 
+          :disable="this.fullData.length === 0" flat round color="primary" size="sm" :icon="r.icon ?? 'fas fa-gear'" 
+          @click="handleItemClick(r)">
+          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
+          <q-menu v-if="itemHasChildren(r)" class="q-pa-sm">
+            <q-list class="text-primary">
+              <q-item v-for="(opt, idx) in r.children" :key="idx" v-close-popup dense clickable
+                @click="opt.fn({fullData, rawData, filters: filtersValues, ...opt.params})">
+                <q-item-section v-if="opt.icon" avatar><q-icon :name="opt.icon" size="xs" /></q-item-section>
+                <q-item-section>{{ opt.label }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </div>
 
@@ -57,7 +69,7 @@
     <q-separator></q-separator>
 
     <!-- Filters Panel -->
-    <div v-if="columnFilters.length > 0" class="row">
+    <div v-if="availableFilters.length > 0" class="row">
       <div class="col-12">
         <q-expansion-item hide-expand-icon v-model="showFilterPanel" header-style="display:none;">
           <q-toolbar class="bg-grey-3">
@@ -70,9 +82,9 @@
             </q-btn>
           </q-toolbar>
           <div class="row q-py-sm">
-            <div v-for="(f, i) in columnFilters" :key="i" class="col-12 col-md-4">
+            <div v-for="(f, i) in availableFilters" :key="i" class="col-12 col-md-4">
               <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds"
-                :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]">
+                :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]" :Default="f.default !== null && typeof f.default != 'undefined' ? f.default : null">
               </InputField>
             </div>
           </div>
@@ -111,7 +123,7 @@
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
                   <div v-if="!(`cell-${column.name}` in $slots)">
-                    {{ column.format ? column.format(row) : row[column.field] }}
+                    {{ column.format ? column.format(row[column.field]) : row[column.field] }}
                   </div>
 
                   <!-- In case a template is set for the td-->
@@ -135,7 +147,8 @@
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
                         <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
+                          @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
@@ -150,7 +163,8 @@
             </tr>
             <tr v-else>
               <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot name="interval-row" :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+                <slot name="interval-row"
+                  :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
                 </slot>
               </td>
             </tr>
@@ -193,25 +207,54 @@
           </tr>
         </tbody>
 
+        <tfoot v-if="hasAnyColumnFooter || 'footer' in $slots">
+          <tr class="text-bold">
+            <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
+              v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
+              <div v-if="!!column.footer">
+                <div v-if="`foot-${column.name}` in $slots">
+                  <slot :name="`foot-${column.name}`"></slot>
+                </div>
+                <div v-else>
+                  {{ typeof column.footer == 'function' ? column.footer(fullData) : column.footer }}
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="'footer' in $slots">
+            <slot :name="`footer`"></slot>
+          </tr>
+        </tfoot>
+
       </table>
 
     </div>
 
     <!-- Pagination -->
     <div v-if="!IgnorePagination" class="row q-mt-lg" v-show="state == 'ready'">
+      <div class="col-12 q-py-sm">
+        <q-separator></q-separator>
+      </div>
       <div :class="`col-12 col-md-6 ${$q.screen.lt.md ? 'text-center' : ''}`">
         <div>
-          Mostrar
+          Mostrar até
           <select class="q-pa-xs" v-model="pagination.limit">
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
           </select>
-          registros
+          registros de um total de
+          <b v-if="fullData.length">{{ fullData.length }}</b>
+          <q-spinner-gears v-else size="xs" />.
         </div>
       </div>
       <div :class="`col-12 col-md-6 ${$q.screen.gt.sm ? 'text-right' : 'text-center q-mt-md'}`">
+        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(1)">
+          <q-tooltip>Primeira Página</q-tooltip>
+          <q-icon size="xs" name="fas fa-angles-left"></q-icon>
+        </q-btn>
         <q-btn color="primary" @click="goToPage('prev')">
           <q-tooltip>Página Anterior</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-left"></q-icon>
@@ -224,6 +267,10 @@
         <q-btn color="primary" @click="goToPage('next')">
           <q-tooltip>Próxima Página</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-right"></q-icon>
+        </q-btn>
+        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(this.pagination.finalPage)">
+          <q-tooltip>Última Página</q-tooltip>
+          <q-icon size="xs" name="fas fa-angles-right"></q-icon>
         </q-btn>
       </div>
     </div>
@@ -256,6 +303,10 @@ export default {
       validator: (v) => ('by' in v) && ('direction' in v)
     },
     RowActions: Object,
+    Filters:{
+      type: Array,
+      default: () => []
+    },
     ExtraFilters: Object,
     Export: Object,
     Printable: Boolean,
@@ -298,6 +349,7 @@ export default {
       columns: [],
 
       // Data:
+      fullData: [],
       rawData: [],
       dataInPage: [],
       loadTimeout: null,
@@ -318,8 +370,8 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         if (!!this.searchTerm)
-          localStorage.setItem(`Datatable.${this.Name}.searchTerm`, this.searchTerm)
-        else localStorage.removeItem(`Datatable.${this.Name}.searchTerm`)
+          localStorage.setItem(`Datatable.${this.sluggedName}.searchTerm`, this.searchTerm)
+        else localStorage.removeItem(`Datatable.${this.sluggedName}.searchTerm`)
 
         const response = await this.loadData(this.IgnorePagination);
         if (response) this.rawData = response.data;
@@ -327,11 +379,11 @@ export default {
     },
 
     'pagination.currentPage'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.currentPage = this.pagination.currentPage;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -342,12 +394,12 @@ export default {
 
     'pagination.limit'() {
       this.pagination.currentPage = 1;
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.currentPage = this.pagination.currentPage;
       persistedPagination.limit = this.pagination.limit;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -357,11 +409,11 @@ export default {
     },
 
     'pagination.sortBy'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.sortBy = this.pagination.sortBy;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -371,11 +423,11 @@ export default {
     },
 
     'pagination.sortDir'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
       persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
       persistedPagination.sortDir = this.pagination.sortDir;
-      localStorage.removeItem(`Datatable.${this.Name}.pagination`)
-      localStorage.setItem(`Datatable.${this.Name}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
+      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -403,7 +455,7 @@ export default {
         this.visibleColumns = [this.Columns[0].field];
       }
 
-      localStorage.setItem(`Datatable.${this.Name}.visibleColumns`, JSON.stringify(newVal));
+      localStorage.setItem(`Datatable.${this.sluggedName}.visibleColumns`, JSON.stringify(newVal));
     },
 
     loading(isLoading) {
@@ -421,6 +473,16 @@ export default {
       },
       deep: true
     },
+
+    fullData: {
+      handler(data) {
+        if (data.length > 0) {
+          this.pagination.finalPage = Math.ceil(data.length / this.pagination.limit);
+        } else {
+          this.pagination.finalPage = this.pagination.currentPage + (Math.ceil(this.rawData.length / this.pagination.limit) - 1);
+        }
+      }
+    }
   },
 
   computed: {
@@ -428,22 +490,6 @@ export default {
       // Show the actions column if at least one row has a visible action
       return this.dataInPage.some(row => this.showActionsBtnInRow(row));
     },
-
-    // showActions() {
-    //   for (let i = 0; i < this.RowActions.length; i++) {
-    //     let a = this.RowActions[i];
-    //     if (!!a.hide) {
-    //       if (typeof a.hide == 'function') {
-    //         for (let j = 0; j < this.dataInPage.length; i++) {
-    //           let row = this.dataInPage[j];
-    //           if (!a.hide(row)) return true;
-    //         }
-    //       } else return !a.hide;
-    //     } else return true;
-    //   }
-
-    //   return false;
-    // },
 
     columnOptions() {
       return this.columns.map(clm => {
@@ -510,23 +556,13 @@ export default {
         const hasValidField = col.field && col.field !== '';
         const isSearchable = col.searchable !== false;
         const isNotFiltered = !(col.field in this.filterParams);
-    
+
         return hasValidField && isSearchable && isNotFiltered;
       })
-
-      // Legacy Code:
-      // var searchableColumns = [];
-      // for (let i = 0; i < this.columns.length; i++) {
-      //   let column = this.columns[i];
-      //   if (!column.field || column.field == '' || column.searchable === false) continue;
-      //   if (column.field in this.filterParams) continue;
-      //   searchableColumns.push(column);
-      // }
-      // return searchableColumns;
     },
 
     rows() {
-      if(typeof this.IntervalRule !== 'function') return [...this.dataInPage];
+      if (typeof this.IntervalRule !== 'function') return [...this.dataInPage];
 
       const result = [];
 
@@ -535,48 +571,107 @@ export default {
         const next = this.dataInPage[i + 1];
 
         result.push(current);
-        if(this.IntervalRule(prev, current, next) === true) result.push('interval');
+        if (this.IntervalRule(prev, current, next) === true) result.push('interval');
       });
 
       return result;
+    },
 
-      // Legacy Code:
-      // var result = [...this.dataInPage];
-      // if (!!this.IntervalRule && typeof this.IntervalRule == 'function') {
-      //   for (let i = 0; i < this.dataInPage.length; i++) {
-      //     let previous = this.dataInPage[i - 1];
-      //     let current = this.dataInPage[i];
-      //     let next = this.dataInPage[i + 1];
-      //     if (this.IntervalRule(previous, current, next) === true) {
-      //       result.splice(i + 1, 0, 'interval');
-      //       i++;
-      //     }
-      //   }
-      // }
-      // return result;
+    hasAnyColumnFooter() {
+      return this.Columns.some(column => !!column.footer);
+    },
+
+    filtersValues() {
+      return {
+        searchTerm: this.searchTerm,
+        ...this.filterParams,
+        ...this.ExtraFilters
+      }
+    },
+
+    sluggedName() {
+      // Remove spaces, lowercases and replace accents and special chars:
+      return this.Name.toSlug();
+    },
+
+    availableFilters() {
+      return [...this.columnFilters, ...this.Filters]
     }
   },
 
   methods: {
-    showActionsBtnInRow(row) {
-      return this.RowActions.some(action => {
-        const hide = action.hide;
-
-        // Execution
-        if (hide === undefined) return true;
-        if (hide === Boolean) return !hide;
-        if (typeof hide === 'function') return !hide(row, action);
-
-        return true;
+    /////////////
+    // Factory:
+    /////////////
+    exposeFactory() {
+      this.$emit('update:model-value', {
+        state: this.state,
+        params: this.setParams(),
+        filterValues: this.filtersValues,
+        dataInPage: this.dataInPage,
+        visibleColumns: this.visibleColumns,
+        reload: this.reload
       });
     },
 
+    /////////////
+    // Getters:
+    /////////////
+    async loadData(ignorePagination) {
+      if (!this.loading) {
+        this.loadFullData();
+
+        // turn on loading indicator
+        this.loading = true;
+        this.error = null;
+        this.errorState = false;
+
+        var params = this.setParams();
+        if (!!ignorePagination) {
+          delete params.$page;
+          delete params.$limit;
+        }
+
+        try {
+          // Before Load callback:
+          if (this.BeforeLoad) await this.BeforeLoad(params);
+
+          // fetch data from server
+          const response = await this.$http.get(this.DataURL, params);
+
+          // On Loaded callback:
+          if (this.OnLoaded) await this.OnLoaded(response);
+
+          return response;
+        } catch (err) {
+          this.loading = false;
+          this.errorState = true;
+          this.error = err;
+          this.$emit('error-thrown', err);
+          throw err;
+        }
+      }
+    },
+
+    async loadFullData() {
+      this.fullData = [];
+      var params = this.setParams();
+      delete params.$page;
+      delete params.$limit;
+
+      const response = await this.$http.get(this.DataURL, params);
+      this.fullData = response.data;
+    },
+
+    /////////////////////
+    // Sort and Filter:
+    /////////////////////
     filterHandler(filtersObject, name) {
       // Save filters state:
-      localStorage.removeItem(`Datatable.${this.Name}.${name}`);
+      localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
 
       if (Object.keys(filtersObject).length > 0)
-        localStorage.setItem(`Datatable.${this.Name}.${name}`, JSON.stringify(filtersObject));
+        localStorage.setItem(`Datatable.${this.sluggedName}.${name}`, JSON.stringify(filtersObject));
 
       this.showLoader = true;
       this.pagination.currentPage = 1;
@@ -595,63 +690,68 @@ export default {
 
     setParams() {
       // Pagination Params:
-      var result = {
+      const pagination = {
         '$sort_by': this.pagination.sortBy ?? '1',
         '$sort_direction': this.pagination.sortDir ?? 'ASC',
         '$page': this.pagination.currentPage,
         '$limit': Number(this.pagination.limit)
       };
 
-      // Search:
+      // Search Filter:
+      const search = {};
       if (this.searchTerm) {
-        let f = null;
-
         for (let i = 0; i < this.searchableColumns.length; i++) {
           let column = this.searchableColumns[i];
 
-          f = column.field;
+          const f = column.field;
 
           // First field:
           if (i == 0) {
             if (i == this.searchableColumns.length - 1) {
-              result[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm;
+              search[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm;
             } else {
-              result[f] = '$startFilterGroup$lkof|' + this.searchTerm;
+              search[f] = '$startFilterGroup$lkof|' + this.searchTerm;
             }
           }
           // All fields in the middle:
           else if (i < (this.searchableColumns.length - 1)) {
-            result[f] = '$or$lkof|' + this.searchTerm;
+            search[f] = '$or$lkof|' + this.searchTerm;
           }
           // Last field:
           else {
-            result[f] = '$endFilterGroup$or$lkof|' + this.searchTerm;
+            search[f] = '$endFilterGroup$or$lkof|' + this.searchTerm;
           }
         }
       }
 
-      var filterParams = {};
-      // Handle filters:
+      // Filters:
+      const filters = {};
       for (let k in this.filterParams) {
-        let _f = this.columnFilters.find(x => x.field == k);
-        if (_f.type == 'text')
-          filterParams[k] = `$lkof|${this.filterParams[k]}`;
-        else if (_f.type == 'daterange' || _f.type == 'datetimerange')
-          filterParams[k] = `$btwn|${this.filterParams[k].from}|${this.filterParams[k].to}`;
-        else filterParams[k] = this.filterParams[k]
+        let filterConfig = this.availableFilters.find(x => x.field == k);
+        let value = (!!filterConfig?.modifierFn && typeof filterConfig?.modifierFn === 'function') ? filterConfig?.modifierFn(this.filterParams[k]) : this.filterParams[k];
+        if(value == null) continue;
+
+        if (filterConfig?.type == 'text')
+          filters[k] = `$lkof|${value}`;
+        else if (filterConfig?.type == 'daterange' || filterConfig?.type == 'datetimerange')
+          filters[k] = `$btwn|${value.from}|${value.to}`;
+        else filters[k] = value;
       }
 
-      result = { ...result, ...filterParams };
-
-      var extraFilters = {};
-      if (!!this.ExtraFilters)
+      // Extra filters:
+      const extraFilters = {};
+      if (!!this.ExtraFilters) {
         for (let k in this.ExtraFilters)
           if (!!this.ExtraFilters[k])
             extraFilters[k] = this.ExtraFilters[k];
+      }
 
-      result = { ...result, ...extraFilters };
-
-      return result;
+      return {
+        ...pagination,
+        ...search,
+        ...filters,
+        ...extraFilters
+      };
     },
 
     getColumnNumber(column) {
@@ -679,6 +779,16 @@ export default {
       return sortNumber;
     },
 
+    getColumnLabel(field) {
+      const columns = this.Columns.map(c => ({label: c.label, field: c.field}));
+      const filters = this.Filters.map(f => ({label: f.label, field: f.field}));
+      const available = [...columns, ...filters];
+
+      let target = available.find(item => item.field == field);
+
+      return target?.label ?? field;
+    },
+
     getSortIcon(column) {
       if (this.getColumnNumber(column) == this.pagination.sortBy) {
         if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up';
@@ -703,22 +813,22 @@ export default {
 
     },
 
-    async goToPage(page) {
-      switch (page) {
-        case 'next':
-          if ((this.pagination.currentPage + 1) > this.pagination.finalPage) return;
-          this.pagination.currentPage++;
-          break;
-        case 'prev':
-          if ((this.pagination.currentPage - 1) < 1) return;
-          this.pagination.currentPage--;
-          break;
-        default:
-          if (page != this.pagination.currentPage)
-            this.pagination.currentPage = page;
-      }
+    showActionsBtnInRow(row) {
+      return this.RowActions.some(action => {
+        const hide = action.hide;
+
+        // Execution
+        if (hide === undefined) return true;
+        if (hide === Boolean) return !hide;
+        if (typeof hide === 'function') return !hide(row, action);
+
+        return true;
+      });
     },
 
+    ///////////////////////////
+    // Operational Functions:
+    ///////////////////////////
     reload() {
       clearTimeout(this.loadTimeout);
 
@@ -726,40 +836,6 @@ export default {
         const response = await this.loadData(this.IgnorePagination);
         if (response) this.rawData = response.data;
       }, 200);
-    },
-
-    async loadData(ignorePagination) {
-      if (!this.loading) {
-        // turn on loading indicator
-        this.loading = true;
-        this.error = null;
-        this.errorState = false;
-
-        var params = this.setParams();
-        if (!!ignorePagination) {
-          delete params.$page;
-          delete params.$limit;
-        }
-
-        try {
-          // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(params);
-
-          // fetch data from server
-          var response = await this.$getService('toolcase/http').get(this.DataURL, params);
-
-          // On Loaded callback:
-          if (this.OnLoaded) await this.OnLoaded(response);
-
-          return response;
-        } catch (err) {
-          this.loading = false;
-          this.errorState = true;
-          this.error = err;
-          this.$emit('error-thrown', err);
-          throw err;
-        }
-      }
     },
 
     paginate(data) {
@@ -803,11 +879,26 @@ export default {
       }
     },
 
+    async goToPage(page) {
+      switch (page) {
+        case 'next':
+          if ((this.pagination.currentPage + 1) > this.pagination.finalPage) return;
+          this.pagination.currentPage++;
+          break;
+        case 'prev':
+          if ((this.pagination.currentPage - 1) < 1) return;
+          this.pagination.currentPage--;
+          break;
+        default:
+          if (page != this.pagination.currentPage)
+            this.pagination.currentPage = page;
+      }
+    },
+
     async exportFile(filetype, filename) {
       filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`;
 
-      const response = await this.loadData(true);
-      var data = response.data;
+      var data = this.fullData;
       var blobType;
       var content;
 
@@ -844,34 +935,11 @@ export default {
       this.loading = false;
     },
 
-    async printData() {
-      const response = await this.loadData(true);
-      var data = response.data;
-      this.loading = false;
-
-      const content = `${this.buildContentTable(data)}`;
-
-      // Open a new window or tab for printing
-      const newWindow = window.open();
-      newWindow.document.open();
-      newWindow.document.write(content);
-      newWindow.document.close();
-      newWindow.print();
-    },
-
-    exposeFactory() {
-      this.$emit('update:model-value', {
-        state: this.state,
-        params: this.setParams(),
-        rawData: this.rawData,
-        dataInPage: this.dataInPage,
-        visibleColumns: this.visibleColumns,
-        reload: this.reload
-      });
-    },
-
     escapeXml(value) {
       if (value === null || value === undefined) return "";
+      if (value === false) return "Não";
+      if (value === true) return "Sim";
+
       return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -886,7 +954,7 @@ export default {
       <?xml version="1.0" encoding="UTF-8"?>
   <html xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="http://www.w3.org/TR/REC-html40">
+        xmlns="this.$http://www.w3.org/TR/REC-html40">
     <head>
       <style>
         table {
@@ -903,7 +971,7 @@ export default {
           text-align: center;
         }
       </style>
-      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta this.$http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
   <table>
@@ -938,6 +1006,76 @@ export default {
       return content;
     },
 
+    buildContentTableForPrint(data) {
+      const visible = this.Columns.filter(c => this.visibleColumns.includes(c.field));
+      var filters = Object.entries(this.filtersValues)
+        .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+        .map(([key, value]) => `<li>&#8250; ${this.escapeXml(this.getColumnLabel(key))}: <span style="font-weight: normal;">"${this.escapeXml(value)}"</span></li>`).join("");
+      if (filters.length == 0) filters = "<li>Nenhum filtro aplicado</li>";
+
+      let content = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${this.Name}</title>
+  <style>
+    @page { margin: 10mm; }
+    body { font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #000; padding: 4px; text-align: left; }
+    th { background: #f4f4f4; text-align: center; }
+
+    thead { display: table-header-group; } /* repete header */
+    tfoot { display: table-footer-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <table>
+    <thead>
+      <tr><th colspan="${visible.length}" style="text-align: center; font-size: 16px;">${this.Name}</th></tr>
+      <tr><th colspan="${visible.length}" style="text-align: left; font-size: 12px;">
+        <span style="text-decoration:underline;">Filtros:</span>
+        <br>
+        <br>
+        <ul style="list-style-type: none; padding: 0; margin: 0;">${filters}</ul></th>
+      </tr>
+      <tr>${visible.map(c => `<th>${this.escapeXml(c.label)}</th>`).join("")}</tr>
+  </thead>
+  <tbody>`;
+
+      for (let j = 0; j < data.length; j++) {
+        const row = data[j];
+        content += "<tr>";
+        for (const clm of visible) {
+          const val = clm.format ? clm.format(row) : (row?.[clm.field] ?? "");
+          content += `<td>${this.escapeHtml(String(val))}</td>`;
+        }
+        content += "</tr>";
+      }
+
+      content += `</tbody>
+</table>
+</body>
+<tfoot>
+  <tr><td colspan="${visible.length}">
+    <em>Total de registros: ${data.length}</em>
+  </td></tr>
+</tfoot>
+</html>`;
+
+      return content;
+    },
+
+    escapeHtml(s) {
+      return s
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    },
+
     buildCsvContent(rawdata) {
       // Ensure the data is an array of objects
       if (!Array.isArray(rawdata) || !rawdata.length || typeof rawdata[0] !== 'object') {
@@ -958,26 +1096,73 @@ export default {
         for (let i = 0; i < this.Columns.length; i++) {
           let clm = this.Columns[i];
           if (!(this.visibleColumns.includes(clm.field))) continue;
-
-          rowValues.push(row[clm.field]);
+          const f = clm.export ?? clm.field
+          rowValues.push(row[f]);
         }
         data.push(rowValues);
       }
 
       // Generate CSV content
       const csvContent = [
-        headers.join(';'), // Join headers with commas
-        ...data.map(row => row.join(';')) // Map each row to CSV string
-      ].join('\r\n'); // Separate rows with a newline
+        headers.join(';'),
+        ...data.map(row => row.join(';'))
+      ].join('\r\n');
 
       return csvContent;
-    }
+    },
+
+    async printData() {
+      const data = this.fullData;
+      this.loading = false;
+
+      const html = this.buildContentTableForPrint(data);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // dá um tempo pro layout e reflow terminarem
+      await new Promise(r => setTimeout(r, 500));
+
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+
+      setTimeout(() => iframe.remove(), 1500);
+    },
+
+    //////////////////
+    // Item Functions:
+    //////////////////
+    handleItemClick(item) {
+      if (this.itemHasChildren(item)) return;
+
+      item.fn({
+        fullData: this.fullData,
+        rawData: this.rawData,
+        filters: this.filtersValues,
+        ...item.params
+      });
+    },
+
+    itemHasChildren(item) {
+      return !!item?.children;
+    },
   },
 
   async mounted() {
     // Set columns:
     this.columns = [...this.Columns];
-    this.visibleColumns = JSON.parse(localStorage.getItem(`Datatable.${this.Name}.visibleColumns`)) ?? this.Columns.map(clm => clm.field)
+    this.visibleColumns = JSON.parse(localStorage.getItem(`Datatable.${this.sluggedName}.visibleColumns`)) ?? this.Columns.map(clm => clm.field)
 
     // Set Actions:
     if (this.RowActions && this.RowActions?.length > 0)
@@ -991,7 +1176,7 @@ export default {
 
     var loadFirstData = true;
     // Set persisted filters:
-    var persistedFilters = localStorage.getItem(`Datatable.${this.Name}.filters`);
+    var persistedFilters = localStorage.getItem(`Datatable.${this.sluggedName}.filters`);
     if (!!persistedFilters) {
       this.showFilterPanel = true;
       setTimeout(() => this.filterParams = JSON.parse(persistedFilters), 100)
@@ -999,7 +1184,7 @@ export default {
     }
 
     // Set persisted search term:
-    this.searchTerm = localStorage.getItem(`Datatable.${this.Name}.searchTerm`) ?? null;
+    this.searchTerm = localStorage.getItem(`Datatable.${this.sluggedName}.searchTerm`) ?? null;
     if (!!this.searchTerm) loadFirstData = false;
 
     // Set sorting:
@@ -1010,7 +1195,7 @@ export default {
     }
 
     // Set persisted pagination:
-    var persistedPagination = localStorage.getItem(`Datatable.${this.Name}.pagination`);
+    var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
     if (!!persistedPagination) {
       persistedPagination = JSON.parse(persistedPagination);
       for (let k in persistedPagination)
@@ -1060,12 +1245,16 @@ th {
   /* Adjusts width to fit the content */
 }
 
+tbody>tr:nth-child(even) {
+  background-color: #e2e2e2;
+}
+
 td {
   min-width: 125px;
 }
 
-tbody>tr:nth-child(even) {
-  background-color: #e2e2e2;
+tfoot {
+  position: sticky;
 }
 
 select {

@@ -1,5 +1,5 @@
 <template>
-  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :dense="dense" readonly filled
+  <q-input hide-bottom-space :class="`full-width bg-${BgColor ? BgColor : 'white'}`" :dense="dense" readonly filled :hint="hint"
     square v-model="formattedDate" :error="Error" :label="Label">
     <template v-slot:append>
       <q-icon id="clear-button" v-if="!!formattedDate && !readonly" name="cancel" clickable @click="clear()"
@@ -10,7 +10,7 @@
       <q-icon v-else clickable @click="$emit('focus');" name="fas fa-calendar-alt" color="primary"
         class="cursor-pointer">
         <q-tooltip>Selecionar {{ range ? 'Período' : 'Data' }}</q-tooltip>
-        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+        <q-popup-proxy cover transition-show="scale" transition-hide="scale" style="margin: 0;">
           <q-card>
             <q-date :emit-immediately="!range" :range="range" :today-btn="todayBtn" :options="dateOptions"
               :navigation-min-year-month="minDatePage" :navigation-max-year-month="maxDatePage" v-model="date"
@@ -54,6 +54,7 @@ export default {
     todayBtn: Boolean,
     minDatePage: String,
     maxDatePage: String,
+    hint: String,
   },
 
   data() {
@@ -150,17 +151,39 @@ export default {
       var val;
 
       // For date range:
-      if (this.date != null && (typeof this.date == 'object' || this.range)) {
-        // 1. Handle date:
-        val = {
-          from: !!this.date.from ? this.date.from.replaceAll('/', '-') : null,
-          to: !!this.date.to ? this.date.to.replaceAll('/', '-') : null,
-        };
-        // 2. Handle first time:
-        if (!!val.from && this.firstTime) val.from = `${val.from} ${this.firstTime}`
-        // 3. Handle last time:
-        if (!!val.to && this.lastTime) val.to = `${val.to} ${this.lastTime}`
+      if (this.range && this.date != null) {
+        const normalize = (d) => (d ? d.replaceAll('/', '-') : null);
+
+        let from = null; 
+        let to = null;
+        
+        if(typeof this.date === 'object') {
+          from = normalize(this.date.from);
+          to   = normalize(this.date.to);
+        } else {
+          const normalized = normalize(this.date);
+          from = normalized;
+          to   = normalized;
+        }
+
+        if (from && this.firstTime) from = `${from} ${this.firstTime}`;
+        if (to && this.lastTime) to = `${to} ${this.lastTime}`;
+
+        val = { from, to };
       }
+
+      // Legacy code:
+      // if (this.date != null && (typeof this.date == 'object' || this.range)) {
+      //   // 1. Handle date:
+      //   val = {
+      //     from: !!this.date.from ? this.date.from.replaceAll('/', '-') : null,
+      //     to: !!this.date.to ? this.date.to.replaceAll('/', '-') : null,
+      //   };
+      //   // 2. Handle first time:
+      //   if (!!val.from && this.firstTime) val.from = `${val.from} ${this.firstTime}`
+      //   // 3. Handle last time:
+      //   if (!!val.to && this.lastTime) val.to = `${val.to} ${this.lastTime}`
+      // }
 
       // For single date:
       else {

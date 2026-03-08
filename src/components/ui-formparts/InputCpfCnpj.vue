@@ -1,5 +1,5 @@
 <template>
-  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
+  <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="false" :dense="dense" :hint="hint"
     :disable="disable" :readonly="readonly" maxlength="18" :mask="mask"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="Error" :error-message="ErrorMsg"
     @focus="() => $emit('focus')">
@@ -28,6 +28,7 @@ export default {
     CpfOnly: Boolean,
     CnpjOnly: Boolean,
     BgColor: String,
+    hint: String,
   },
 
   data() {
@@ -40,11 +41,13 @@ export default {
     mask() {
       let mask = '###.###.###-###';
 
-      if (!this.value) return mask;
+      if (!!this.CpfOnly) mask = '###.###.###-##';
+      if (!!this.CnpjOnly) mask = '##.###.###/####-##';
 
-      const onlyDigits = this.value.replace(/\D+/g, '');
-
-      if (onlyDigits.length > 11) mask = '##.###.###/####-##';
+      if (!!this.value) {
+        const onlyDigits = this.value.replace(/\D+/g, '');
+        if (onlyDigits.length > 11) mask = '##.###.###/####-##';
+      }
 
       return mask;
     }
@@ -52,7 +55,7 @@ export default {
 
   watch: {
     modelValue(val) {
-      this.value = val ?? null
+      this.value = val ?? null;
     },
 
     value(val) {
@@ -60,12 +63,12 @@ export default {
       else if (val.length < 14) return;
 
       this.emit();
-    },
+  }
   },
 
   methods: {
     clear() {
-      this.value = this.Default ?? null;
+      this.value = this.Default || null;
       this.emit();
     },
 

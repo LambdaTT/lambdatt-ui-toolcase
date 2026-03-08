@@ -35,7 +35,7 @@
       </q-btn>
     </q-card>
 
-    <q-avatar v-else :square="square" :size="setSize">
+    <q-avatar v-else :square="square" :size="setSize" class="bg-grey-7">
       <q-img :src="setSrc" :ratio="setRatio" :fit="setFit" />
 
       <FileUpload

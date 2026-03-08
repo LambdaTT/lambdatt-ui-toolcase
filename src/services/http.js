@@ -39,12 +39,7 @@ export default {
     }
 
     isExternal = false;
-    try {
-      var reqPromise = axios.get(url, reqConf);
-    } catch (error) {
-      console.error(`HTTP SERVICE ERROR: on url (GET)'${url}':`, error);
-      throw error;
-    }
+    var reqPromise = axios.get(url, reqConf);
 
     // Evt Trigger
     eventbroadcaster.$broadcast("http-request-sent", reqPromise);
@@ -70,12 +65,7 @@ export default {
     }
 
     isExternal = false;
-    try {
-      var reqPromise = axios.post(url, data, reqConf);
-    } catch (error) {
-      console.error(`HTTP SERVICE ERROR: on url (POST)'${url}':`, error);
-      throw error;
-    }
+    var reqPromise = axios.post(url, data, reqConf);
 
     // Evt Trigger
     eventbroadcaster.$broadcast("http-request-sent", reqPromise);

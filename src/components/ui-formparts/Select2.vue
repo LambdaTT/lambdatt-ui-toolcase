@@ -1,16 +1,19 @@
 <template>
-  <q-select behavior="menu" hide-bottom-space :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive"
-    :disable="disable" :hide-dropdown-icon="readonly" :dense="dense" filled square :clearable="clearable"
-    v-model="selected" use-input hide-selected fill-input input-debounce="300" :options="options" @filter="filterFn"
-    :label="Label" :error="Error" @focus="$emit('focus')" :readonly="readonly">
-    <template v-if="!!Icon" v-slot:append>
-      <q-icon :name="Icon" color="grey-8" />
+  <q-select filled square hide-bottom-space hide-dropdown-icon use-input fill-input
+    behavior="menu" :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive" input-debounce="300"
+    :clearable="clearable" :dense="dense" :disable="disable" :label="Label" :readonly="readonly" :hide-selected="!Multiple"
+    :options="options" :error="Error" :multiple="Multiple" :use-chips="UseChips" :stack-label="StackLabel"
+    v-model="selected"
+    @filter="filterFn" @focus="$emit('focus')" @popup-show="isOpen = true" @popup-hide="isOpen = false"
+  >
+    <template v-slot:append>
+      <q-icon v-if="!readonly" :class="isOpen ? 'rotate-180' : ''" name="arrow_drop_down" color="grey-8"
+        style="transition: transform 0.28s" />
+      <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
     </template>
     <template v-slot:no-option>
       <q-item>
-        <q-item-section class="text-grey">
-          Nenhum resultado
-        </q-item-section>
+        <q-item-section class="text-grey">Nenhum resultado</q-item-section>
       </q-item>
     </template>
   </q-select>
@@ -21,95 +24,124 @@ export default {
   name: 'ui-formparts-select2',
 
   props: {
-    EmitWholeOption: Boolean,
+    modelValue: {
+      type: [String, Number, Array, Object],
+      default: null
+    },
+    Options: {
+      type: Array,
+      default: () => []
+    },
+
     BgColor: String,
-    Options: Array,
     Label: String,
     Icon: String,
     Error: Boolean,
+
     readonly: Boolean,
     disable: Boolean,
     dense: Boolean,
-    modelValue: {
-      types: ['string', 'object', 'number']
-    },
-    clearable: Boolean
+    clearable: Boolean,
+
+    Multiple: Boolean,
+    UseChips: Boolean,
+    StackLabel: Boolean,
+
+    Default: [String, Object, Number],
   },
 
   data() {
     return {
-      rawData: [],
+      filteredOptions: this.Options,
       selected: null,
-      debounceId: null,
-    }
-  },
-
-  computed: {
-    options() {
-      if (!!this.rawData?.length) {
-        return [...this.rawData].sort((a, b) =>
-          String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
-      }
-      return [];
+      isOpen: false,
+      internalUpdate: false,
     }
   },
 
   watch: {
     selected(v) {
-      const emitVal = !!this.EmitWholeOption ? v : v?.value;
-      this.$emit('update:model-value', emitVal);
+      v = v ?? this.Default ?? null;
+      this.emitValue(v)
     },
 
     modelValue(v) {
+      if (this.internalUpdate) {
+        this.internalUpdate = false
+        return
+      }
+
       this.setValue(v);
     },
 
-    Options: {
-      handler(v) {
-        this.rawData = v;
-      },
+    Options(v) {
+      this.filteredOptions = [...v].sort(
+        (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
+      );
+      this.setValue(this.modelValue)
+    }
+  },
 
-      deep: true
+  computed: {
+    options() {
+      return this.filteredOptions
     }
   },
 
   methods: {
     setValue(v) {
-      if (!!this.debounceId) {
-        clearTimeout(this.debounceId);
-        this.debounceId = null;
-      }
+      const source = this.Options
+      if (!source?.length) return
 
-      if (!(this.rawData?.length))
-        this.debounceId = setTimeout(() => this.setValue(v), 100);
-      else {
-        if (!(!!v)) {
-          this.selected = null;
-        } else {
-          this.selected = this.rawData.find((opt) => {
-            return String(opt.value).toLocaleLowerCase() == String(v).toLocaleLowerCase();
-          });
-        }
-      }
-    },
-
-    filterFn(val, update) {
-      if (!(!!val)) {
-        update(() => {
-          this.rawData = this.Options;
-        })
+      if (!v) {
+        this.selected = this.Multiple ? [] : null
         return
       }
 
+      this.selected = this.Multiple
+        ? source.filter(opt => (Array.isArray(v) ? v : []).includes(opt.value))
+        : source.find(opt =>
+            String(opt.value).toLowerCase() === String(v).toLowerCase()
+          ) || null
+    },
+
+    filterFn(val, update) {
       update(() => {
+        if (!(val)) {
+          this.filteredOptions = this.Options;
+          return
+        }
+
         const needle = val.toLowerCase()
-        this.rawData = this.Options.filter(v => String(v.label).toLowerCase().includes(needle));
+        this.filteredOptions = this.Options.filter(opt =>
+          String(opt.label).toLowerCase().includes(needle)
+        )
       })
     },
+
+    emitValue(v) {
+      if (this.Multiple) {
+        this.internalUpdate = true
+        this.$emit('update:model-value', Array.isArray(v) ? [...v] : [])
+        return
+      }
+
+      if (v instanceof Object && "value" in v) v = v.value;
+
+      const payload = v ? v : null
+      if (payload === this.modelValue) return
+
+      this.internalUpdate = true
+      this.$emit('update:model-value', payload)
+    }
   },
 
   mounted() {
-    this.rawData = this.Options;
+    setTimeout(() => {
+      if (this.Default) {
+        this.selected = this.Default;
+      }
+    }, 200);
   }
 }
 </script>
