@@ -4,26 +4,57 @@
     <div class="row q-pb-sm items-center">
       <div class="col-12 col-md-8">
         <!-- Options -->
-        <q-btn v-if="availableFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
-          @click="showFilterPanel = !showFilterPanel">
+        <q-btn
+          v-if="availableFilters.length > 0"
+          flat
+          round
+          color="primary"
+          size="sm"
+          icon="fas fa-filter"
+          @click="showFilterPanel = !showFilterPanel"
+        >
           <q-tooltip>Filtros da tabela</q-tooltip>
         </q-btn>
-        <q-btn flat round color="primary" size="sm" icon="fas fa-sync" @click="reload()">
+        <q-btn
+          flat
+          round
+          color="primary"
+          size="sm"
+          icon="fas fa-sync"
+          @click="reload()"
+        >
           <q-tooltip>Atualizar lista</q-tooltip>
         </q-btn>
         <q-btn flat round color="primary" size="sm" icon="fas fa-columns">
           <q-tooltip>Colunas visíveis</q-tooltip>
           <q-menu class="q-pa-sm">
-            <q-option-group v-model="visibleColumns" type="checkbox" :options="columnOptions"></q-option-group>
+            <q-option-group
+              v-model="visibleColumns"
+              type="checkbox"
+              :options="columnOptions"
+            ></q-option-group>
           </q-menu>
         </q-btn>
-        <q-btn :disable="this.fullData.length === 0" v-if="!!Export" flat round color="primary" size="sm"
-          icon="fas fa-file-download">
+        <q-btn
+          :disable="this.fullData.length === 0"
+          v-if="!!Export"
+          flat
+          round
+          color="primary"
+          size="sm"
+          icon="fas fa-file-download"
+        >
           <q-tooltip>Opções de Exportação</q-tooltip>
           <q-menu class="q-pa-sm">
             <q-list class="text-primary">
-              <q-item v-close-popup dense v-for="(opt, idx) in exportOptions" :key="idx" clickable
-                @click="exportFile(opt.filetype, opt.filename)">
+              <q-item
+                v-close-popup
+                dense
+                v-for="(opt, idx) in exportOptions"
+                :key="idx"
+                clickable
+                @click="exportFile(opt.filetype, opt.filename)"
+              >
                 <q-item-section avatar>
                   <q-icon :name="opt.icon" size="xs"></q-icon>
                 </q-item-section>
@@ -34,21 +65,52 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn :disable="this.fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm"
-          icon="fas fa-print" @click="printData()">
+        <q-btn
+          :disable="this.fullData.length === 0"
+          v-if="!!Printable"
+          flat
+          round
+          color="primary"
+          size="sm"
+          icon="fas fa-print"
+          @click="printData()"
+        >
           <q-tooltip>Imprimir</q-tooltip>
         </q-btn>
 
         <!-- Custom Resources -->
-        <q-btn v-for="(r, i) in CustomResources" :key="i" 
-          :disable="this.fullData.length === 0" flat round color="primary" size="sm" :icon="r.icon ?? 'fas fa-gear'" 
-          @click="handleItemClick(r)">
-          <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
+        <q-btn
+          v-for="(r, i) in CustomResources"
+          :key="i"
+          :disable="this.fullData.length === 0"
+          flat
+          round
+          color="primary"
+          size="sm"
+          :icon="r.icon ?? 'fas fa-gear'"
+          @click="handleItemClick(r)"
+        >
+          <q-tooltip>{{ r.label ?? "Recurso personalizado" }}</q-tooltip>
           <q-menu v-if="itemHasChildren(r)" class="q-pa-sm">
             <q-list class="text-primary">
-              <q-item v-for="(opt, idx) in r.children" :key="idx" v-close-popup dense clickable
-                @click="opt.fn({fullData, rawData, filters: filtersValues, ...opt.params})">
-                <q-item-section v-if="opt.icon" avatar><q-icon :name="opt.icon" size="xs" /></q-item-section>
+              <q-item
+                v-for="(opt, idx) in r.children"
+                :key="idx"
+                v-close-popup
+                dense
+                clickable
+                @click="
+                  opt.fn({
+                    fullData,
+                    rawData,
+                    filters: filtersValues,
+                    ...opt.params,
+                  })
+                "
+              >
+                <q-item-section v-if="opt.icon" avatar
+                  ><q-icon :name="opt.icon" size="xs"
+                /></q-item-section>
                 <q-item-section>{{ opt.label }}</q-item-section>
               </q-item>
             </q-list>
@@ -58,11 +120,18 @@
 
       <!-- Search Field -->
       <div class="col-12 col-md-4">
-        <q-input v-if="searchableColumns.length > 0" dense square filled clearable label="Pesquisar na lista"
-          v-model="searchTerm">
+        <q-input
+          v-if="searchableColumns.length > 0"
+          dense
+          square
+          filled
+          clearable
+          label="Pesquisar na lista"
+          v-model="searchTerm"
+        >
           <template v-slot:append>
-            <q-icon size="xs" name="fas fa-search" color="grey-8" />
-          </template></q-input>
+            <q-icon size="xs" name="fas fa-search" color="grey-8" /> </template
+        ></q-input>
       </div>
     </div>
 
@@ -71,20 +140,45 @@
     <!-- Filters Panel -->
     <div v-if="availableFilters.length > 0" class="row">
       <div class="col-12">
-        <q-expansion-item hide-expand-icon v-model="showFilterPanel" header-style="display:none;">
+        <q-expansion-item
+          hide-expand-icon
+          v-model="showFilterPanel"
+          header-style="display:none;"
+        >
           <q-toolbar class="bg-grey-3">
-            <q-toolbar-title>
-              Filtros da Tabela
-            </q-toolbar-title>
-            <q-btn size="sm" icon="fas fa-filter-circle-xmark" color="primary" flat round dense
-              @click="filterParams = {}">
+            <q-toolbar-title> Filtros da Tabela </q-toolbar-title>
+            <q-btn
+              size="sm"
+              icon="fas fa-filter-circle-xmark"
+              color="primary"
+              flat
+              round
+              dense
+              @click="filterParams = {}"
+            >
               <q-tooltip>Limpar filtros</q-tooltip>
             </q-btn>
           </q-toolbar>
           <div class="row q-py-sm">
-            <div v-for="(f, i) in availableFilters" :key="i" class="col-12 col-md-4">
-              <InputField clearable dense :type="f.type" :withSeconds="f.filterOptions?.withSeconds"
-                :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []" v-model="filterParams[f.field]" :Default="f.default !== null && typeof f.default != 'undefined' ? f.default : null">
+            <div
+              v-for="(f, i) in availableFilters"
+              :key="i"
+              class="col-12 col-md-4"
+            >
+              <InputField
+                clearable
+                dense
+                :type="f.type"
+                :withSeconds="f.filterOptions?.withSeconds"
+                :Label="`Filtrar por ${f.label}`"
+                :Options="f.options ?? []"
+                v-model="filterParams[f.field]"
+                :Default="
+                  f.default !== null && typeof f.default != 'undefined'
+                    ? f.default
+                    : null
+                "
+              >
               </InputField>
             </div>
           </div>
@@ -99,15 +193,34 @@
       <table>
         <thead>
           <tr>
-            <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${column.sortable !== false ? 'cursor-pointer' : ''}`"
-              v-for="column in columns" :key="column.field" @click="sort(column)"
-              :style="column.width ? `width: ${column.width};` : ''">
+            <th
+              v-show="
+                visibleColumns.includes(column.field) ||
+                column.name == 'actions'
+              "
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${
+                column.sortable !== false ? 'cursor-pointer' : ''
+              }`"
+              v-for="column in columns"
+              :key="column.field"
+              @click="sort(column)"
+              :style="column.width ? `width: ${column.width};` : ''"
+            >
               <span>{{ column.label }}</span>
-              <q-icon v-if="column.sortable !== false" size="0.9em" :name="getSortIcon(column)"
-                :color="getColumnNumber(column) == this.pagination.sortBy ? 'primary' : null">
+              <q-icon
+                v-if="column.sortable !== false"
+                size="0.9em"
+                :name="getSortIcon(column)"
+                :color="
+                  getColumnNumber(column) == this.pagination.sortBy
+                    ? 'primary'
+                    : null
+                "
+              >
               </q-icon>
-              <q-tooltip v-if="column.sortable !== false">Clique para ordenar p/ {{ column.label }}</q-tooltip>
+              <q-tooltip v-if="column.sortable !== false"
+                >Clique para ordenar p/ {{ column.label }}</q-tooltip
+              >
             </th>
           </tr>
         </thead>
@@ -116,14 +229,26 @@
         <tbody v-if="state == 'ready'">
           <template v-for="(row, idx) in rows" :key="idx">
             <tr v-if="row != 'interval'">
-              <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-                :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
-                v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
-
+              <td
+                v-show="
+                  visibleColumns.includes(column.field) ||
+                  column.name == 'actions'
+                "
+                :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${
+                  !!column.align ? `text-${column.align}` : ''
+                }`"
+                v-for="column in columns"
+                :key="column.field"
+                :style="column.width ? `width: ${column.width};` : ''"
+              >
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
                   <div v-if="!(`cell-${column.name}` in $slots)">
-                    {{ column.format ? column.format(row[column.field]) : row[column.field] }}
+                    {{
+                      column.format
+                        ? column.format(row[column.field])
+                        : row[column.field]
+                    }}
                   </div>
 
                   <!-- In case a template is set for the td-->
@@ -133,27 +258,65 @@
                 </div>
 
                 <!-- Especial td of actions -->
-                <div class="text-center" v-if="column.name == 'actions' && showActionsColumn">
-                  <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
+                <div
+                  class="text-center"
+                  v-if="column.name == 'actions' && showActionsColumn"
+                >
+                  <q-btn
+                    v-if="showActionsBtnInRow(row)"
+                    flat
+                    dense
+                    color="primary"
+                    icon="fas fa-ellipsis-v"
+                  >
                     <q-tooltip>Ações do registro</q-tooltip>
                     <q-menu>
                       <q-list>
-                        <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in RowActions" :key="idx" clickable v-close-popup @click="a.fn(row)">
+                        <q-item
+                          class="text-primary"
+                          v-show="
+                            typeof a.hide == 'function' ? !a.hide(row) : !a.hide
+                          "
+                          v-for="(a, idx) in RowActions"
+                          :key="idx"
+                          clickable
+                          v-close-popup
+                          @click="a.fn(row)"
+                        >
                           <q-item-section v-if="a.icon" side>
-                            <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
+                            <q-icon
+                              color="primary"
+                              size="sm"
+                              :name="a.icon"
+                            ></q-icon>
                           </q-item-section>
                           <q-item-section>{{ a.label }}</q-item-section>
-                          <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
+                          <q-tooltip v-if="a.tooltip">{{
+                            a.tooltip
+                          }}</q-tooltip>
                         </q-item>
-                        <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
-                          @click="a.fn(row)">
+                        <q-item
+                          class="text-primary"
+                          v-show="
+                            typeof a.hide == 'function' ? !a.hide(row) : !a.hide
+                          "
+                          v-for="(a, idx) in injectedRowActions(row)"
+                          :key="idx"
+                          clickable
+                          v-close-popup
+                          @click="a.fn(row)"
+                        >
                           <q-item-section v-if="a.icon" side>
-                            <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
+                            <q-icon
+                              color="primary"
+                              size="sm"
+                              :name="a.icon"
+                            ></q-icon>
                           </q-item-section>
                           <q-item-section>{{ a.label }}</q-item-section>
-                          <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
+                          <q-tooltip v-if="a.tooltip">{{
+                            a.tooltip
+                          }}</q-tooltip>
                         </q-item>
                       </q-list>
                     </q-menu>
@@ -162,9 +325,18 @@
               </td>
             </tr>
             <tr v-else>
-              <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot name="interval-row"
-                  :data="{ previous: dataInPage[idx - 1], current: dataInPage, next: dataInPage[idx + 1] }">
+              <td
+                :colspan="columns.length"
+                :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`"
+              >
+                <slot
+                  name="interval-row"
+                  :data="{
+                    previous: dataInPage[idx - 1],
+                    current: dataInPage,
+                    next: dataInPage[idx + 1],
+                  }"
+                >
                 </slot>
               </td>
             </tr>
@@ -174,12 +346,21 @@
         <!-- Error State -->
         <tbody v-if="state == 'error'">
           <tr>
-            <td class="q-pa-lg text-center text-red-3" :colspan="columns.length">
+            <td
+              class="q-pa-lg text-center text-red-3"
+              :colspan="columns.length"
+            >
               <div>
                 <div><q-icon size="lg" name="fas fa-bomb"></q-icon></div>
                 <div class="text-h6">ERRO!</div>
-                <div class="text-caption"><b>{{ error.response.status }}</b> {{ error.response.statusText }}</div>
-                <small>Favor entrar em contato com o administrador do sistema.</small>
+                <div class="text-caption">
+                  <b>{{ error.response.status }}</b>
+                  {{ error.response.statusText }}
+                </div>
+                <small
+                  >Favor entrar em contato com o administrador do
+                  sistema.</small
+                >
               </div>
             </td>
           </tr>
@@ -188,9 +369,14 @@
         <!-- Empty State -->
         <tbody v-if="state == 'empty'">
           <tr>
-            <td class="q-pa-lg text-center text-grey-8" :colspan="columns.length">
+            <td
+              class="q-pa-lg text-center text-grey-8"
+              :colspan="columns.length"
+            >
               <div>
-                <div><q-icon size="lg" name="far fa-folder-open"></q-icon> *</div>
+                <div>
+                  <q-icon size="lg" name="far fa-folder-open"></q-icon> *
+                </div>
                 <div class="text-h6">Lista Vazia.</div>
               </div>
             </td>
@@ -200,7 +386,10 @@
         <!-- Loading State -->
         <tbody v-if="state == 'loading'">
           <tr>
-            <td class="q-pa-lg text-center text-grey-8" :colspan="columns.length">
+            <td
+              class="q-pa-lg text-center text-grey-8"
+              :colspan="columns.length"
+            >
               <div><q-spinner-gears size="lg" /></div>
               <div class="text-caption">Carregando...</div>
             </td>
@@ -209,15 +398,28 @@
 
         <tfoot v-if="hasAnyColumnFooter || 'footer' in $slots">
           <tr class="text-bold">
-            <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${(!!column.align) ? `text-${column.align}` : ''}`"
-              v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
+            <td
+              v-show="
+                visibleColumns.includes(column.field) ||
+                column.name == 'actions'
+              "
+              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${
+                !!column.align ? `text-${column.align}` : ''
+              }`"
+              v-for="column in columns"
+              :key="column.field"
+              :style="column.width ? `width: ${column.width};` : ''"
+            >
               <div v-if="!!column.footer">
                 <div v-if="`foot-${column.name}` in $slots">
                   <slot :name="`foot-${column.name}`"></slot>
                 </div>
                 <div v-else>
-                  {{ typeof column.footer == 'function' ? column.footer(fullData) : column.footer }}
+                  {{
+                    typeof column.footer == "function"
+                      ? column.footer(fullData)
+                      : column.footer
+                  }}
                 </div>
               </div>
             </td>
@@ -226,9 +428,7 @@
             <slot :name="`footer`"></slot>
           </tr>
         </tfoot>
-
       </table>
-
     </div>
 
     <!-- Pagination -->
@@ -250,8 +450,16 @@
           <q-spinner-gears v-else size="xs" />.
         </div>
       </div>
-      <div :class="`col-12 col-md-6 ${$q.screen.gt.sm ? 'text-right' : 'text-center q-mt-md'}`">
-        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(1)">
+      <div
+        :class="`col-12 col-md-6 ${
+          $q.screen.gt.sm ? 'text-right' : 'text-center q-mt-md'
+        }`"
+      >
+        <q-btn
+          :disable="fullData.length === 0"
+          color="primary"
+          @click="goToPage(1)"
+        >
           <q-tooltip>Primeira Página</q-tooltip>
           <q-icon size="xs" name="fas fa-angles-left"></q-icon>
         </q-btn>
@@ -259,8 +467,14 @@
           <q-tooltip>Página Anterior</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-left"></q-icon>
         </q-btn>
-        <q-btn class="q-px-sm" color="primary" v-for="page in pagination.pages" :key="page" @click="goToPage(page)"
-          :flat="page == pagination.currentPage">
+        <q-btn
+          class="q-px-sm"
+          color="primary"
+          v-for="page in pagination.pages"
+          :key="page"
+          @click="goToPage(page)"
+          :flat="page == pagination.currentPage"
+        >
           <q-tooltip>Página {{ page }}</q-tooltip>
           {{ page }}
         </q-btn>
@@ -268,7 +482,11 @@
           <q-tooltip>Próxima Página</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-right"></q-icon>
         </q-btn>
-        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(this.pagination.finalPage)">
+        <q-btn
+          :disable="fullData.length === 0"
+          color="primary"
+          @click="goToPage(this.pagination.finalPage)"
+        >
           <q-tooltip>Última Página</q-tooltip>
           <q-icon size="xs" name="fas fa-angles-right"></q-icon>
         </q-btn>
@@ -279,33 +497,33 @@
 
 <script>
 export default {
-  name: 'ui-gadgets-datatable',
+  name: "ui-gadgets-datatable",
 
   props: {
     Name: {
       type: String,
-      required: true
+      required: true,
     },
     modelValue: {
       type: Object,
-      required: true
+      required: true,
     },
     DataURL: {
       type: String,
-      required: true
+      required: true,
     },
     Columns: {
       type: Object,
-      required: true
+      required: true,
     },
     DefaultSorting: {
       type: Object,
-      validator: (v) => ('by' in v) && ('direction' in v)
+      validator: (v) => "by" in v && "direction" in v,
     },
     RowActions: Object,
-    Filters:{
+    Filters: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     ExtraFilters: Object,
     Export: Object,
@@ -317,7 +535,7 @@ export default {
     dense: Boolean,
     injectedRowActions: {
       type: Function,
-      default: (row) => []
+      default: (row) => [],
     },
     CustomResources: Array,
   },
@@ -335,8 +553,8 @@ export default {
         pageLastItem: null,
         pageLastIndex: null,
         limit: 10,
-        sortBy: '1',
-        sortDir: 'ASC',
+        sortBy: "1",
+        sortDir: "ASC",
       },
 
       // Filters related vars:
@@ -358,8 +576,8 @@ export default {
       // State:
       loading: false,
       showLoader: true,
-      errorState: false
-    }
+      errorState: false,
+    };
   },
 
   watch: {
@@ -370,20 +588,31 @@ export default {
 
       this.loadTimeout = setTimeout(async () => {
         if (!!this.searchTerm)
-          localStorage.setItem(`Datatable.${this.sluggedName}.searchTerm`, this.searchTerm)
-        else localStorage.removeItem(`Datatable.${this.sluggedName}.searchTerm`)
+          localStorage.setItem(
+            `Datatable.${this.sluggedName}.searchTerm`,
+            this.searchTerm,
+          );
+        else
+          localStorage.removeItem(`Datatable.${this.sluggedName}.searchTerm`);
 
         const response = await this.loadData(this.IgnorePagination);
         if (response) this.rawData = response.data;
       }, 200);
     },
 
-    'pagination.currentPage'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
-      persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
+    "pagination.currentPage"() {
+      var persistedPagination = localStorage.getItem(
+        `Datatable.${this.sluggedName}.pagination`,
+      );
+      persistedPagination = !!persistedPagination
+        ? JSON.parse(persistedPagination)
+        : {};
       persistedPagination.currentPage = this.pagination.currentPage;
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`);
+      localStorage.setItem(
+        `Datatable.${this.sluggedName}.pagination`,
+        JSON.stringify(persistedPagination),
+      );
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -392,14 +621,21 @@ export default {
       }, 200);
     },
 
-    'pagination.limit'() {
+    "pagination.limit"() {
       this.pagination.currentPage = 1;
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
-      persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
+      var persistedPagination = localStorage.getItem(
+        `Datatable.${this.sluggedName}.pagination`,
+      );
+      persistedPagination = !!persistedPagination
+        ? JSON.parse(persistedPagination)
+        : {};
       persistedPagination.currentPage = this.pagination.currentPage;
       persistedPagination.limit = this.pagination.limit;
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`);
+      localStorage.setItem(
+        `Datatable.${this.sluggedName}.pagination`,
+        JSON.stringify(persistedPagination),
+      );
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -408,12 +644,19 @@ export default {
       }, 200);
     },
 
-    'pagination.sortBy'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
-      persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
+    "pagination.sortBy"() {
+      var persistedPagination = localStorage.getItem(
+        `Datatable.${this.sluggedName}.pagination`,
+      );
+      persistedPagination = !!persistedPagination
+        ? JSON.parse(persistedPagination)
+        : {};
       persistedPagination.sortBy = this.pagination.sortBy;
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`);
+      localStorage.setItem(
+        `Datatable.${this.sluggedName}.pagination`,
+        JSON.stringify(persistedPagination),
+      );
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -422,12 +665,19 @@ export default {
       }, 200);
     },
 
-    'pagination.sortDir'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
-      persistedPagination = !!persistedPagination ? JSON.parse(persistedPagination) : {};
+    "pagination.sortDir"() {
+      var persistedPagination = localStorage.getItem(
+        `Datatable.${this.sluggedName}.pagination`,
+      );
+      persistedPagination = !!persistedPagination
+        ? JSON.parse(persistedPagination)
+        : {};
       persistedPagination.sortDir = this.pagination.sortDir;
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(`Datatable.${this.sluggedName}.pagination`, JSON.stringify(persistedPagination))
+      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`);
+      localStorage.setItem(
+        `Datatable.${this.sluggedName}.pagination`,
+        JSON.stringify(persistedPagination),
+      );
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
@@ -438,16 +688,16 @@ export default {
 
     filterParams: {
       handler(v) {
-        this.filterHandler(v, 'filters')
+        this.filterHandler(v, "filters");
       },
-      deep: true
+      deep: true,
     },
 
     ExtraFilters: {
       handler(v) {
-        this.filterHandler(v, 'extrafilters');
+        this.filterHandler(v, "extrafilters");
       },
-      deep: true
+      deep: true,
     },
 
     visibleColumns(newVal) {
@@ -455,7 +705,10 @@ export default {
         this.visibleColumns = [this.Columns[0].field];
       }
 
-      localStorage.setItem(`Datatable.${this.sluggedName}.visibleColumns`, JSON.stringify(newVal));
+      localStorage.setItem(
+        `Datatable.${this.sluggedName}.visibleColumns`,
+        JSON.stringify(newVal),
+      );
     },
 
     loading(isLoading) {
@@ -469,100 +722,109 @@ export default {
         // Expose factory:
         this.exposeFactory();
         // turn off loading indicator
-        this.loading = false
+        this.loading = false;
       },
-      deep: true
+      deep: true,
     },
 
     fullData: {
       handler(data) {
         if (data.length > 0) {
-          this.pagination.finalPage = Math.ceil(data.length / this.pagination.limit);
+          this.pagination.finalPage = Math.ceil(
+            data.length / this.pagination.limit,
+          );
         } else {
-          this.pagination.finalPage = this.pagination.currentPage + (Math.ceil(this.rawData.length / this.pagination.limit) - 1);
+          this.pagination.finalPage =
+            this.pagination.currentPage +
+            (Math.ceil(this.rawData.length / this.pagination.limit) - 1);
         }
-      }
-    }
+      },
+    },
   },
 
   computed: {
     showActionsColumn() {
       // Show the actions column if at least one row has a visible action
-      return this.dataInPage.some(row => this.showActionsBtnInRow(row));
+      return this.dataInPage.some((row) => this.showActionsBtnInRow(row));
     },
 
     columnOptions() {
-      return this.columns.map(clm => {
-        return clm.name != 'actions' ? {
-          label: clm.label,
-          value: clm.field,
-        } : null;
-      }).filter(item => item != null);
+      return this.columns
+        .map((clm) => {
+          return clm.name != "actions"
+            ? {
+                label: clm.label,
+                value: clm.field,
+              }
+            : null;
+        })
+        .filter((item) => item != null);
     },
 
     columnFilters() {
-      return this.Columns.map(clm => {
+      return this.Columns.map((clm) => {
         if (!!clm.filter == false) return null;
 
-        if (typeof clm.filter == 'string') {
+        if (typeof clm.filter == "string") {
           return {
             label: clm.label,
             field: clm.field,
-            type: clm.filter
+            type: clm.filter,
           };
         }
 
-        if (!('field' in clm.filter))
-          clm.filter.field = clm.field;
+        if (!("field" in clm.filter)) clm.filter.field = clm.field;
 
         return { label: clm.label, ...clm.filter };
-      }).filter(item => item != null);
+      }).filter((item) => item != null);
     },
 
     exportOptions() {
       var typeIcons = {
-        xls: 'fas fa-file-excel',
-        csv: 'fas fa-file-csv',
+        xls: "fas fa-file-excel",
+        csv: "fas fa-file-csv",
       };
       var typeLabels = {
-        xls: 'Exportar XLS',
-        csv: 'Exportar CSV',
+        xls: "Exportar XLS",
+        csv: "Exportar CSV",
       };
 
       if (!(this.Export instanceof Array))
-        return [{
-          ...this.Export,
-          icon: typeIcons[this.Export.filetype],
-          label: typeLabels[this.Export.filetype]
-        }];
+        return [
+          {
+            ...this.Export,
+            icon: typeIcons[this.Export.filetype],
+            label: typeLabels[this.Export.filetype],
+          },
+        ];
 
       return this.Export.map((opt) => ({
         ...opt,
         icon: typeIcons[opt.filetype],
-        label: typeLabels[opt.filetype]
+        label: typeLabels[opt.filetype],
       }));
     },
 
     state() {
-      if (this.showLoader) return 'loading';
-      if (this.errorState) return 'error';
-      if (this.dataInPage.length > 0) return 'ready';
-      if (this.dataInPage.length == 0) return 'empty';
+      if (this.showLoader) return "loading";
+      if (this.errorState) return "error";
+      if (this.dataInPage.length > 0) return "ready";
+      if (this.dataInPage.length == 0) return "empty";
       return null;
     },
 
     searchableColumns() {
-      return this.columns.filter(col => {
-        const hasValidField = col.field && col.field !== '';
+      return this.columns.filter((col) => {
+        const hasValidField = col.field && col.field !== "";
         const isSearchable = col.searchable !== false;
         const isNotFiltered = !(col.field in this.filterParams);
 
         return hasValidField && isSearchable && isNotFiltered;
-      })
+      });
     },
 
     rows() {
-      if (typeof this.IntervalRule !== 'function') return [...this.dataInPage];
+      if (typeof this.IntervalRule !== "function") return [...this.dataInPage];
 
       const result = [];
 
@@ -571,22 +833,23 @@ export default {
         const next = this.dataInPage[i + 1];
 
         result.push(current);
-        if (this.IntervalRule(prev, current, next) === true) result.push('interval');
+        if (this.IntervalRule(prev, current, next) === true)
+          result.push("interval");
       });
 
       return result;
     },
 
     hasAnyColumnFooter() {
-      return this.Columns.some(column => !!column.footer);
+      return this.Columns.some((column) => !!column.footer);
     },
 
     filtersValues() {
       return {
         searchTerm: this.searchTerm,
         ...this.filterParams,
-        ...this.ExtraFilters
-      }
+        ...this.ExtraFilters,
+      };
     },
 
     sluggedName() {
@@ -595,8 +858,8 @@ export default {
     },
 
     availableFilters() {
-      return [...this.columnFilters, ...this.Filters]
-    }
+      return [...this.columnFilters, ...this.Filters];
+    },
   },
 
   methods: {
@@ -604,13 +867,13 @@ export default {
     // Factory:
     /////////////
     exposeFactory() {
-      this.$emit('update:model-value', {
+      this.$emit("update:model-value", {
         state: this.state,
         params: this.setParams(),
         filterValues: this.filtersValues,
         dataInPage: this.dataInPage,
         visibleColumns: this.visibleColumns,
-        reload: this.reload
+        reload: this.reload,
       });
     },
 
@@ -637,7 +900,10 @@ export default {
           if (this.BeforeLoad) await this.BeforeLoad(params);
 
           // fetch data from server
-          const response = await this.$http.get(this.DataURL, params);
+          const response = await this.$getService("toolcase/http").get(
+            this.DataURL,
+            params,
+          );
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response);
@@ -647,7 +913,7 @@ export default {
           this.loading = false;
           this.errorState = true;
           this.error = err;
-          this.$emit('error-thrown', err);
+          this.$emit("error-thrown", err);
           throw err;
         }
       }
@@ -659,7 +925,10 @@ export default {
       delete params.$page;
       delete params.$limit;
 
-      const response = await this.$http.get(this.DataURL, params);
+      const response = await this.$getService("toolcase/http").get(
+        this.DataURL,
+        params,
+      );
       this.fullData = response.data;
     },
 
@@ -671,30 +940,32 @@ export default {
       localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
 
       if (Object.keys(filtersObject).length > 0)
-        localStorage.setItem(`Datatable.${this.sluggedName}.${name}`, JSON.stringify(filtersObject));
+        localStorage.setItem(
+          `Datatable.${this.sluggedName}.${name}`,
+          JSON.stringify(filtersObject),
+        );
 
       this.showLoader = true;
       this.pagination.currentPage = 1;
       clearTimeout(this.loadTimeout);
 
       for (let k in filtersObject) {
-        if (filtersObject[k] == null)
-          delete filtersObject[k] == null
+        if (filtersObject[k] == null) delete filtersObject[k] == null;
       }
 
       this.loadTimeout = setTimeout(async () => {
         const response = await this.loadData(this.IgnorePagination);
-        if (response) this.rawData = response.data
+        if (response) this.rawData = response.data;
       }, 200);
     },
 
     setParams() {
       // Pagination Params:
       const pagination = {
-        '$sort_by': this.pagination.sortBy ?? '1',
-        '$sort_direction': this.pagination.sortDir ?? 'ASC',
-        '$page': this.pagination.currentPage,
-        '$limit': Number(this.pagination.limit)
+        $sort_by: this.pagination.sortBy ?? "1",
+        $sort_direction: this.pagination.sortDir ?? "ASC",
+        $page: this.pagination.currentPage,
+        $limit: Number(this.pagination.limit),
       };
 
       // Search Filter:
@@ -708,18 +979,19 @@ export default {
           // First field:
           if (i == 0) {
             if (i == this.searchableColumns.length - 1) {
-              search[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm;
+              search[f] =
+                "$startFilterGroup$lkof$endFilterGroup|" + this.searchTerm;
             } else {
-              search[f] = '$startFilterGroup$lkof|' + this.searchTerm;
+              search[f] = "$startFilterGroup$lkof|" + this.searchTerm;
             }
           }
           // All fields in the middle:
-          else if (i < (this.searchableColumns.length - 1)) {
-            search[f] = '$or$lkof|' + this.searchTerm;
+          else if (i < this.searchableColumns.length - 1) {
+            search[f] = "$or$lkof|" + this.searchTerm;
           }
           // Last field:
           else {
-            search[f] = '$endFilterGroup$or$lkof|' + this.searchTerm;
+            search[f] = "$endFilterGroup$or$lkof|" + this.searchTerm;
           }
         }
       }
@@ -727,13 +999,19 @@ export default {
       // Filters:
       const filters = {};
       for (let k in this.filterParams) {
-        let filterConfig = this.availableFilters.find(x => x.field == k);
-        let value = (!!filterConfig?.modifierFn && typeof filterConfig?.modifierFn === 'function') ? filterConfig?.modifierFn(this.filterParams[k]) : this.filterParams[k];
-        if(value == null) continue;
+        let filterConfig = this.availableFilters.find((x) => x.field == k);
+        let value =
+          !!filterConfig?.modifierFn &&
+          typeof filterConfig?.modifierFn === "function"
+            ? filterConfig?.modifierFn(this.filterParams[k])
+            : this.filterParams[k];
+        if (value == null) continue;
 
-        if (filterConfig?.type == 'text')
-          filters[k] = `$lkof|${value}`;
-        else if (filterConfig?.type == 'daterange' || filterConfig?.type == 'datetimerange')
+        if (filterConfig?.type == "text") filters[k] = `$lkof|${value}`;
+        else if (
+          filterConfig?.type == "daterange" ||
+          filterConfig?.type == "datetimerange"
+        )
           filters[k] = `$btwn|${value.from}|${value.to}`;
         else filters[k] = value;
       }
@@ -742,15 +1020,14 @@ export default {
       const extraFilters = {};
       if (!!this.ExtraFilters) {
         for (let k in this.ExtraFilters)
-          if (!!this.ExtraFilters[k])
-            extraFilters[k] = this.ExtraFilters[k];
+          if (!!this.ExtraFilters[k]) extraFilters[k] = this.ExtraFilters[k];
       }
 
       return {
         ...pagination,
         ...search,
         ...filters,
-        ...extraFilters
+        ...extraFilters,
       };
     },
 
@@ -761,66 +1038,75 @@ export default {
         let columns = Object.keys(this.rawData[0] ?? {});
         let idx = columns.indexOf(column.field);
 
-        if (idx == -1) return
+        if (idx == -1) return;
 
-        sortNumber = idx + 1
-      } else if (typeof column.sortBy == 'string') {
+        sortNumber = idx + 1;
+      } else if (typeof column.sortBy == "string") {
         // Find sort number:
         let columns = Object.keys(this.rawData[0] ?? {});
         let idx = columns.indexOf(column.sortBy);
 
-        if (idx == -1) return
+        if (idx == -1) return;
 
-        sortNumber = idx + 1
+        sortNumber = idx + 1;
       } else {
-        sortNumber = column.sortBy
+        sortNumber = column.sortBy;
       }
 
       return sortNumber;
     },
 
     getColumnLabel(field) {
-      const columns = this.Columns.map(c => ({label: c.label, field: c.field}));
-      const filters = this.Filters.map(f => ({label: f.label, field: f.field}));
+      const columns = this.Columns.map((c) => ({
+        label: c.label,
+        field: c.field,
+      }));
+      const filters = this.Filters.map((f) => ({
+        label: f.label,
+        field: f.field,
+      }));
       const available = [...columns, ...filters];
 
-      let target = available.find(item => item.field == field);
+      let target = available.find((item) => item.field == field);
 
       return target?.label ?? field;
     },
 
     getSortIcon(column) {
       if (this.getColumnNumber(column) == this.pagination.sortBy) {
-        if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up';
-        else if (this.pagination.sortDir == 'DESC') return 'fas fa-sort-down';
-        else return 'fas fa-ban';
-      } else return 'fas fa-sort';
+        if (this.pagination.sortDir == "ASC") return "fas fa-sort-up";
+        else if (this.pagination.sortDir == "DESC") return "fas fa-sort-down";
+        else return "fas fa-ban";
+      } else return "fas fa-sort";
     },
 
     sort(column) {
-      if (column.sortable === false || (!!column.sortBy === false && this.rawData.length == 0)) return;
+      if (
+        column.sortable === false ||
+        (!!column.sortBy === false && this.rawData.length == 0)
+      )
+        return;
 
-      var sortNumber = this.getColumnNumber(column)
+      var sortNumber = this.getColumnNumber(column);
 
       if (this.pagination.sortBy == sortNumber) {
-        if (this.pagination.sortDir == 'ASC') this.pagination.sortDir = 'DESC';
-        else if (this.pagination.sortDir == 'DESC') this.pagination.sortDir = 'ASC';
-
+        if (this.pagination.sortDir == "ASC") this.pagination.sortDir = "DESC";
+        else if (this.pagination.sortDir == "DESC")
+          this.pagination.sortDir = "ASC";
       } else {
         this.pagination.sortBy = sortNumber;
-        this.pagination.sortDir = 'ASC';
+        this.pagination.sortDir = "ASC";
       }
-
     },
 
     showActionsBtnInRow(row) {
-      return this.RowActions.some(action => {
+      return this.RowActions.some((action) => {
         const hide = action.hide;
 
         // Execution
         if (hide === undefined) return true;
         if (hide === Boolean) return !hide;
-        if (typeof hide === 'function') return !hide(row, action);
+        if (typeof hide === "function") return !hide(row, action);
 
         return true;
       });
@@ -839,7 +1125,9 @@ export default {
     },
 
     paginate(data) {
-      this.pagination.finalPage = this.pagination.currentPage + (Math.ceil(data.length / this.pagination.limit) - 1);
+      this.pagination.finalPage =
+        this.pagination.currentPage +
+        (Math.ceil(data.length / this.pagination.limit) - 1);
 
       var initial = null;
 
@@ -858,7 +1146,12 @@ export default {
         if (this.pagination.pages.length > 4) break;
       }
 
-      this.pagination.pageFirstItem = data.length > 0 ? (((this.pagination.currentPage * this.pagination.limit) - this.pagination.limit) + 1) : 0;
+      this.pagination.pageFirstItem =
+        data.length > 0
+          ? this.pagination.currentPage * this.pagination.limit -
+            this.pagination.limit +
+            1
+          : 0;
 
       if (data.length > 0) {
         this.pagination.pageLastItem = this.pagination.pageFirstItem;
@@ -867,7 +1160,10 @@ export default {
         }
       } else this.pagination.pageLastItem = 0;
 
-      this.pagination.pageLastIndex = data.length < this.pagination.limit ? data.length - 1 : this.pagination.limit - 1;
+      this.pagination.pageLastIndex =
+        data.length < this.pagination.limit
+          ? data.length - 1
+          : this.pagination.limit - 1;
 
       this.dataInPage = [];
       for (let i = 0; i <= this.pagination.pageLastIndex; i++) {
@@ -875,18 +1171,19 @@ export default {
       }
 
       if (this.dataInPage.length == 0 && this.pagination.currentPage > 1) {
-        this.goToPage('prev');
+        this.goToPage("prev");
       }
     },
 
     async goToPage(page) {
       switch (page) {
-        case 'next':
-          if ((this.pagination.currentPage + 1) > this.pagination.finalPage) return;
+        case "next":
+          if (this.pagination.currentPage + 1 > this.pagination.finalPage)
+            return;
           this.pagination.currentPage++;
           break;
-        case 'prev':
-          if ((this.pagination.currentPage - 1) < 1) return;
+        case "prev":
+          if (this.pagination.currentPage - 1 < 1) return;
           this.pagination.currentPage--;
           break;
         default:
@@ -896,18 +1193,20 @@ export default {
     },
 
     async exportFile(filetype, filename) {
-      filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`;
+      filename = filename.indexOf(`.${filetype}`)
+        ? filename
+        : `${filename}.${filetype}`;
 
       var data = this.fullData;
       var blobType;
       var content;
 
       switch (filetype) {
-        case 'xls':
+        case "xls":
           blobType = "application/vnd.ms-excel;charset=utf-8;";
           content = this.buildContentTable(data);
           break;
-        case 'csv':
+        case "csv":
           blobType = "text/csv;charset=utf-8;";
           content = this.buildCsvContent(data);
           break;
@@ -954,7 +1253,7 @@ export default {
       <?xml version="1.0" encoding="UTF-8"?>
   <html xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="this.$http://www.w3.org/TR/REC-html40">
+        xmlns="this.$getService("toolcase/http")://www.w3.org/TR/REC-html40">
     <head>
       <style>
         table {
@@ -971,15 +1270,17 @@ export default {
           text-align: center;
         }
       </style>
-      <meta this.$http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta this.$getService("toolcase/http")-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
   <table>
     <thead>
       <tr>
-        ${this.Columns
-          .filter(column => this.visibleColumns.includes(column.field))
-          .map(column => `<th>${this.escapeXml(column.label)}</th>`).join("")}
+        ${this.Columns.filter((column) =>
+          this.visibleColumns.includes(column.field),
+        )
+          .map((column) => `<th>${this.escapeXml(column.label)}</th>`)
+          .join("")}
       </tr>
     </thead>
     <tbody>
@@ -987,15 +1288,21 @@ export default {
 
       // Adiciona as linhas
       for (let j = 0; j < data.length; j++) {
-        content += '<tr>';
+        content += "<tr>";
         let row = data[j];
 
         for (let i = 0; i < this.Columns.length; i++) {
           let clm = this.Columns[i];
-          if (!(this.visibleColumns.includes(clm.field))) continue;
-          content += `<td>${!!clm.format ? clm.format(row) : (!!row[clm.field] ? row[clm.field] : '')}</td>`;
+          if (!this.visibleColumns.includes(clm.field)) continue;
+          content += `<td>${
+            !!clm.format
+              ? clm.format(row)
+              : !!row[clm.field]
+              ? row[clm.field]
+              : ""
+          }</td>`;
         }
-        content += '</tr>';
+        content += "</tr>";
       }
       // Fecha o XML
       content += `
@@ -1007,10 +1314,23 @@ export default {
     },
 
     buildContentTableForPrint(data) {
-      const visible = this.Columns.filter(c => this.visibleColumns.includes(c.field));
+      const visible = this.Columns.filter((c) =>
+        this.visibleColumns.includes(c.field),
+      );
       var filters = Object.entries(this.filtersValues)
-        .filter(([key, value]) => value !== null && value !== undefined && value !== '')
-        .map(([key, value]) => `<li>&#8250; ${this.escapeXml(this.getColumnLabel(key))}: <span style="font-weight: normal;">"${this.escapeXml(value)}"</span></li>`).join("");
+        .filter(
+          ([key, value]) =>
+            value !== null && value !== undefined && value !== "",
+        )
+        .map(
+          ([key, value]) =>
+            `<li>&#8250; ${this.escapeXml(
+              this.getColumnLabel(key),
+            )}: <span style="font-weight: normal;">"${this.escapeXml(
+              value,
+            )}"</span></li>`,
+        )
+        .join("");
       if (filters.length == 0) filters = "<li>Nenhum filtro aplicado</li>";
 
       let content = `<!doctype html>
@@ -1033,14 +1353,20 @@ export default {
 <body>
   <table>
     <thead>
-      <tr><th colspan="${visible.length}" style="text-align: center; font-size: 16px;">${this.Name}</th></tr>
-      <tr><th colspan="${visible.length}" style="text-align: left; font-size: 12px;">
+      <tr><th colspan="${
+        visible.length
+      }" style="text-align: center; font-size: 16px;">${this.Name}</th></tr>
+      <tr><th colspan="${
+        visible.length
+      }" style="text-align: left; font-size: 12px;">
         <span style="text-decoration:underline;">Filtros:</span>
         <br>
         <br>
         <ul style="list-style-type: none; padding: 0; margin: 0;">${filters}</ul></th>
       </tr>
-      <tr>${visible.map(c => `<th>${this.escapeXml(c.label)}</th>`).join("")}</tr>
+      <tr>${visible
+        .map((c) => `<th>${this.escapeXml(c.label)}</th>`)
+        .join("")}</tr>
   </thead>
   <tbody>`;
 
@@ -1048,7 +1374,7 @@ export default {
         const row = data[j];
         content += "<tr>";
         for (const clm of visible) {
-          const val = clm.format ? clm.format(row) : (row?.[clm.field] ?? "");
+          const val = clm.format ? clm.format(row) : row?.[clm.field] ?? "";
           content += `<td>${this.escapeHtml(String(val))}</td>`;
         }
         content += "</tr>";
@@ -1078,15 +1404,19 @@ export default {
 
     buildCsvContent(rawdata) {
       // Ensure the data is an array of objects
-      if (!Array.isArray(rawdata) || !rawdata.length || typeof rawdata[0] !== 'object') {
-        console.error('The provided data could not be converted to CSV.');
+      if (
+        !Array.isArray(rawdata) ||
+        !rawdata.length ||
+        typeof rawdata[0] !== "object"
+      ) {
+        console.error("The provided data could not be converted to CSV.");
         return;
       }
 
       // Extract headers (keys of the first object in the array)
-      const headers = this.Columns
-        .filter(column => this.visibleColumns.includes(column.field))
-        .map(column => column.label)
+      const headers = this.Columns.filter((column) =>
+        this.visibleColumns.includes(column.field),
+      ).map((column) => column.label);
 
       const data = [];
       for (let j = 0; j < rawdata.length; j++) {
@@ -1095,8 +1425,8 @@ export default {
 
         for (let i = 0; i < this.Columns.length; i++) {
           let clm = this.Columns[i];
-          if (!(this.visibleColumns.includes(clm.field))) continue;
-          const f = clm.export ?? clm.field
+          if (!this.visibleColumns.includes(clm.field)) continue;
+          const f = clm.export ?? clm.field;
           rowValues.push(row[f]);
         }
         data.push(rowValues);
@@ -1104,9 +1434,9 @@ export default {
 
       // Generate CSV content
       const csvContent = [
-        headers.join(';'),
-        ...data.map(row => row.join(';'))
-      ].join('\r\n');
+        headers.join(";"),
+        ...data.map((row) => row.join(";")),
+      ].join("\r\n");
 
       return csvContent;
     },
@@ -1132,7 +1462,7 @@ export default {
       doc.close();
 
       // dá um tempo pro layout e reflow terminarem
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
 
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
@@ -1150,7 +1480,7 @@ export default {
         fullData: this.fullData,
         rawData: this.rawData,
         filters: this.filtersValues,
-        ...item.params
+        ...item.params,
       });
     },
 
@@ -1162,49 +1492,63 @@ export default {
   async mounted() {
     // Set columns:
     this.columns = [...this.Columns];
-    this.visibleColumns = JSON.parse(localStorage.getItem(`Datatable.${this.sluggedName}.visibleColumns`)) ?? this.Columns.map(clm => clm.field)
+    this.visibleColumns =
+      JSON.parse(
+        localStorage.getItem(`Datatable.${this.sluggedName}.visibleColumns`),
+      ) ?? this.Columns.map((clm) => clm.field);
 
     // Set Actions:
     if (this.RowActions && this.RowActions?.length > 0)
       this.columns.push({
-        name: 'actions',
-        label: 'Ações',
-        align: 'center',
+        name: "actions",
+        label: "Ações",
+        align: "center",
         sortable: false,
-        filterable: false
+        filterable: false,
       });
 
     var loadFirstData = true;
     // Set persisted filters:
-    var persistedFilters = localStorage.getItem(`Datatable.${this.sluggedName}.filters`);
+    var persistedFilters = localStorage.getItem(
+      `Datatable.${this.sluggedName}.filters`,
+    );
     if (!!persistedFilters) {
       this.showFilterPanel = true;
-      setTimeout(() => this.filterParams = JSON.parse(persistedFilters), 100)
-      loadFirstData = false
+      setTimeout(() => (this.filterParams = JSON.parse(persistedFilters)), 100);
+      loadFirstData = false;
     }
 
     // Set persisted search term:
-    this.searchTerm = localStorage.getItem(`Datatable.${this.sluggedName}.searchTerm`) ?? null;
+    this.searchTerm =
+      localStorage.getItem(`Datatable.${this.sluggedName}.searchTerm`) ?? null;
     if (!!this.searchTerm) loadFirstData = false;
 
     // Set sorting:
     if (!!this.DefaultSorting) {
       this.pagination.sortBy = this.DefaultSorting.by;
       this.pagination.sortDir = this.DefaultSorting.direction;
-      loadFirstData = false
+      loadFirstData = false;
     }
 
     // Set persisted pagination:
-    var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`);
+    var persistedPagination = localStorage.getItem(
+      `Datatable.${this.sluggedName}.pagination`,
+    );
     if (!!persistedPagination) {
       persistedPagination = JSON.parse(persistedPagination);
       for (let k in persistedPagination)
-        if (k in this.pagination && k != 'currentPage')
-          this.pagination[k] = persistedPagination[k]
+        if (k in this.pagination && k != "currentPage")
+          this.pagination[k] = persistedPagination[k];
 
-      if (!!persistedPagination.currentPage && persistedPagination.currentPage != 1) {
-        setTimeout(() => this.pagination.currentPage = persistedPagination.currentPage, 200);
-        loadFirstData = false
+      if (
+        !!persistedPagination.currentPage &&
+        persistedPagination.currentPage != 1
+      ) {
+        setTimeout(
+          () => (this.pagination.currentPage = persistedPagination.currentPage),
+          200,
+        );
+        loadFirstData = false;
       }
     }
 
@@ -1214,7 +1558,7 @@ export default {
       if (response) this.rawData = response.data;
     }
   },
-}
+};
 </script>
 
 <style scoped>
@@ -1245,7 +1589,7 @@ th {
   /* Adjusts width to fit the content */
 }
 
-tbody>tr:nth-child(even) {
+tbody > tr:nth-child(even) {
   background-color: #e2e2e2;
 }
 

@@ -1,13 +1,13 @@
 <template>
-  <div ref="scrollContainer" class="full-width" style="height:400px; overflow: auto;">
+  <div
+    ref="scrollContainer"
+    class="full-width"
+    style="height: 400px; overflow: auto"
+  >
     <!-- Empty -->
     <div v-if="state == 'empty'" class="q-pa-lg text-center text-grey-8">
-      <div>
-        <q-icon size="lg" name="fas fa-folder-open"></q-icon> *
-      </div>
-      <div class="text-h6">
-        Sem dados
-      </div>
+      <div><q-icon size="lg" name="fas fa-folder-open"></q-icon> *</div>
+      <div class="text-h6">Sem dados</div>
     </div>
 
     <!-- Error State -->
@@ -15,17 +15,22 @@
       <div>
         <q-icon size="lg" name="fas fa-bomb"></q-icon>
       </div>
-      <div class="text-h6">
-        ERRO!
+      <div class="text-h6">ERRO!</div>
+      <div class="text-caption">
+        <b>{{ errData.response?.status }}</b> {{ errData.response?.statusText }}
       </div>
-      <div class="text-caption"><b>{{ errData.response?.status }}</b> {{ errData.response?.statusText }}</div>
       <small>Favor entrar em contato com o administrador do sistema.</small>
     </div>
 
     <!-- Ready -->
     <div v-if="state == 'ready'">
-      <q-infinite-scroll :key="reloadCount" :disable="!hasMoreData" :scroll-target="$refs.scrollContainer"
-        @load="loadData" :offset="250">
+      <q-infinite-scroll
+        :key="reloadCount"
+        :disable="!hasMoreData"
+        :scroll-target="$refs.scrollContainer"
+        @load="loadData"
+        :offset="250"
+      >
         <div class="q-pa-sm" v-for="(row, idx) in data" :key="idx">
           <slot :data="row"></slot>
         </div>
@@ -42,20 +47,20 @@
 
 <script>
 export default {
-  name: 'ui-gadgets-infinite-scroll',
+  name: "ui-gadgets-infinite-scroll",
 
   props: {
     DataURL: {
       type: String,
-      required: true
+      required: true,
     },
     Limit: {
       type: Number,
-      default: () => 10
+      default: () => 10,
     },
     Filters: {
       type: Object,
-      default: () => { }
+      default: () => {},
     },
     BeforeLoad: Function,
     AfterLoad: Function,
@@ -73,8 +78,8 @@ export default {
 
       // Data:
       data: [],
-      errData: null
-    }
+      errData: null,
+    };
   },
 
   computed: {
@@ -83,29 +88,29 @@ export default {
         ...this.Filters,
         $page: this.page,
         $limit: this.Limit,
-        $limit_multiplier: 1
-      }
+        $limit_multiplier: 1,
+      };
     },
 
     state() {
-      if (!!this.errData) return 'error';
+      if (!!this.errData) return "error";
 
       const loadIsNotStarted = !this.startLoad;
       const hasNoData = this.data.length < 1;
       const noDataOrNoURL = !this.DataURL || hasNoData;
 
-      if (loadIsNotStarted && noDataOrNoURL) return 'empty';
+      if (loadIsNotStarted && noDataOrNoURL) return "empty";
 
-      return 'ready';
+      return "ready";
     },
 
     output() {
       return {
         data: this.data,
         params: this.params,
-        state: this.state
-      }
-    }
+        state: this.state,
+      };
+    },
   },
 
   watch: {
@@ -120,26 +125,29 @@ export default {
     },
 
     state() {
-      this.emit()
+      this.emit();
     },
 
     data: {
       handler() {
-        this.emit()
+        this.emit();
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
 
   methods: {
     emit() {
-      this.$emit('update:model-value', this.output)
+      this.$emit("update:model-value", this.output);
     },
 
     async checkForMoreData() {
       const params = this.params;
       params.$page++;
-      const response = await this.$http.get(this.DataURL, params);
+      const response = await this.$getService("toolcase/http").get(
+        this.DataURL,
+        params,
+      );
       return !!response.data?.length;
     },
 
@@ -150,31 +158,37 @@ export default {
       this.isLoading = true;
 
       try {
-        let params = this.params
+        let params = this.params;
         if (!!this.BeforeLoad) params = this.BeforeLoad(this.params);
 
-        const response = await this.$http.get(this.DataURL, params);
+        const response = await this.$getService("toolcase/http").get(
+          this.DataURL,
+          params,
+        );
         var responseData = JSON.parse(JSON.stringify(response.data ?? []));
         const cloneData = responseData;
 
-        if (!!this.AfterLoad) responseData = this.AfterLoad(cloneData, response) ?? responseData;
+        if (!!this.AfterLoad)
+          responseData = this.AfterLoad(cloneData, response) ?? responseData;
 
-        if (responseData.length)
-          this.data = [...this.data, ...responseData];
+        if (responseData.length) this.data = [...this.data, ...responseData];
 
         this.hasMoreData = await this.checkForMoreData();
 
-        this.page++
+        this.page++;
         if (!!done) done();
       } catch (error) {
         this.page = 1;
-        this.errData = error
-        console.error("There was a problem on the attempt to retrieve infinite scroll data.", error);
+        this.errData = error;
+        console.error(
+          "There was a problem on the attempt to retrieve infinite scroll data.",
+          error,
+        );
       } finally {
         this.isLoading = false;
         this.startLoad = false;
       }
-    }
+    },
   },
-}
+};
 </script>
