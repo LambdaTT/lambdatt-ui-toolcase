@@ -1,61 +1,93 @@
 <template>
   <div id="wrapper" :class="`q-pa-sm ${setAlign}`">
     <q-card v-if="cover" class="q-pa-sm">
-      <q-img class="bg-grey-3" 
-        :src="setSrc" 
-        :ratio="setRatio" 
-        :fit="setFit" 
-        :height="coverHeight" 
-        :width="coverWidth" />
+      <div
+        v-if="!setSrc"
+        class="empty-state-cover column flex-center"
+        :style="{ height: coverHeight || '200px', width: coverWidth || '100%' }"
+      >
+        <q-icon
+          name="fas fa-image"
+          size="xl"
+          class="q-mb-sm text-blue-grey-4"
+        />
+        <span class="text-subtitle2 text-blue-grey-7" style="font-weight: 600"
+          >Nenhuma Imagem Selecionada</span
+        >
+      </div>
+      <q-img
+        v-else
+        class="bg-grey-3"
+        :src="setSrc"
+        :ratio="setRatio"
+        :fit="setFit"
+        :height="coverHeight"
+        :width="coverWidth"
+      />
 
-      <FileUpload 
-        class="hidden" 
-        v-model="input" 
+      <FileUpload
+        class="hidden"
+        v-model="input"
         :ReadAsURL="true"
         :accept="accept ? accept : 'image/*'"
-        @activateFn="(fn) => activateFileInput = fn" 
-        @update:model-value="updModelValue">
+        @activateFn="(fn) => (activateFileInput = fn)"
+        @update:model-value="updModelValue"
+      >
       </FileUpload>
 
-      <q-btn 
-        flat 
-        round 
-        class="bg-white" 
-        id="btn-edit" 
-        color="primary" 
-        :disable="disable" 
+      <q-btn
+        flat
+        round
+        class="bg-white"
+        id="btn-edit"
+        color="primary"
+        :disable="disable"
         icon="fas fa-edit"
-        @click="activateFileInput()" 
-        :size="setIconSize">
+        @click="activateFileInput()"
+        :size="setIconSize"
+      >
         <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
       </q-btn>
     </q-card>
 
-    <q-avatar v-else :square="square" :size="setSize" class="bg-grey-7">
-      <q-img 
-        :src="setSrc" 
-        :ratio="setRatio" 
-        :fit="setFit" />
+    <q-avatar v-else :square="square" :size="setSize">
+      <div v-if="!setSrc" class="empty-state-avatar column flex-center">
+        <q-icon
+          name="fas fa-image"
+          :size="!size || parseInt(size) >= 100 ? '32px' : '20px'"
+          class="text-blue-grey-4"
+        />
+        <span
+          v-if="!size || parseInt(size) >= 100"
+          class="text-caption text-center q-mt-xs text-blue-grey-7"
+          style="line-height: 1.2; font-weight: 600; font-size: 13px"
+        >
+          Selecionar<br />Imagem
+        </span>
+      </div>
+      <q-img v-else :src="setSrc" :ratio="setRatio" :fit="setFit" />
 
-      <FileUpload 
-        class="hidden" 
-        v-model="input" 
+      <FileUpload
+        class="hidden"
+        v-model="input"
         :ReadAsURL="true"
         :accept="accept ? accept : 'image/*'"
-        @activateFn="(fn) => activateFileInput = fn" 
-        @update:model-value="updModelValue">
+        @activateFn="(fn) => (activateFileInput = fn)"
+        @update:model-value="updModelValue"
+      >
       </FileUpload>
 
-      <q-btn 
-        flat 
-        round 
-        id="btn-edit" 
-        class="bg-white" 
-        color="primary" 
+      <q-btn
+        flat
+        round
+        id="btn-edit"
+        class="bg-white"
+        color="primary"
         icon="fas fa-edit"
-        :disable="disable" 
+        :disable="disable"
         :size="setIconSize"
-        @click="activateFileInput()">
+        @click="activateFileInput()"
+      >
         <q-tooltip v-if="!disable">Alterar imagem</q-tooltip>
       </q-btn>
     </q-avatar>
@@ -64,7 +96,7 @@
 
 <script>
 export default {
-  name: 'ui-formparts-photopicker',
+  name: "ui-formparts-photopicker",
 
   props: {
     DefaultImgPath: String,
@@ -79,8 +111,12 @@ export default {
     fit: String,
     accept: {
       type: String,
-      validator: val => val === 'image/*' || val === 'image/png' || val === 'image/jpeg' || val === 'image/jpg'
-    }
+      validator: (val) =>
+        val === "image/*" ||
+        val === "image/png" ||
+        val === "image/jpeg" ||
+        val === "image/jpg",
+    },
   },
 
   data() {
@@ -91,19 +127,23 @@ export default {
         name: null,
         src: null,
         size: null,
-      }
-    }
+      },
+    };
   },
 
   watch: {
     modelValue: {
       handler(v) {
+        if (!v) return;
         for (let k in this.input) {
-          this.input[k] = v[k];
+          if (v[k] !== undefined && this.input[k] !== v[k]) {
+            this.input[k] = v[k];
+          }
         }
       },
-      deep: true
-    }
+      deep: true,
+      immediate: true,
+    },
   },
 
   computed: {
@@ -112,50 +152,51 @@ export default {
     },
 
     setSize() {
-      if (!!this.size) { return this.size + 'px'; }
-      return '150px';
+      if (!!this.size) {
+        return this.size + "px";
+      }
+      return "150px";
     },
 
     setIconSize() {
       if (!!this.size) {
-        if (this.size <= 70) return this.size / 7 + 'px';
-        if (this.size <= 100) return 'sm';
-        if (this.size <= 300) return 'md';
-        return 'lg';
+        if (this.size <= 70) return this.size / 7 + "px";
+        if (this.size <= 100) return "sm";
+        if (this.size <= 300) return "md";
+        return "lg";
       }
-      return 'md';
+      return "md";
     },
 
     setAlign() {
       if (!!this.align) {
         switch (this.align) {
-          case 'left':
-            return 'text-left';
-          case 'right':
-            return 'text-right';
+          case "left":
+            return "text-left";
+          case "right":
+            return "text-right";
           default:
-            return 'text-center';
+            return "text-center";
         }
       }
-      return 'text-center';
+      return "text-center";
     },
 
     setRatio() {
-      return this.cover? 16/9 : 1;
+      return this.cover ? 16 / 9 : 1;
     },
 
     setFit() {
-      return this.fit? this.fit : 'cover';
-    }
+      return this.fit ? this.fit : "cover";
+    },
   },
 
   methods: {
     updModelValue(v) {
-      this.$emit('update:model-value', v);
+      this.$emit("update:model-value", v);
     },
-  }
-
-}
+  },
+};
 </script>
 
 <style scoped>
@@ -168,9 +209,10 @@ export default {
   width: 100%;
   border-radius: 50%;
   overflow: hidden;
+  box-shadow: 0px 0px 2px;
 }
 
-.photo-container>img {
+.photo-container > img {
   width: 100%;
 }
 
@@ -182,5 +224,21 @@ export default {
 
 .square {
   border-radius: 0%;
+}
+
+.empty-state-avatar {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #cfd8dc;
+  border-radius: inherit;
+  background-color: #f4f6f8;
+  box-sizing: border-box;
+}
+
+.empty-state-cover {
+  border: 2px dashed #cfd8dc;
+  border-radius: 6px;
+  background-color: #f4f6f8;
+  box-sizing: border-box;
 }
 </style>

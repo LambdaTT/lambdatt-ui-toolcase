@@ -176,6 +176,7 @@ export default {
         read: (data) => {
           for (let k in this.input) if (k in data) this.input[k] = data[k];
         },
+        getData: () => ({ ...this.input }),
         input: {
           ...this.input,
         },

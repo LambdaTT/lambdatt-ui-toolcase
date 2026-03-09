@@ -96,7 +96,9 @@ export default {
     async inputClicked() {
       if (!this.repetitionLock) {
         this.repetitionLock = true;
-        this.$eventbroadcaster.$broadcast("fileupload-before-choose");
+        this.$getService("toolcase/eventbroadcaster").$broadcast(
+          "fileupload-before-choose",
+        );
         await this.sleep(100);
         this.dialogIsOpen = true;
         window.addEventListener("focus", this.onWindowFocus);
@@ -152,7 +154,9 @@ export default {
       }
 
       this.repetitionLock = false;
-      this.$eventbroadcaster.$broadcast("fileupload-chosen");
+      this.$getService("toolcase/eventbroadcaster").$broadcast(
+        "fileupload-chosen",
+      );
     },
 
     onWindowFocus() {

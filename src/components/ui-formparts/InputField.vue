@@ -440,7 +440,7 @@ export default {
 
   props: {
     // General
-    modelValue: [String, Object, Number],
+    modelValue: [String, Object, Number, Boolean],
     BgColor: String,
     Label: String,
     Icon: String,
@@ -452,22 +452,27 @@ export default {
     disable: Boolean,
     maxlength: String,
     readonly: Boolean,
+
     // Date
     dateOptions: { type: [Array, Function] },
     todayBtn: Boolean,
     minDatePage: String,
     maxDatePage: String,
+
     // Time
     withSeconds: Boolean,
+
     // Select
     Options: Array,
     Multiple: Boolean,
     UseChips: Boolean,
     StackLabel: Boolean,
+
     // Number
     step: String,
     max: String,
     min: String,
+
     // Mask
     Mask: String,
     ReverseFillMask: Boolean,
@@ -475,12 +480,16 @@ export default {
       type: [String, Boolean],
       default: false,
     },
+
+    // Others
     SelectOnClick: {
       type: Boolean,
       default: false,
     },
-    // Others
-    Default: [String, Object, Number, Boolean],
+    Default: {
+      type: [String, Object, Number, Boolean],
+      default: () => null,
+    },
     accept: String,
     ReadAsURL: Boolean,
     placeholder: String,
@@ -504,12 +513,13 @@ export default {
     modelValue(v) {
       this.value = v;
     },
-    /*value:{
-      handler(){
-        this.$emit('update:modelValue', this.value)
+
+    value: {
+      handler() {
+        this.$emit("update:modelValue", this.value);
       },
-      deep: true
-    }*/
+      deep: true,
+    },
   },
 
   methods: {
