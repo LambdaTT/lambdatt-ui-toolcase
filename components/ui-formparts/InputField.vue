@@ -201,7 +201,10 @@ export default {
       default: false,
     },
     // Others
-    Default: [String, Object, Number, Boolean],
+    Default: {
+      type: [String, Object, Number, Boolean],
+      default: () => null
+    },
     accept: String,
     ReadAsURL: Boolean,
     placeholder: String,
