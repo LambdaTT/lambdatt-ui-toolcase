@@ -1,47 +1,117 @@
 <template>
   <q-card :flat="!card">
     <div v-if="showTitle">
-      <div v-if="!card" class="q-pa-sm" style="font-size: 20px;">Informações de Endereço</div>
-      <div v-else class="bg-grey-9 q-pa-md text-bold text-white q-pl-lg card-title">Endereço</div>
+      <div v-if="!card" class="q-pa-sm" style="font-size: 20px">
+        Informações de Endereço
+      </div>
+      <div
+        v-else
+        class="bg-grey-9 q-pa-md text-bold text-white q-pl-lg card-title"
+      >
+        Endereço
+      </div>
     </div>
-    <div class="row" :class="!card? '': 'q-pa-md'">
+    <div class="row" :class="!card ? '' : 'q-pa-md'">
       <div class="col-12 row">
         <div :class="`col-12 ${wrapFields == true ? '' : 'col-md-6'}`">
-          <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="CEP*" Icon="fas fa-search"
-            v-model="input.ds_addresszipcode" :Error="inputError.ds_addresszipcode"
-            @focus="inputError.ds_addresszipcode = false" Mask="#####-###" @update:model-value="getAddressByZipcode()">
+          <InputField
+            type="text"
+            clearable
+            :dense="dense"
+            :readonly="formReadonly"
+            Label="CEP*"
+            Icon="fas fa-search"
+            v-model="input.ds_addresszipcode"
+            :Error="inputError.ds_addresszipcode"
+            @focus="inputError.ds_addresszipcode = false"
+            Mask="#####-###"
+            @update:model-value="getAddressByZipcode()"
+          >
           </InputField>
-          <span class="q-ml-sm text-amber-9 text-caption text-bold" v-if="!!zipcodeWarning">{{ zipcodeWarning }}</span>
+          <span
+            class="q-ml-sm text-amber-9 text-caption text-bold"
+            v-if="!!zipcodeWarning"
+            >{{ zipcodeWarning }}</span
+          >
         </div>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
-        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Endereço*"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addressstreet" :Error="inputError.ds_addressstreet"
-          @focus="inputError.ds_addressstreet = false"></InputField>
+        <InputField
+          type="text"
+          clearable
+          :dense="dense"
+          :readonly="formReadonly"
+          Label="Endereço*"
+          Icon="fas fa-map-marker-alt"
+          v-model="input.ds_addressstreet"
+          :Error="inputError.ds_addressstreet"
+          @focus="inputError.ds_addressstreet = false"
+        ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
-        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Número*"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addressnumber" :Error="inputError.ds_addressnumber"
-          @focus="inputError.ds_addressnumber = false"></InputField>
+        <InputField
+          type="text"
+          clearable
+          :dense="dense"
+          :readonly="formReadonly"
+          Label="Número*"
+          Icon="fas fa-map-marker-alt"
+          v-model="input.ds_addressnumber"
+          :Error="inputError.ds_addressnumber"
+          @focus="inputError.ds_addressnumber = false"
+        ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
-        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Complemento"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addresscomplement"></InputField>
+        <InputField
+          type="text"
+          clearable
+          :dense="dense"
+          :readonly="formReadonly"
+          Label="Complemento"
+          Icon="fas fa-map-marker-alt"
+          v-model="input.ds_addresscomplement"
+        ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
-        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Bairro*"
-          Icon="fas fa-map-marker-alt" v-model="input.ds_addressneighborhood" :Error="inputError.ds_addressneighborhood"
-          @focus="inputError.ds_addressneighborhood = false"></InputField>
+        <InputField
+          type="text"
+          clearable
+          :dense="dense"
+          :readonly="formReadonly"
+          Label="Bairro*"
+          Icon="fas fa-map-marker-alt"
+          v-model="input.ds_addressneighborhood"
+          :Error="inputError.ds_addressneighborhood"
+          @focus="inputError.ds_addressneighborhood = false"
+        ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
-        <InputField type="text" clearable :dense="dense" :readonly="formReadonly" Label="Cidade*" Icon="fas fa-building"
-          v-model="input.ds_addresscity" :Error="inputError.ds_addresscity" @focus="inputError.ds_addresscity = false">
+        <InputField
+          type="text"
+          clearable
+          :dense="dense"
+          :readonly="formReadonly"
+          Label="Cidade*"
+          Icon="fas fa-building"
+          v-model="input.ds_addresscity"
+          :Error="inputError.ds_addresscity"
+          @focus="inputError.ds_addresscity = false"
+        >
         </InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
-        <InputField type="select" clearable :dense="dense" :readonly="formReadonly" Label="UF*"
-          Icon="fas fa-map-marker-alt" v-model="input.do_addressuf" :Options="brazilianStates"
-          :Error="inputError.do_addressuf" @focus="inputError.do_addressuf = false"></InputField>
+        <InputField
+          type="select"
+          clearable
+          :dense="dense"
+          :readonly="formReadonly"
+          Label="UF*"
+          Icon="fas fa-map-marker-alt"
+          v-model="input.do_addressuf"
+          :Options="brazilianStates"
+          :Error="inputError.do_addressuf"
+          @focus="inputError.do_addressuf = false"
+        ></InputField>
       </div>
       <div class="col-12" v-if="!hideMap">
         <q-separator></q-separator>
@@ -57,7 +127,7 @@
 
 <script>
 export default {
-  name: 'components-common-addressinfo',
+  name: "components-common-addressinfo",
 
   props: {
     card: Boolean,
@@ -91,33 +161,37 @@ export default {
         do_addressuf: false,
       },
       formReadonly: !!this.readonly,
-      zipcodeWarning: null
-    }
+      zipcodeWarning: null,
+    };
   },
 
   computed: {
     brazilianStates() {
-      return this.$utils.brazilianStates();
+      return this.$getService("toolcase/utils").brazilianStates();
     },
 
     factory() {
       return {
         validate: this.validateFields,
         read: (data) => {
-          for (let k in this.input)
-            if (k in data)
-              this.input[k] = data[k];
+          for (let k in this.input) if (k in data) this.input[k] = data[k];
         },
         input: {
-          ...this.input
-        }
-      }
-    }
+          ...this.input,
+        },
+      };
+    },
   },
 
   methods: {
     validateFields() {
-      if (!this.$utils.validateForm(this.input, this.inputError)) return false;
+      if (
+        !this.$getService("toolcase/utils").validateForm(
+          this.input,
+          this.inputError,
+        )
+      )
+        return false;
       return true;
     },
 
@@ -126,13 +200,16 @@ export default {
     },
 
     async getAddressByZipcode() {
-      var address = await this.$utils.getAddressByZipCode(this.input.ds_addresszipcode, false);
+      var address = await this.$getService(
+        "toolcase/utils",
+      ).getAddressByZipCode(this.input.ds_addresszipcode, false);
       if (address === null) return;
       if (address === false) {
-        this.zipcodeWarning = 'CEP não encontrado. Preencha o endereço manualmente.'
+        this.zipcodeWarning =
+          "CEP não encontrado. Preencha o endereço manualmente.";
         return;
       }
-      this.zipcodeWarning = null
+      this.zipcodeWarning = null;
       // Updating Values
       this.input.ds_addressstreet = address.logradouro;
       this.input.ds_addressneighborhood = address.bairro;
@@ -168,8 +245,8 @@ export default {
 
   mounted() {
     this.updModel();
-  }
-}
+  },
+};
 </script>
 <style scoped>
 .card-title {
