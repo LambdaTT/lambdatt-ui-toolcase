@@ -21,9 +21,9 @@
             :readonly="formReadonly"
             Label="CEP*"
             Icon="fas fa-search"
-            v-model="input.ds_addresszipcode"
-            :Error="inputError.ds_addresszipcode"
-            @focus="inputError.ds_addresszipcode = false"
+            v-model="input.ds_zipcode"
+            :Error="inputError.ds_zipcode"
+            @focus="inputError.ds_zipcode = false"
             Mask="#####-###"
             @update:model-value="getAddressByZipcode()"
           >
@@ -43,9 +43,9 @@
           :readonly="formReadonly"
           Label="Endereço*"
           Icon="fas fa-map-marker-alt"
-          v-model="input.ds_addressstreet"
-          :Error="inputError.ds_addressstreet"
-          @focus="inputError.ds_addressstreet = false"
+          v-model="input.ds_street"
+          :Error="inputError.ds_street"
+          @focus="inputError.ds_street = false"
         ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-2'}`">
@@ -56,9 +56,9 @@
           :readonly="formReadonly"
           Label="Número*"
           Icon="fas fa-map-marker-alt"
-          v-model="input.ds_addressnumber"
-          :Error="inputError.ds_addressnumber"
-          @focus="inputError.ds_addressnumber = false"
+          v-model="input.ds_number"
+          :Error="inputError.ds_number"
+          @focus="inputError.ds_number = false"
         ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
@@ -69,7 +69,7 @@
           :readonly="formReadonly"
           Label="Complemento"
           Icon="fas fa-map-marker-alt"
-          v-model="input.ds_addresscomplement"
+          v-model="input.ds_complement"
         ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-6'}`">
@@ -80,9 +80,9 @@
           :readonly="formReadonly"
           Label="Bairro*"
           Icon="fas fa-map-marker-alt"
-          v-model="input.ds_addressneighborhood"
-          :Error="inputError.ds_addressneighborhood"
-          @focus="inputError.ds_addressneighborhood = false"
+          v-model="input.ds_neighborhood"
+          :Error="inputError.ds_neighborhood"
+          @focus="inputError.ds_neighborhood = false"
         ></InputField>
       </div>
       <div :class="`col-12 ${wrapFields === true ? '' : 'col-md-4'}`">
@@ -93,9 +93,9 @@
           :readonly="formReadonly"
           Label="Cidade*"
           Icon="fas fa-building"
-          v-model="input.ds_addresscity"
-          :Error="inputError.ds_addresscity"
-          @focus="inputError.ds_addresscity = false"
+          v-model="input.ds_city"
+          :Error="inputError.ds_city"
+          @focus="inputError.ds_city = false"
         >
         </InputField>
       </div>
@@ -107,10 +107,10 @@
           :readonly="formReadonly"
           Label="UF*"
           Icon="fas fa-map-marker-alt"
-          v-model="input.do_addressuf"
+          v-model="input.do_uf"
           :Options="brazilianStates"
-          :Error="inputError.do_addressuf"
-          @focus="inputError.do_addressuf = false"
+          :Error="inputError.do_uf"
+          @focus="inputError.do_uf = false"
         ></InputField>
       </div>
       <div class="col-12" v-if="!hideMap">
@@ -144,21 +144,21 @@ export default {
   data() {
     return {
       input: {
-        ds_addresszipcode: null,
-        ds_addressstreet: null,
-        ds_addressnumber: null,
-        ds_addresscomplement: null,
-        ds_addressneighborhood: null,
-        ds_addresscity: null,
-        do_addressuf: null,
+        ds_zipcode: null,
+        ds_street: null,
+        ds_number: null,
+        ds_complement: null,
+        ds_neighborhood: null,
+        ds_city: null,
+        do_uf: null,
       },
       inputError: {
-        ds_addresszipcode: false,
-        ds_addressstreet: false,
-        ds_addressnumber: false,
-        ds_addressneighborhood: false,
-        ds_addresscity: false,
-        do_addressuf: false,
+        ds_zipcode: false,
+        ds_street: false,
+        ds_number: false,
+        ds_neighborhood: false,
+        ds_city: false,
+        do_uf: false,
       },
       formReadonly: !!this.readonly,
       zipcodeWarning: null,
@@ -203,7 +203,7 @@ export default {
     async getAddressByZipcode() {
       var address = await this.$getService(
         "toolcase/utils",
-      ).getAddressByZipCode(this.input.ds_addresszipcode, false);
+      ).getAddressByZipCode(this.input.ds_zipcode, false);
       if (address === null) return;
       if (address === false) {
         this.zipcodeWarning =
@@ -212,15 +212,15 @@ export default {
       }
       this.zipcodeWarning = null;
       // Updating Values
-      this.input.ds_addressstreet = address.logradouro;
-      this.input.ds_addressneighborhood = address.bairro;
-      this.input.ds_addresscity = address.localidade;
-      this.input.do_addressuf = address.uf;
+      this.input.ds_street = address.logradouro;
+      this.input.ds_neighborhood = address.bairro;
+      this.input.ds_city = address.localidade;
+      this.input.do_uf = address.uf;
       // Updating Errors
-      this.inputError.ds_addressstreet = false;
-      this.inputError.ds_addressneighborhood = false;
-      this.inputError.ds_addresscity = false;
-      this.inputError.do_addressuf = false;
+      this.inputError.ds_street = false;
+      this.inputError.ds_neighborhood = false;
+      this.inputError.ds_city = false;
+      this.inputError.do_uf = false;
     },
   },
 
