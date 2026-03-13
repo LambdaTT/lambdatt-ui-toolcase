@@ -138,8 +138,7 @@ export default {
       url = `${url}${url.includes('?') ? '&' : '?'}${utils.objToSerialString(params)}`;
 
     var reqConf = {
-      responseType: 'arrayBuffer',
-      responseEncoding: 'utf8',
+      responseType: 'arraybuffer',
       headers: { ...headers }
     };
 
@@ -170,6 +169,8 @@ export default {
         anchorElement.style.display = 'none';
         anchorElement.href = _url;
         anchorElement.download = fname;
+
+        document.body.appendChild(anchorElement);
         anchorElement.click();
 
         window.URL.revokeObjectURL(_url);
