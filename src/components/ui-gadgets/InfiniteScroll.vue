@@ -171,7 +171,7 @@ export default {
         if (!!this.AfterLoad)
           responseData = this.AfterLoad(cloneData, response) ?? responseData;
 
-        if (responseData.length) this.data = [...this.data, ...responseData];
+        if (responseData.length) this.data = [...this.data, ...responseData].filter(Boolean);
 
         this.hasMoreData = await this.checkForMoreData();
 
