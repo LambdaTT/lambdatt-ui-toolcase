@@ -121,7 +121,10 @@ export default {
     emitValue(v) {
       if (this.Multiple) {
         this.internalUpdate = true
-        this.$emit('update:model-value', Array.isArray(v) ? [...v] : [])
+        const values = Array.isArray(v)
+          ? v.map(item => (item instanceof Object && 'value' in item) ? item.value : item)
+          : []
+        this.$emit('update:model-value', values)
         return
       }
 
