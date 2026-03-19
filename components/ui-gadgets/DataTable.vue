@@ -667,6 +667,10 @@ export default {
     // Sort and Filter:
     /////////////////////
     filterHandler(filtersObject, name) {
+       console.log(
+        name,
+        localStorage.getItem(`Datatable.${this.sluggedName}.${name}`),
+      );
       // Save filters state:
       localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
 
@@ -679,7 +683,7 @@ export default {
 
       for (let k in filtersObject) {
         if (filtersObject[k] == null)
-          delete filtersObject[k] == null
+          delete filtersObject[k]
       }
 
       this.loadTimeout = setTimeout(async () => {
