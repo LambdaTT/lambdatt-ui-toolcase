@@ -13,7 +13,22 @@
           icon="fas fa-filter"
           @click="showFilterPanel = !showFilterPanel"
         >
-          <q-tooltip>Filtros da tabela</q-tooltip>
+          <q-tooltip
+            >Filtros da tabela
+            {{
+              activeFiltersCount > 0 ? `(${activeFiltersCount})` : ""
+            }}</q-tooltip
+          >
+          <!-- Active filter badge -->
+          <q-badge
+            v-if="activeFiltersCount > 0"
+            color="red"
+            floating
+            rounded
+            transparent
+          >
+            {{ activeFiltersCount }}
+          </q-badge>
         </q-btn>
         <q-btn
           flat
@@ -852,6 +867,13 @@ export default {
       };
     },
 
+    activeFiltersCount() {
+      const filters = JSON.parse(JSON.stringify(this.filterParams))
+      return Object.values(filters).filter(
+        (v) => v !== null && v !== undefined && v !== "",
+      ).length;
+    },
+
     sluggedName() {
       // Remove spaces, lowercases and replace accents and special chars:
       return this.Name.toSlug();
@@ -936,6 +958,10 @@ export default {
     // Sort and Filter:
     /////////////////////
     filterHandler(filtersObject, name) {
+      console.log(
+        name,
+        localStorage.getItem(`Datatable.${this.sluggedName}.${name}`),
+      );
       // Save filters state:
       localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
 
@@ -950,7 +976,7 @@ export default {
       clearTimeout(this.loadTimeout);
 
       for (let k in filtersObject) {
-        if (filtersObject[k] == null) delete filtersObject[k] == null;
+        if (filtersObject[k] == null) delete filtersObject[k];
       }
 
       this.loadTimeout = setTimeout(async () => {
@@ -1009,7 +1035,7 @@ export default {
 
         if (filterConfig?.type == "text") filters[k] = `$lkof|${value}`;
         else if (
-          filterConfig?.type == "daterange" ||
+          filterConfig?.type == "daterangepicker" ||
           filterConfig?.type == "datetimerange"
         )
           filters[k] = `$btwn|${value.from}|${value.to}`;
@@ -1490,6 +1516,7 @@ export default {
   },
 
   async mounted() {
+    console.log("MOUNTED START");
     // Set columns:
     this.columns = [...this.Columns];
     this.visibleColumns =
@@ -1512,6 +1539,8 @@ export default {
     var persistedFilters = localStorage.getItem(
       `Datatable.${this.sluggedName}.filters`,
     );
+    console.log("persistedFilters", persistedFilters);
+
     if (!!persistedFilters) {
       this.showFilterPanel = true;
       setTimeout(() => (this.filterParams = JSON.parse(persistedFilters)), 100);

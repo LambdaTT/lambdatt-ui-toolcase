@@ -1,37 +1,148 @@
 <template>
-  <div
-    ref="scrollContainer"
-    class="full-width"
-    style="height: 400px; overflow: auto"
-  >
-    <!-- Empty -->
-    <div v-if="state == 'empty'" class="q-pa-lg text-center text-grey-8">
-      <div><q-icon size="lg" name="fas fa-folder-open"></q-icon> *</div>
-      <div class="text-h6">Sem dados</div>
+  <div class="full-width">
+    <!-- Controls Bar -->
+    <div class="row items-center q-pb-sm">
+      <div class="col-12 col-md-8">
+        <!-- Filter Toggle -->
+        <q-btn
+          v-if="availableFilters.length > 0"
+          flat
+          round
+          color="primary"
+          size="sm"
+          icon="fas fa-filter"
+          @click="showFilterPanel = !showFilterPanel"
+        >
+          <q-tooltip
+            >Filtros da lista
+            {{
+              activeFiltersCount > 0 ? `(${activeFiltersCount})` : ""
+            }}</q-tooltip
+          >
+          <!-- Active filter badge -->
+          <q-badge
+            v-if="activeFiltersCount > 0"
+            color="red"
+            floating
+            rounded
+            transparent
+          >
+            {{ activeFiltersCount }}
+          </q-badge>
+        </q-btn>
+
+        <!-- Reload -->
+        <q-btn
+          flat
+          round
+          color="primary"
+          size="sm"
+          icon="fas fa-sync"
+          @click="triggerReload()"
+        >
+          <q-tooltip>Atualizar lista</q-tooltip>
+        </q-btn>
+      </div>
+
+      <!-- Search Field -->
+      <div class="col-12 col-md-4" v-if="searchableFields.length > 0">
+        <q-input
+          dense
+          square
+          filled
+          clearable
+          label="Pesquisar na lista"
+          v-model="searchTerm"
+        >
+          <template v-slot:append>
+            <q-icon size="xs" name="fas fa-search" color="grey-8" />
+          </template>
+        </q-input>
+      </div>
     </div>
 
-    <!-- Error State -->
-    <div v-if="state == 'error'" class="q-pa-lg text-center text-red-3">
-      <div>
-        <q-icon size="lg" name="fas fa-bomb"></q-icon>
-      </div>
-      <div class="text-h6">ERRO!</div>
-      <div class="text-caption">
-        <b>{{ errData.response?.status }}</b> {{ errData.response?.statusText }}
-      </div>
-      <small>Favor entrar em contato com o administrador do sistema.</small>
+    <!-- Filters Panel -->
+    <div v-if="availableFilters.length > 0">
+      <q-expansion-item
+        hide-expand-icon
+        v-model="showFilterPanel"
+        header-style="display:none;"
+      >
+        <q-toolbar class="bg-grey-3">
+          <q-toolbar-title>Filtros da Lista</q-toolbar-title>
+          <q-btn
+            size="sm"
+            icon="fas fa-filter-circle-xmark"
+            color="primary"
+            flat
+            round
+            dense
+            @click="filterParams = {}"
+          >
+            <q-tooltip>Limpar filtros</q-tooltip>
+          </q-btn>
+        </q-toolbar>
+        <div class="row q-py-sm">
+          <div
+            v-for="f in availableFilters"
+            :key="f.field"
+            class="col-12 col-md-4"
+          >
+            <InputField
+              clearable
+              dense
+              :type="f.type"
+              :withSeconds="f.filterOptions?.withSeconds"
+              :Label="`Filtrar por ${f.label}`"
+              :Options="f.options ?? []"
+              v-model="filterParams[f.field]"
+              :Default="
+                f.default !== null && typeof f.default != 'undefined'
+                  ? f.default
+                  : null
+              "
+            >
+            </InputField>
+          </div>
+        </div>
+      </q-expansion-item>
+      <q-separator />
     </div>
 
-    <!-- Ready -->
-    <div v-if="state == 'ready'">
+    <!-- Scroll Container -->
+    <div
+      ref="scrollContainer"
+      class="full-width"
+      style="height: 400px; overflow: auto"
+    >
+      <!-- States -->
+      <div v-show="state == 'empty'" class="q-pa-lg text-center text-grey-8">
+        <div><q-icon size="lg" name="fas fa-folder-open"></q-icon> *</div>
+        <div class="text-h6">Sem dados</div>
+      </div>
+
+      <div v-show="state == 'error'" class="q-pa-lg text-center text-red-3">
+        <div>
+          <q-icon size="lg" name="fas fa-bomb"></q-icon>
+        </div>
+        <div class="text-h6">ERRO!</div>
+        <div class="text-caption">
+          <b>{{ errData?.response?.status }}</b>
+          {{ errData?.response?.statusText }}
+        </div>
+        <small>Favor entrar em contato com o administrador do sistema.</small>
+      </div>
+
+      <!-- Infinite Scroll -->
       <q-infinite-scroll
-        :key="reloadCount"
+        v-show="state == 'ready'"
+        ref="infiniteScrollInternal"
         :disable="!hasMoreData"
         :scroll-target="$refs.scrollContainer"
         @load="loadData"
         :offset="250"
       >
-        <div class="q-pa-sm" v-for="(row, idx) in data" :key="idx">
+        <div class="q-pa-sm" v-for="row in data" :key="row.id ?? Math.random()">
           <slot :data="row"></slot>
         </div>
 
@@ -58,9 +169,39 @@ export default {
       type: Number,
       default: () => 10,
     },
+    /**
+     * Array of filter definitions (rendered as embedded fields).
+     * Each item: { label, field, type, options?, default?, filterOptions? }
+     * Same structure as DataTable's Filters prop.
+     */
     Filters: {
+      type: Array,
+      default: () => [],
+    },
+    /**
+     * External / programmatic filters object applied directly to the request.
+     * Equivalent to DataTable's ExtraFilters.
+     */
+    ExtraFilters: {
       type: Object,
       default: () => {},
+    },
+    /**
+     * Additional field or array of fields to search on, beyond those defined
+     * in Filters. If Filters is empty and SearchField is set, the search input
+     * is still shown using these fields.
+     */
+    SearchField: {
+      type: [String, Array],
+      default: null,
+    },
+    /**
+     * Optional name for this list instance, used to persist filters
+     * in localStorage (under key `InfiniteScroll.{slug}.filters`).
+     */
+    Name: {
+      type: String,
+      default: null,
     },
     BeforeLoad: Function,
     AfterLoad: Function,
@@ -69,7 +210,18 @@ export default {
 
   data() {
     return {
-      // Control:
+      // Lifecycle:
+      isUnmounting: false,
+
+      // Filter panel control:
+      showFilterPanel: false,
+      filterParams: {},
+
+      // Search related:
+      searchTerm: null,
+      searchTimeout: null,
+
+      // Scroll control:
       page: 1,
       hasMoreData: true,
       startLoad: false,
@@ -83,23 +235,129 @@ export default {
   },
 
   computed: {
+    sluggedName() {
+      if (!this.Name) return null;
+      return this.Name.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-");
+    },
+
+    availableFilters() {
+      return this.Filters;
+    },
+
+    searchableFields() {
+      // Start with fields from Filters (that have a field and are searchable)
+      const fromFilters = this.availableFilters
+        .filter((f) => {
+          const hasField = f.field && f.field !== "";
+          const isSearchable = f.searchable !== false;
+          const isNotFiltered =
+            !(f.field in this.filterParams) || !this.filterParams[f.field];
+          return hasField && isSearchable && isNotFiltered;
+        })
+        .map((f) => f.field);
+
+      // Append any extra SearchField fields
+      const extra = !this.SearchField
+        ? []
+        : Array.isArray(this.SearchField)
+        ? this.SearchField
+        : [this.SearchField];
+
+      // Merge, dedup
+      return [...new Set([...fromFilters, ...extra])];
+    },
+
+    activeFiltersCount() {
+      return Object.values(this.filterParams).filter(
+        (v) => v !== null && v !== undefined && v !== "",
+      ).length;
+    },
+
     params() {
-      return {
-        ...this.Filters,
+      const p = {
+        ...this.ExtraFilters,
+        ...this.filterValues,
+        ...this.searchParams,
         $page: this.page,
         $limit: this.Limit,
         $limit_multiplier: 1,
       };
+
+      // Filter out empty/null/undefined values
+      Object.keys(p).forEach((key) => {
+        if (p[key] === null || p[key] === undefined || p[key] === "") {
+          delete p[key];
+        }
+      });
+
+      return p;
+    },
+
+    filterValues() {
+      const filters = {};
+      for (let k in this.filterParams) {
+        const filterConfig = this.availableFilters.find((x) => x.field == k);
+        let value =
+          !!filterConfig?.modifierFn &&
+          typeof filterConfig?.modifierFn === "function"
+            ? filterConfig.modifierFn(this.filterParams[k])
+            : this.filterParams[k];
+
+        if (value == null || value === "") continue;
+
+        if (filterConfig?.type === "text") {
+          filters[k] = `$lkof|${value}`;
+        } else if (
+          filterConfig?.type === "daterangepicker" ||
+          filterConfig?.type === "datetimerange"
+        ) {
+          if (value?.from && value?.to)
+            filters[k] = `$btwn|${value.from}|${value.to}`;
+        } else {
+          filters[k] = value;
+        }
+      }
+      return filters;
+    },
+
+    searchParams() {
+      const search = {};
+      if (!this.searchTerm || !this.searchableFields.length) return search;
+
+      const fields = this.searchableFields;
+
+      fields.forEach((f, i) => {
+        // First field:
+        if (i == 0) {
+          if (i == fields.length - 1) {
+            search[f] =
+              "$startFilterGroup$lkof$endFilterGroup|" + this.searchTerm;
+          } else {
+            search[f] = "$startFilterGroup$lkof|" + this.searchTerm;
+          }
+        }
+        // All fields in the middle:
+        else if (i < fields.length - 1) {
+          search[f] = "$or$lkof|" + this.searchTerm;
+        }
+        // Last field:
+        else {
+          search[f] = "$or$lkof$endFilterGroup|" + this.searchTerm;
+        }
+      });
+
+      return search;
     },
 
     state() {
       if (!!this.errData) return "error";
 
-      const loadIsNotStarted = !this.startLoad;
-      const hasNoData = this.data.length < 1;
-      const noDataOrNoURL = !this.DataURL || hasNoData;
+      if (this.isLoading && this.data.length === 0) return "ready"; // Show loader, not empty
 
-      if (loadIsNotStarted && noDataOrNoURL) return "empty";
+      if (!this.startLoad && this.data.length < 1) return "empty";
 
       return "ready";
     },
@@ -109,19 +367,43 @@ export default {
         data: this.data,
         params: this.params,
         state: this.state,
+        reload: this.triggerReload,
       };
     },
   },
 
   watch: {
-    Filters() {
-      if (!this.DataURL || this.isLoading) return;
+    ExtraFilters: {
+      handler() {
+        this.triggerReload();
+      },
+      deep: true,
+    },
 
-      this.page = 1;
-      this.hasMoreData = true;
-      this.data = [];
-      this.startLoad = true;
-      this.reloadCount++;
+    searchTerm(val) {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        if (this.sluggedName) {
+          if (val)
+            localStorage.setItem(
+              `InfiniteScroll.${this.sluggedName}.searchTerm`,
+              val,
+            );
+          else
+            localStorage.removeItem(
+              `InfiniteScroll.${this.sluggedName}.searchTerm`,
+            );
+        }
+        this.triggerReload();
+      }, 400);
+    },
+
+    filterParams: {
+      handler(v) {
+        this.persistFilters(v);
+        this.triggerReload();
+      },
+      deep: true,
     },
 
     state() {
@@ -132,13 +414,44 @@ export default {
       handler() {
         this.emit();
       },
-      deep: true,
     },
   },
 
   methods: {
     emit() {
       this.$emit("update:model-value", this.output);
+    },
+
+    persistFilters(filtersObject) {
+      if (!this.sluggedName || this.isUnmounting) return;
+      const key = `InfiniteScroll.${this.sluggedName}.filters`;
+      const cleaned = {};
+      for (let k in filtersObject) {
+        if (
+          filtersObject[k] !== null &&
+          filtersObject[k] !== undefined &&
+          filtersObject[k] !== ""
+        )
+          cleaned[k] = filtersObject[k];
+      }
+      if (Object.keys(cleaned).length > 0)
+        localStorage.setItem(key, JSON.stringify(cleaned));
+      else localStorage.removeItem(key);
+    },
+
+    triggerReload() {
+      if (!this.DataURL || this.isLoading) return;
+
+      this.page = 1;
+      this.hasMoreData = true;
+      this.data = [];
+      this.errData = null;
+      this.startLoad = true;
+      this.reloadCount++;
+      if (this.$refs.infiniteScrollInternal) {
+        this.$refs.infiniteScrollInternal.poll();
+        this.$refs.infiniteScrollInternal.resume();
+      }
     },
 
     async checkForMoreData() {
@@ -171,7 +484,8 @@ export default {
         if (!!this.AfterLoad)
           responseData = this.AfterLoad(cloneData, response) ?? responseData;
 
-        if (responseData.length) this.data = [...this.data, ...responseData].filter(Boolean);
+        if (responseData.length)
+          this.data = [...this.data, ...responseData].filter(Boolean);
 
         this.hasMoreData = await this.checkForMoreData();
 
@@ -189,6 +503,28 @@ export default {
         this.startLoad = false;
       }
     },
+  },
+
+  mounted() {
+    if (!this.sluggedName) return;
+
+    // Restore persisted filters:
+    const persistedFilters = localStorage.getItem(
+      `InfiniteScroll.${this.sluggedName}.filters`,
+    );
+    if (persistedFilters) {
+      this.showFilterPanel = true;
+      setTimeout(() => (this.filterParams = JSON.parse(persistedFilters)), 100);
+    }
+
+    // Restore persisted search term:
+    this.searchTerm =
+      localStorage.getItem(`InfiniteScroll.${this.sluggedName}.searchTerm`) ??
+      null;
+  },
+
+  beforeUnmount() {
+    this.isUnmounting = true;
   },
 };
 </script>
