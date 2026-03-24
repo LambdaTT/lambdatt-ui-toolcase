@@ -1,13 +1,14 @@
 <template>
-  <q-select filled square hide-bottom-space hide-dropdown-icon use-input  fill-input
+  <!-- No errors -->
+  <q-select v-if="error === null" filled square hide-bottom-space hide-dropdown-icon use-input fill-input
     behavior="menu" :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive" input-debounce="300"
-    :clearable="clearable" :dense="dense" :disable="disable" :label="Label" :readonly="readonly" :hide-selected="!Multiple"
-    :options="options" :error="Error" :multiple="Multiple" :use-chips="UseChips" :stack-label="StackLabel"
-    v-model="selected"
-    @filter="filterFn" @focus="$emit('focus')" @popup-show="isOpen = true" @popup-hide="isOpen = false"
-  >
+    :clearable="clearable" :dense="dense" :disable="disable" :label="Label" :readonly="readonly"
+    :hide-selected="!Multiple" :options="options" :error="Error" :multiple="Multiple" :use-chips="UseChips"
+    :stack-label="StackLabel" v-model="selected" @filter="filterFn" @focus="$emit('focus')" @popup-show="isOpen = true"
+    @popup-hide="isOpen = false">
     <template v-slot:append>
-      <q-icon v-if="!readonly" :class="isOpen? 'rotate-180':''" name="arrow_drop_down" color="grey-8" style="transition: transform 0.28s" />
+      <q-icon v-if="!readonly" :class="isOpen ? 'rotate-180' : ''" name="arrow_drop_down" color="grey-8"
+        style="transition: transform 0.28s" />
       <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
     </template>
     <template v-slot:no-option>
@@ -16,6 +17,28 @@
       </q-item>
     </template>
   </q-select>
+  <label v-else
+    class="q-field row no-wrap items-start q-field--filled q-input q-field--square q-field--float q-field--labeled full-width bg-red-1"
+    for="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19"><!---->
+    <div class="q-field__inner relative-position col self-stretch">
+      <div class="q-field__control relative-position row no-wrap" tabindex="-1">
+        <div class="q-field__control-container col relative-position row no-wrap q-anchor--skip"><input
+            class="q-field__native q-placeholder text-red-5 text-bold" tabindex="0" :aria-label="Label"
+            id="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19" maxlength="100" type="text" :value="`ERRO: ${error}`">
+          <div class="q-field__label no-pointer-events absolute ellipsis">{{ Label }}</div><!---->
+        </div>
+        <div class="q-field__append q-field__marginal row no-wrap items-center"><i class="q-icon text-red-5 fas fa-circle-exclamation"
+            aria-hidden="true" role="presentation"> </i></div>
+      </div><!---->
+    </div><!---->
+  </label>
+
+  <!-- <q-input v-else class="text-negative" disable filled square hide-bottom-space :bg-color="`bg-red-1`" color="red-5" :label="Label"
+    v-model="error" readonly>
+    <template v-slot:append>
+      <q-icon name="error" color="negative" />
+    </template>
+  </q-input> -->
 </template>
 
 <script>
@@ -31,6 +54,8 @@ export default {
       type: Array,
       default: () => []
     },
+    OptionsURL: String,
+    OptionMap: Object,
 
     BgColor: String,
     Label: String,
@@ -51,10 +76,22 @@ export default {
 
   data() {
     return {
-      filteredOptions: this.Options,
+      filteredOptions: [],
       selected: null,
       isOpen: false,
       internalUpdate: false, // Evita loop infinito entre: selected -> emitValue -> modelValue -> setValue -> selected
+      error: null,
+      errorDict: {
+        400: '400 - Requisição inválida.',
+        401: '401 - Não autenticado.',
+        403: '403 - Permissão negada.',
+        404: '404 - Não Encontrado',
+        500: '500 - Erro interno do servidor. Tente novamente mais tarde.',
+        502: '502 - Bad Gateway.',
+        503: '503 - Serviço temporariamente indisponível.',
+        504: '504 - Gateway Timeout.'
+      },
+      remoteOptions: []
     }
   },
 
@@ -74,9 +111,11 @@ export default {
     },
 
     Options(v) {
-      this.filteredOptions = [...v].sort(
+      const opts = v.length ? [...v] : this.remoteOptions;
+      this.filteredOptions = opts.sort(
         (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
       );
+      this.error = null; // Limpa erros anteriores ao atualizar opções
       this.setValue(this.modelValue)
     }
   },
@@ -84,6 +123,10 @@ export default {
   computed: {
     options() {
       return this.filteredOptions
+    },
+
+    loading(){
+      return this.OptionsURL && !this.Options.length && !this.remoteOptions.length
     }
   },
 
@@ -100,21 +143,26 @@ export default {
       this.selected = this.Multiple
         ? source.filter(opt => (Array.isArray(v) ? v : []).includes(opt.value))
         : source.find(opt =>
-            String(opt.value).toLowerCase() === String(v).toLowerCase()
-          ) || null
+          String(opt.value).toLowerCase() === String(v).toLowerCase()
+        ) || null
     },
 
     filterFn(val, update) {
       update(() => {
+        const opts = (this.Options.length ? this.Options : this.remoteOptions)
+          .sort(
+            (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
+          );
         if (!(val)) {
-          this.filteredOptions = this.Options;
+          this.filteredOptions = opts
           return
         }
 
         const needle = val.toLowerCase()
-        this.filteredOptions = this.Options.filter(opt => 
-          String(opt.label).toLowerCase().includes(needle)
-        )
+        this.filteredOptions = opts
+          .filter(opt =>
+            String(opt.label).toLowerCase().includes(needle)
+          )
       })
     },
 
@@ -128,21 +176,44 @@ export default {
         return
       }
 
-      if(v instanceof Object && "value" in v) v = v.value;
+      if (v instanceof Object && "value" in v) v = v.value;
 
       const payload = v ? v : null
       if (payload === this.modelValue) return
 
       this.internalUpdate = true
       this.$emit('update:model-value', payload)
+    },
+
+    async getRemoteOptions() {
+      if (this.OptionsURL && this.OptionMap) {
+        try {
+          const { data } = await this.$http.get(this.OptionsURL)
+          this.remoteOptions = data.map(item => ({
+            label: item[this.OptionMap.label],
+            value: item[this.OptionMap.value],
+          }));
+          this.error = null; // Limpa erros anteriores ao atualizar opções
+        } catch (e) {
+          this.error = this.errorDict[e.status];
+          console.error('Erro ao buscar opções remotas:', e)
+          return
+        }
+      }
     }
   },
 
   mounted() {
-    setTimeout(() => {
+    if (this.OptionsURL && !this.OptionMap) {
+      console.warn('Select2: OptionsURL fornecida sem OptionMap. As opções remotas não serão carregadas.')
+    }
+
+    setTimeout(async () => {
       if (this.Default) {
         this.selected = this.Default;
       }
+
+      await this.getRemoteOptions();
     }, 200);
   }
 }
