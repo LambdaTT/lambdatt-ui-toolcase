@@ -23,22 +23,16 @@
     <div class="q-field__inner relative-position col self-stretch">
       <div class="q-field__control relative-position row no-wrap" tabindex="-1">
         <div class="q-field__control-container col relative-position row no-wrap q-anchor--skip"><input
-            class="q-field__native q-placeholder text-red-5 text-bold" tabindex="0" :aria-label="Label"
-            id="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19" maxlength="100" type="text" :value="`ERRO: ${error}`">
+            class="q-field__native q-placeholder text-negative text-bold" tabindex="0" :aria-label="Label"
+            id="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19" maxlength="100" type="text" disabled :value="`ERRO: ${error}`">
           <div class="q-field__label no-pointer-events absolute ellipsis">{{ Label }}</div><!---->
         </div>
-        <div class="q-field__append q-field__marginal row no-wrap items-center"><i class="q-icon text-red-5 fas fa-circle-exclamation"
+        <div class="q-field__append q-field__marginal row no-wrap items-center"><i class="q-icon text-negative fas fa-circle-exclamation"
             aria-hidden="true" role="presentation"> </i></div>
       </div><!---->
     </div><!---->
   </label>
 
-  <!-- <q-input v-else class="text-negative" disable filled square hide-bottom-space :bg-color="`bg-red-1`" color="red-5" :label="Label"
-    v-model="error" readonly>
-    <template v-slot:append>
-      <q-icon name="error" color="negative" />
-    </template>
-  </q-input> -->
 </template>
 
 <script>
