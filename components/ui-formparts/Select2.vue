@@ -137,7 +137,7 @@ export default {
 
   methods: {
     setValue(v) {
-      if (this.loading) {
+      if (this.loading && this.Options.length === 0) {
         setTimeout(() => this.setValue(v), 300);
         return;
       }
