@@ -1,37 +1,41 @@
 <template>
-  <!-- No errors -->
-  <q-select v-if="error === null" filled square hide-bottom-space hide-dropdown-icon use-input fill-input
-    behavior="menu" :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive" input-debounce="300"
-    :clearable="clearable" :dense="dense" :disable="disable" :label="Label" :readonly="readonly"
-    :hide-selected="!Multiple" :options="options" :error="Error" :multiple="Multiple" :use-chips="UseChips"
-    :stack-label="StackLabel" v-model="selected" @filter="filterFn" @focus="$emit('focus')" @popup-show="isOpen = true"
-    @popup-hide="isOpen = false">
-    <template v-slot:append>
-      <q-icon v-if="!readonly" :class="isOpen ? 'rotate-180' : ''" name="arrow_drop_down" color="grey-8"
-        style="transition: transform 0.28s" />
-      <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
-    </template>
-    <template v-slot:no-option>
-      <q-item>
-        <q-item-section class="text-grey">Nenhum resultado</q-item-section>
-      </q-item>
-    </template>
-  </q-select>
-  <label v-else
-    class="q-field row no-wrap items-start q-field--filled q-input q-field--square q-field--float q-field--labeled full-width bg-red-1"
-    for="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19"><!---->
-    <div class="q-field__inner relative-position col self-stretch">
-      <div class="q-field__control relative-position row no-wrap" tabindex="-1">
-        <div class="q-field__control-container col relative-position row no-wrap q-anchor--skip"><input
-            class="q-field__native q-placeholder text-negative text-bold" tabindex="0" :aria-label="Label"
-            id="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19" maxlength="100" type="text" disabled :value="`ERRO: ${error}`">
-          <div class="q-field__label no-pointer-events absolute ellipsis">{{ Label }}</div><!---->
-        </div>
-        <div class="q-field__append q-field__marginal row no-wrap items-center"><i class="q-icon text-negative fas fa-circle-exclamation"
-            aria-hidden="true" role="presentation"> </i></div>
+  <div>
+
+    <!-- No errors -->
+    <q-select v-if="error === null" filled square hide-bottom-space hide-dropdown-icon use-input fill-input
+      :loading="loading" behavior="menu" :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive"
+      input-debounce="300" :clearable="clearable" :dense="dense" :disable="disable" :label="Label" :readonly="readonly"
+      :hide-selected="!Multiple" :options="options" :error="Error" :multiple="Multiple" :use-chips="UseChips"
+      :stack-label="StackLabel" v-model="selected" @filter="filterFn" @focus="$emit('focus')"
+      @popup-show="isOpen = true" @popup-hide="isOpen = false">
+      <template v-slot:append>
+        <q-icon v-if="!readonly" :class="isOpen ? 'rotate-180' : ''" name="arrow_drop_down" color="grey-8"
+          style="transition: transform 0.28s" />
+        <q-icon v-if="!!Icon" :name="Icon" color="grey-8" />
+      </template>
+      <template v-slot:no-option>
+        <q-item>
+          <q-item-section class="text-grey">Nenhum resultado</q-item-section>
+        </q-item>
+      </template>
+    </q-select>
+    <label v-else
+      class="q-field row no-wrap items-start q-field--filled q-input q-field--square q-field--float q-field--labeled full-width bg-red-1"
+      for="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19"><!---->
+      <div class="q-field__inner relative-position col self-stretch">
+        <div class="q-field__control relative-position row no-wrap" tabindex="-1">
+          <div class="q-field__control-container col relative-position row no-wrap q-anchor--skip"><input
+              class="q-field__native q-placeholder text-negative text-bold" tabindex="0" :aria-label="Label"
+              id="f_0f2b1c56-251c-42ac-9d8d-f01255b7ef19" maxlength="100" type="text" disabled
+              :value="`ERRO: ${error}`">
+            <div class="q-field__label no-pointer-events absolute ellipsis">{{ Label }}</div><!---->
+          </div>
+          <div class="q-field__append q-field__marginal row no-wrap items-center"><i
+              class="q-icon text-negative fas fa-circle-exclamation" aria-hidden="true" role="presentation"> </i></div>
+        </div><!---->
       </div><!---->
-    </div><!---->
-  </label>
+    </label>
+  </div>
 
 </template>
 
@@ -85,7 +89,8 @@ export default {
         503: '503 - Serviço temporariamente indisponível.',
         504: '504 - Gateway Timeout.'
       },
-      remoteOptions: []
+      remoteOptions: [],
+      loading: true,
     }
   },
 
@@ -96,6 +101,8 @@ export default {
     },
 
     modelValue(v) {
+      console.log('modelValue', v);
+
       if (this.internalUpdate) {
         this.internalUpdate = false
         return
@@ -105,12 +112,16 @@ export default {
     },
 
     Options(v) {
-      const opts = v.length ? [...v] : this.remoteOptions;
+      const opts = v.length ? [...v] : (this.remoteOptions ?? []);
       this.filteredOptions = opts.sort(
         (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
       );
       this.error = null; // Limpa erros anteriores ao atualizar opções
       this.setValue(this.modelValue)
+    },
+
+    OptionsURL() {
+      this.getRemoteOptions()
     }
   },
 
@@ -119,14 +130,19 @@ export default {
       return this.filteredOptions
     },
 
-    loading(){
-      return this.OptionsURL && !this.Options.length && !this.remoteOptions.length
+    definedOpts() {
+      return this.Options.length ? this.Options : (this.remoteOptions ?? [])
     }
   },
 
   methods: {
     setValue(v) {
-      const source = this.Options
+      if (this.loading) {
+        setTimeout(() => this.setValue(v), 300);
+        return;
+      }
+
+      const source = this.definedOpts
       if (!source?.length) return
 
       if (!v) {
@@ -143,7 +159,7 @@ export default {
 
     filterFn(val, update) {
       update(() => {
-        const opts = (this.Options.length ? this.Options : this.remoteOptions)
+        const opts = this.definedOpts
           .sort(
             (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
           );
@@ -180,6 +196,7 @@ export default {
     },
 
     async getRemoteOptions() {
+      this.loading = true
       if (this.OptionsURL && this.OptionMap) {
         try {
           const { data } = await this.$http.get(this.OptionsURL)
@@ -187,13 +204,19 @@ export default {
             label: item[this.OptionMap.label],
             value: item[this.OptionMap.value],
           }));
+          const opts = this.definedOpts
+            .sort(
+              (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
+            );
+          this.filteredOptions = opts;
           this.error = null; // Limpa erros anteriores ao atualizar opções
         } catch (e) {
           this.error = this.errorDict[e.status];
           console.error('Erro ao buscar opções remotas:', e)
-          return
         }
       }
+
+      this.loading = false;
     }
   },
 
@@ -203,11 +226,11 @@ export default {
     }
 
     setTimeout(async () => {
+      await this.getRemoteOptions();
+
       if (this.Default) {
         this.selected = this.Default;
       }
-
-      await this.getRemoteOptions();
     }, 200);
   }
 }
