@@ -101,8 +101,6 @@ export default {
     },
 
     modelValue(v) {
-      console.log('modelValue', v);
-
       if (this.internalUpdate) {
         this.internalUpdate = false
         return
