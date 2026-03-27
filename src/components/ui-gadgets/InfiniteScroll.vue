@@ -61,6 +61,8 @@
       </div>
     </div>
 
+    <q-separator></q-separator>
+
     <!-- Filters Panel -->
     <div v-if="availableFilters.length > 0">
       <q-expansion-item
@@ -212,6 +214,7 @@ export default {
     return {
       // Lifecycle:
       isUnmounting: false,
+      isRestoring: false,
 
       // Filter panel control:
       showFilterPanel: false,
@@ -308,17 +311,12 @@ export default {
 
         if (value == null || value === "") continue;
 
-        if (filterConfig?.type === "text") {
-          filters[k] = `$lkof|${value}`;
-        } else if (
-          filterConfig?.type === "daterangepicker" ||
-          filterConfig?.type === "datetimerange"
-        ) {
-          if (value?.from && value?.to)
-            filters[k] = `$btwn|${value.from}|${value.to}`;
-        } else {
-          filters[k] = value;
-        }
+        if (filterConfig?.type == "text") filters[k] = `$lkof|${value}`;
+        else if (filterConfig?.type == "daterangepicker")
+          filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`;
+        else if (filterConfig?.type == "datetimerange")
+          filters[k] = `$btwn|${value.from}|${value.to}`;
+        else filters[k] = value;
       }
       return filters;
     },
@@ -400,6 +398,9 @@ export default {
 
     filterParams: {
       handler(v) {
+        console.log("filterParams", this.isRestoring);
+
+        if (this.isRestoring) return;
         this.persistFilters(v);
         this.triggerReload();
       },
@@ -505,6 +506,14 @@ export default {
     },
   },
 
+  created() {
+    // Block filterParams watcher while restoring persisted filters.
+    // InputField children emit update:model-value with their Default value
+    // during their own mounted(), which runs BEFORE this component's mounted().
+    // Without this flag those emissions would wipe out the persisted filters.
+    this.isRestoring = true;
+  },
+
   mounted() {
     if (!this.sluggedName) return;
 
@@ -514,8 +523,11 @@ export default {
     );
     if (persistedFilters) {
       this.showFilterPanel = true;
-      setTimeout(() => (this.filterParams = JSON.parse(persistedFilters)), 100);
-    }
+      setTimeout(() => {
+        this.filterParams = JSON.parse(persistedFilters);
+        this.isRestoring = false;
+      }, 100);
+    } else this.isRestoring = false;
 
     // Restore persisted search term:
     this.searchTerm =

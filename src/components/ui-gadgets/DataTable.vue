@@ -576,6 +576,7 @@ export default {
       searchTerm: null,
       showFilterPanel: false,
       filterParams: {},
+      isRestoring: false,
 
       // Columns settings:
       visibleColumns: [],
@@ -703,6 +704,7 @@ export default {
 
     filterParams: {
       handler(v) {
+        if (this.isRestoring) return;
         this.filterHandler(v, "filters");
       },
       deep: true,
@@ -868,7 +870,7 @@ export default {
     },
 
     activeFiltersCount() {
-      const filters = JSON.parse(JSON.stringify(this.filterParams))
+      const filters = JSON.parse(JSON.stringify(this.filterParams));
       return Object.values(filters).filter(
         (v) => v !== null && v !== undefined && v !== "",
       ).length;
@@ -958,10 +960,10 @@ export default {
     // Sort and Filter:
     /////////////////////
     filterHandler(filtersObject, name) {
-      console.log(
-        name,
-        localStorage.getItem(`Datatable.${this.sluggedName}.${name}`),
-      );
+      // console.log(
+      //   name,
+      //   localStorage.getItem(`Datatable.${this.sluggedName}.${name}`),
+      // );
       // Save filters state:
       localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`);
 
@@ -1034,10 +1036,9 @@ export default {
         if (value == null) continue;
 
         if (filterConfig?.type == "text") filters[k] = `$lkof|${value}`;
-        else if (
-          filterConfig?.type == "daterangepicker" ||
-          filterConfig?.type == "datetimerange"
-        )
+        else if (filterConfig?.type == "daterangepicker")
+          filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`;
+        else if (filterConfig?.type == "datetimerange")
           filters[k] = `$btwn|${value.from}|${value.to}`;
         else filters[k] = value;
       }
@@ -1515,8 +1516,15 @@ export default {
     },
   },
 
+  created() {
+    // Block filterParams watcher while restoring persisted filters.
+    // InputField children emit update:model-value with their Default value
+    // during their own mounted(), which runs BEFORE this component's mounted().
+    // Without this flag those emissions would wipe out the persisted filters.
+    this.isRestoring = true;
+  },
+
   async mounted() {
-    console.log("MOUNTED START");
     // Set columns:
     this.columns = [...this.Columns];
     this.visibleColumns =
@@ -1539,12 +1547,15 @@ export default {
     var persistedFilters = localStorage.getItem(
       `Datatable.${this.sluggedName}.filters`,
     );
-    console.log("persistedFilters", persistedFilters);
-
     if (!!persistedFilters) {
       this.showFilterPanel = true;
-      setTimeout(() => (this.filterParams = JSON.parse(persistedFilters)), 100);
+      setTimeout(() => {
+        this.filterParams = JSON.parse(persistedFilters);
+        this.isRestoring = false;
+      }, 100);
       loadFirstData = false;
+    } else {
+      this.isRestoring = false;
     }
 
     // Set persisted search term:
