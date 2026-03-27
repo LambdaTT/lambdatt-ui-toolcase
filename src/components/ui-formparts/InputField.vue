@@ -185,6 +185,8 @@
       :readonly="readonly"
       v-model="value"
       :Options="Options"
+      :OptionsURL="OptionsURL"
+      :OptionMap="OptionMap"
       :Label="Label"
       :Icon="Icon"
       :Error="Error"
@@ -463,7 +465,12 @@ export default {
     withSeconds: Boolean,
 
     // Select
-    Options: Array,
+    Options: {
+      type: Array,
+      default: () => []
+    },
+    OptionsURL: String,
+    OptionMap: Object,
     Multiple: Boolean,
     UseChips: Boolean,
     StackLabel: Boolean,
