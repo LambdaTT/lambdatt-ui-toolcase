@@ -189,13 +189,13 @@ export default {
       default: () => {},
     },
     /**
-     * Additional field or array of fields to search on, beyond those defined
-     * in Filters. If Filters is empty and SearchField is set, the search input
-     * is still shown using these fields.
+     * Explicit list of fields used by the "Pesquisar na lista" input.
+     * The search box is shown ONLY when this prop is non-empty.
+     * Fields are no longer inferred from Filters.
      */
-    SearchField: {
-      type: [String, Array],
-      default: null,
+    SearchFields: {
+      type: Array,
+      default: () => [],
     },
     /**
      * Optional name for this list instance, used to persist filters
@@ -251,26 +251,7 @@ export default {
     },
 
     searchableFields() {
-      // Start with fields from Filters (that have a field and are searchable)
-      const fromFilters = this.availableFilters
-        .filter((f) => {
-          const hasField = f.field && f.field !== "";
-          const isSearchable = f.searchable !== false;
-          const isNotFiltered =
-            !(f.field in this.filterParams) || !this.filterParams[f.field];
-          return hasField && isSearchable && isNotFiltered;
-        })
-        .map((f) => f.field);
-
-      // Append any extra SearchField fields
-      const extra = !this.SearchField
-        ? []
-        : Array.isArray(this.SearchField)
-        ? this.SearchField
-        : [this.SearchField];
-
-      // Merge, dedup
-      return [...new Set([...fromFilters, ...extra])];
+      return this.SearchFields;
     },
 
     activeFiltersCount() {
