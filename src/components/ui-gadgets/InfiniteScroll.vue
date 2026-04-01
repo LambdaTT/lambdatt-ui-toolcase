@@ -229,6 +229,7 @@ export default {
       hasMoreData: true,
       startLoad: false,
       isLoading: false,
+      pendingReload: false,
       reloadCount: 0,
 
       // Data:
@@ -422,8 +423,15 @@ export default {
     },
 
     triggerReload() {
-      if (!this.DataURL || this.isLoading) return;
+      if (!this.DataURL) return;
 
+      // If a load is in progress, queue the reload so it runs after loading finishes:
+      if (this.isLoading) {
+        this.pendingReload = true;
+        return;
+      }
+
+      this.pendingReload = false;
       this.page = 1;
       this.hasMoreData = true;
       this.data = [];
@@ -483,6 +491,8 @@ export default {
       } finally {
         this.isLoading = false;
         this.startLoad = false;
+        // Drain any reload that was queued while we were loading:
+        if (this.pendingReload) this.triggerReload();
       }
     },
   },

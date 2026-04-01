@@ -15,7 +15,7 @@ export default {
     return this;
   },
 
-  get: function (url, params) {
+  get: function (url, params, signal) {
     url = `${isExternal ? "" : process.env.API}${url}`;
 
     var _params = "";
@@ -27,6 +27,8 @@ export default {
     var reqConf = {
       headers: { ...headers },
     };
+
+    if (signal) reqConf.signal = signal;
 
     headers = {};
 
