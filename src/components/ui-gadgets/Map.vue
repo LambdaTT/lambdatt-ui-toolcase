@@ -85,7 +85,7 @@ export default {
         ", " +
         address.ds_city +
         "/" +
-        address.do_uf +
+        address.do_state +
         " - CEP: " +
         address.ds_zipcode;
 
@@ -170,7 +170,7 @@ export default {
         !!val.ds_number &&
         !!val.ds_neighborhood &&
         !!val.ds_city &&
-        !!val.do_uf
+        !!val.do_state
       ) {
         this.updMapAddress(true);
       } else this.mapState = "empty";

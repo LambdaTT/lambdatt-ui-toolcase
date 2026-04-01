@@ -107,10 +107,10 @@
           :readonly="formReadonly"
           Label="UF*"
           Icon="fas fa-map-marker-alt"
-          v-model="input.do_uf"
+          v-model="input.do_state"
           :Options="brazilianStates"
-          :Error="inputError.do_uf"
-          @focus="inputError.do_uf = false"
+          :Error="inputError.do_state"
+          @focus="inputError.do_state = false"
         ></InputField>
       </div>
       <div class="col-12" v-if="!hideMap">
@@ -150,7 +150,7 @@ export default {
         ds_complement: null,
         ds_neighborhood: null,
         ds_city: null,
-        do_uf: null,
+        do_state: null,
       },
       inputError: {
         ds_zipcode: false,
@@ -158,7 +158,7 @@ export default {
         ds_number: false,
         ds_neighborhood: false,
         ds_city: false,
-        do_uf: false,
+        do_state: false,
       },
       formReadonly: !!this.readonly,
       zipcodeWarning: null,
@@ -215,12 +215,12 @@ export default {
       this.input.ds_street = address.logradouro;
       this.input.ds_neighborhood = address.bairro;
       this.input.ds_city = address.localidade;
-      this.input.do_uf = address.uf;
+      this.input.do_state = address.uf;
       // Updating Errors
       this.inputError.ds_street = false;
       this.inputError.ds_neighborhood = false;
       this.inputError.ds_city = false;
-      this.inputError.do_uf = false;
+      this.inputError.do_state = false;
     },
   },
 
