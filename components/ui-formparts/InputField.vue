@@ -71,7 +71,7 @@
     <!-- Input select: -->
     <Select2 v-if="type == 'select'" :BgColor="BgColor" :clearable="clearable" :dense="dense" :disable="disable"
       :readonly="readonly" v-model="value" :Options="Options" :OptionsURL="OptionsURL" :OptionMap="OptionMap" :Label="Label" :Icon="Icon" :Error="Error"
-      :Multiple="Multiple" :UseChips="UseChips" :StackLabel="StackLabel" :Default="Default"
+      :Multiple="Multiple" :UseChips="UseChips" :StackLabel="StackLabel" :Default="Default" :SortOptions="SortOptions"
       @focus="() => $emit('focus')" @update:model-value="updModelValue">
     </Select2>
 
@@ -184,6 +184,10 @@ export default {
     Options: { 
       type: Array,
       default: () => [] 
+    },
+    SortOptions: {
+      type: Boolean,
+      default: true
     },
     OptionsURL: String,
     OptionMap: Object,

@@ -1,6 +1,5 @@
 <template>
   <div>
-
     <!-- No errors -->
     <q-select v-if="error === null" filled square hide-bottom-space hide-dropdown-icon use-input fill-input
       :loading="loading" behavior="menu" :bg-color="`bg-${BgColor ? BgColor : 'white'}`" option-disable="inactive"
@@ -51,6 +50,10 @@ export default {
     Options: {
       type: Array,
       default: () => []
+    },
+    SortOptions: {
+      type: Boolean,
+      default: true
     },
     OptionsURL: String,
     OptionMap: Object,
@@ -111,9 +114,11 @@ export default {
 
     Options(v) {
       const opts = v.length ? [...v] : (this.remoteOptions ?? []);
-      this.filteredOptions = opts.sort(
-        (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
-      );
+
+      this.filteredOptions = this.SortOptions
+        ? opts.sort((a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
+        : opts
+
       this.error = null; // Limpa erros anteriores ao atualizar opções
       this.setValue(this.modelValue)
     },
@@ -129,7 +134,11 @@ export default {
     },
 
     definedOpts() {
-      return this.Options.length ? this.Options : (this.remoteOptions ?? [])
+      const options = this.Options.length ? this.Options : (this.remoteOptions ?? [])
+
+      return this.SortOptions
+        ? options.sort((a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
+        : options
     }
   },
 
@@ -158,9 +167,7 @@ export default {
     filterFn(val, update) {
       update(() => {
         const opts = this.definedOpts
-          .sort(
-            (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
-          );
+
         if (!(val)) {
           this.filteredOptions = opts
           return
@@ -194,27 +201,29 @@ export default {
     },
 
     async getRemoteOptions() {
-      this.loading = true
-      if (this.OptionsURL && this.OptionMap) {
-        try {
-          const { data } = await this.$http.get(this.OptionsURL)
-          this.remoteOptions = data.map(item => ({
-            label: item[this.OptionMap.label],
-            value: item[this.OptionMap.value],
-          }));
-          const opts = this.definedOpts
-            .sort(
-              (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
-            );
-          this.filteredOptions = opts;
-          this.error = null; // Limpa erros anteriores ao atualizar opções
-        } catch (e) {
-          this.error = this.errorDict[e.status];
-          console.error('Erro ao buscar opções remotas:', e)
-        }
+      this.loading = true;
+
+      if (!this.OptionsURL || !this.OptionMap) {
+        this.loading = false;
+        return;
       }
 
-      this.loading = false;
+      try {
+        const { data } = await this.$http.get(this.OptionsURL);
+
+        this.remoteOptions = data.map(item => ({
+          label: item[this.OptionMap.label],
+          value: item[this.OptionMap.value],
+        }));
+
+        this.filteredOptions = this.definedOpts;
+        this.error = null; // Limpa erros anteriores ao atualizar opções
+      } catch (e) {
+        this.error = this.errorDict[e.status];
+        console.error('Erro ao buscar opções remotas:', e)
+      } finally {
+        this.loading = false;
+      }
     }
   },
 
