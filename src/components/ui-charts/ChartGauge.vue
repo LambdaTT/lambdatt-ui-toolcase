@@ -10,7 +10,8 @@
 
 <script>
 // Libs:
-import Chart from "chart.js";
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 export default {
   name: "ui-charts-gauge",
