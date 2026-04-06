@@ -114,7 +114,7 @@ export default {
   // Aux Functions:
   //////////////////
   cloneObj: function (obj) {
-    return { ...obj }
+    return JSON.parse(JSON.stringify(obj));
   },
 
   sleep: function (ms) {
