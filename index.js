@@ -11,7 +11,6 @@ function mapServices() {
   const servicesMap = {};
   for (const path in services) {
     const mod = services[path];
-    // Extract the service name from the file path
     const parts = path.split("/");
     const serviceName = parts.pop().replace(/\.\w+$/, "");
     const serviceUri = [...parts.slice(3), serviceName].join(".");
@@ -22,12 +21,13 @@ function mapServices() {
 }
 
 function mapComponents() {
-  const components = import.meta.glob("./src/components/**/*.vue", { eager: true });
+  const components = import.meta.glob("./src/components/**/*.vue", {
+    eager: true,
+  });
 
   const componentsMap = {};
   for (const path in components) {
     const mod = components[path];
-    // Extract the component name from the file path
     const componentName = path
       .split("/")
       .pop()
@@ -38,7 +38,9 @@ function mapComponents() {
 }
 
 function mapIcons() {
-  const icons = import.meta.glob("./src/components/ui-icons/**/*.vue", { eager: true });
+  const icons = import.meta.glob("./src/components/ui-icons/**/*.vue", {
+    eager: true,
+  });
 
   const iconsList = [];
   const iconsMap = {};
@@ -63,7 +65,6 @@ function mapPages() {
     const configs = mod.__PAGE_CONFIG ?? {};
     const extras = configs.extras ?? {};
     const params = configs.params ?? [];
-    // Extract the page name from the file path
     const parts = path.split("/");
     const pageName = parts.pop().replace(/\.\w+$/, "");
     const pageUrl = `${NAME}/${[...parts.slice(3), pageName.toLowerCase()].join(
@@ -73,11 +74,7 @@ function mapPages() {
       configs.route ??
       `${pageUrl}${params.length > 0 ? `/:${params.join("/:")}` : ""}`;
 
-    pagesMap[pageUrl] = {
-      path: pageRoute,
-      component: mod.default,
-      extras,
-    };
+    pagesMap[pageUrl] = { path: pageRoute, component: mod.default, extras };
   }
   return pagesMap;
 }
@@ -88,7 +85,6 @@ function mapLayouts() {
   const layoutsMap = {};
   for (const path in layouts) {
     const mod = layouts[path];
-    // Extract the layout name from the file path
     const layoutName = path
       .split("/")
       .pop()
