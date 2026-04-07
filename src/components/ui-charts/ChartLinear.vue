@@ -49,8 +49,7 @@
 
 <script>
 // Libs:
-import { Chart, registerables } from "chart.js"; // v4
-Chart.register(...registerables);
+import Chart from "chart.js";
 
 export default {
   name: "ui-charts-linear",

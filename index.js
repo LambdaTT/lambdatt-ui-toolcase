@@ -6,7 +6,7 @@ import ENDPOINTS from "./src/ENDPOINTS.js";
 export const NAME = "toolcase";
 
 function mapServices() {
-  const services = import.meta.glob("./src/services/**/*.js", { eager: true });
+  const services = import.meta.globEager("./src/services/**/*.js");
 
   const servicesMap = {};
   for (const path in services) {
@@ -22,7 +22,7 @@ function mapServices() {
 }
 
 function mapComponents() {
-  const components = import.meta.glob("./src/components/**/*.vue", { eager: true });
+  const components = import.meta.globEager("./src/components/**/*.vue");
 
   const componentsMap = {};
   for (const path in components) {
@@ -38,7 +38,7 @@ function mapComponents() {
 }
 
 function mapIcons() {
-  const icons = import.meta.glob("./src/components/ui-icons/**/*.vue", { eager: true });
+  const icons = import.meta.globEager("./src/components/ui-icons/**/*.vue");
 
   const iconsList = [];
   for (const path in icons) {
@@ -52,7 +52,7 @@ function mapIcons() {
 }
 
 function mapPages() {
-  const pages = import.meta.glob("./src/pages/**/*.vue", { eager: true });
+  const pages = import.meta.globEager("./src/pages/**/*.vue");
 
   const pagesMap = {};
   for (const path in pages) {
@@ -80,7 +80,7 @@ function mapPages() {
 }
 
 function mapLayouts() {
-  const layouts = import.meta.glob("./src/layouts/**/*.vue", { eager: true });
+  const layouts = import.meta.globEager("./src/layouts/**/*.vue");
 
   const layoutsMap = {};
   for (const path in layouts) {
