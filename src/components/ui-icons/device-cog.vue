@@ -1,7 +1,12 @@
 <template>
   <span
     class="fa-stack"
-    style="vertical-align: middle; position: relative; display: inline-block"
+    style="
+      vertical-align: middle;
+      position: relative;
+      display: inline-block;
+      margin-left: -10px;
+    "
   >
     <i class="fa-solid fa-mobile-screen-button fa-stack-2x"></i>
     <i
