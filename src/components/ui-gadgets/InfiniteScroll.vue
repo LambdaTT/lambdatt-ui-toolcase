@@ -15,45 +15,23 @@
         >
           <q-tooltip
             >Filtros da lista
-            {{
-              activeFiltersCount > 0 ? `(${activeFiltersCount})` : ""
-            }}</q-tooltip
+            {{ activeFiltersCount > 0 ? `(${activeFiltersCount})` : '' }}</q-tooltip
           >
           <!-- Active filter badge -->
-          <q-badge
-            v-if="activeFiltersCount > 0"
-            color="red"
-            floating
-            rounded
-            transparent
-          >
+          <q-badge v-if="activeFiltersCount > 0" color="red" floating rounded transparent>
             {{ activeFiltersCount }}
           </q-badge>
         </q-btn>
 
         <!-- Reload -->
-        <q-btn
-          flat
-          round
-          color="primary"
-          size="sm"
-          icon="fas fa-sync"
-          @click="triggerReload()"
-        >
+        <q-btn flat round color="primary" size="sm" icon="fas fa-sync" @click="triggerReload()">
           <q-tooltip>Atualizar lista</q-tooltip>
         </q-btn>
       </div>
 
       <!-- Search Field -->
       <div class="col-12 col-md-4" v-if="searchableFields.length > 0">
-        <q-input
-          dense
-          square
-          filled
-          clearable
-          label="Pesquisar na lista"
-          v-model="searchTerm"
-        >
+        <q-input dense square filled clearable label="Pesquisar na lista" v-model="searchTerm">
           <template v-slot:append>
             <q-icon size="xs" name="fas fa-search" color="grey-8" />
           </template>
@@ -65,11 +43,7 @@
 
     <!-- Filters Panel -->
     <div v-if="availableFilters.length > 0">
-      <q-expansion-item
-        hide-expand-icon
-        v-model="showFilterPanel"
-        header-style="display:none;"
-      >
+      <q-expansion-item hide-expand-icon v-model="showFilterPanel" header-style="display:none;">
         <q-toolbar class="bg-grey-3">
           <q-toolbar-title>Filtros da Lista</q-toolbar-title>
           <q-btn
@@ -85,11 +59,7 @@
           </q-btn>
         </q-toolbar>
         <div class="row q-py-sm">
-          <div
-            v-for="f in availableFilters"
-            :key="f.field"
-            class="col-12 col-md-4"
-          >
+          <div v-for="f in availableFilters" :key="f.field" class="col-12 col-md-4">
             <InputField
               clearable
               dense
@@ -98,11 +68,7 @@
               :Label="`Filtrar por ${f.label}`"
               :Options="f.options ?? []"
               v-model="filterParams[f.field]"
-              :Default="
-                f.default !== null && typeof f.default != 'undefined'
-                  ? f.default
-                  : null
-              "
+              :Default="f.default !== null && typeof f.default != 'undefined' ? f.default : null"
             >
             </InputField>
           </div>
@@ -112,11 +78,7 @@
     </div>
 
     <!-- Scroll Container -->
-    <div
-      ref="scrollContainer"
-      class="full-width"
-      style="height: 400px; overflow: auto"
-    >
+    <div ref="scrollContainer" class="full-width" :style="`height: ${Height}; overflow: auto`">
       <!-- States -->
       <div v-show="state == 'empty'" class="q-pa-lg text-center text-grey-8">
         <div><q-icon size="lg" name="fas fa-folder-open"></q-icon> *</div>
@@ -160,7 +122,7 @@
 
 <script>
 export default {
-  name: "ui-gadgets-infinite-scroll",
+  name: 'ui-gadgets-infinite-scroll',
 
   props: {
     DataURL: {
@@ -208,6 +170,10 @@ export default {
     BeforeLoad: Function,
     AfterLoad: Function,
     modelValue: {},
+    Height: {
+      type: String,
+      default: () => '400px',
+    },
   },
 
   data() {
@@ -235,30 +201,30 @@ export default {
       // Data:
       data: [],
       errData: null,
-    };
+    }
   },
 
   computed: {
     sluggedName() {
-      if (!this.Name) return null;
+      if (!this.Name) return null
       return this.Name.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-");
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
     },
 
     availableFilters() {
-      return this.Filters;
+      return this.Filters
     },
 
     searchableFields() {
-      return this.SearchFields;
+      return this.SearchFields
     },
 
     activeFiltersCount() {
       return Object.values(this.filterParams).filter(
-        (v) => v !== null && v !== undefined && v !== "",
-      ).length;
+        (v) => v !== null && v !== undefined && v !== '',
+      ).length
     },
 
     params() {
@@ -269,77 +235,75 @@ export default {
         $page: this.page,
         $limit: this.Limit,
         $limit_multiplier: 1,
-      };
+      }
 
       // Filter out empty/null/undefined values
       Object.keys(p).forEach((key) => {
-        if (p[key] === null || p[key] === undefined || p[key] === "") {
-          delete p[key];
+        if (p[key] === null || p[key] === undefined || p[key] === '') {
+          delete p[key]
         }
-      });
+      })
 
-      return p;
+      return p
     },
 
     filterValues() {
-      const filters = {};
+      const filters = {}
       for (let k in this.filterParams) {
-        const filterConfig = this.availableFilters.find((x) => x.field == k);
+        const filterConfig = this.availableFilters.find((x) => x.field == k)
         let value =
-          !!filterConfig?.modifierFn &&
-          typeof filterConfig?.modifierFn === "function"
+          !!filterConfig?.modifierFn && typeof filterConfig?.modifierFn === 'function'
             ? filterConfig.modifierFn(this.filterParams[k])
-            : this.filterParams[k];
+            : this.filterParams[k]
 
-        if (value == null || value === "") continue;
+        if (value == null || value === '') continue
 
-        if (filterConfig?.type == "text") filters[k] = `$lkof|${value}`;
-        else if (filterConfig?.type == "daterangepicker")
-          filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`;
-        else if (filterConfig?.type == "datetimerange")
-          filters[k] = `$btwn|${value.from}|${value.to}`;
-        else filters[k] = value;
+        if (filterConfig?.type == 'text') filters[k] = `$lkof|${value}`
+        else if (filterConfig?.type == 'daterangepicker')
+          filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`
+        else if (filterConfig?.type == 'datetimerange')
+          filters[k] = `$btwn|${value.from}|${value.to}`
+        else filters[k] = value
       }
-      return filters;
+      return filters
     },
 
     searchParams() {
-      const search = {};
-      if (!this.searchTerm || !this.searchableFields.length) return search;
+      const search = {}
+      if (!this.searchTerm || !this.searchableFields.length) return search
 
-      const fields = this.searchableFields;
+      const fields = this.searchableFields
 
       fields.forEach((f, i) => {
         // First field:
         if (i == 0) {
           if (i == fields.length - 1) {
-            search[f] =
-              "$startFilterGroup$lkof$endFilterGroup|" + this.searchTerm;
+            search[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm
           } else {
-            search[f] = "$startFilterGroup$lkof|" + this.searchTerm;
+            search[f] = '$startFilterGroup$lkof|' + this.searchTerm
           }
         }
         // All fields in the middle:
         else if (i < fields.length - 1) {
-          search[f] = "$or$lkof|" + this.searchTerm;
+          search[f] = '$or$lkof|' + this.searchTerm
         }
         // Last field:
         else {
-          search[f] = "$or$lkof$endFilterGroup|" + this.searchTerm;
+          search[f] = '$or$lkof$endFilterGroup|' + this.searchTerm
         }
-      });
+      })
 
-      return search;
+      return search
     },
 
     state() {
-      if (!!this.errData) return "error";
+      if (this.errData) return 'error'
 
-      if (this.isLoading && this.data.length === 0) return "ready"; // Show loader, not empty
+      if (this.isLoading && this.data.length === 0) return 'ready' // Show loader, not empty
 
-      if (!this.startLoad && this.data.length < 1) return "empty";
+      if (!this.startLoad && this.data.length < 1) return 'empty'
 
-      return "ready";
+      return 'ready'
     },
 
     output() {
@@ -348,151 +312,128 @@ export default {
         params: this.params,
         state: this.state,
         reload: this.triggerReload,
-      };
+      }
     },
   },
 
   watch: {
     ExtraFilters: {
       handler() {
-        this.triggerReload();
+        this.triggerReload()
       },
       deep: true,
     },
 
     searchTerm(val) {
-      clearTimeout(this.searchTimeout);
+      clearTimeout(this.searchTimeout)
       this.searchTimeout = setTimeout(() => {
         if (this.sluggedName) {
-          if (val)
-            localStorage.setItem(
-              `InfiniteScroll.${this.sluggedName}.searchTerm`,
-              val,
-            );
-          else
-            localStorage.removeItem(
-              `InfiniteScroll.${this.sluggedName}.searchTerm`,
-            );
+          if (val) localStorage.setItem(`InfiniteScroll.${this.sluggedName}.searchTerm`, val)
+          else localStorage.removeItem(`InfiniteScroll.${this.sluggedName}.searchTerm`)
         }
-        this.triggerReload();
-      }, 400);
+        this.triggerReload()
+      }, 400)
     },
 
     filterParams: {
       handler(v) {
-        console.log("filterParams", this.isRestoring);
+        console.log('filterParams', this.isRestoring)
 
-        if (this.isRestoring) return;
-        this.persistFilters(v);
-        this.triggerReload();
+        if (this.isRestoring) return
+        this.persistFilters(v)
+        this.triggerReload()
       },
       deep: true,
     },
 
     state() {
-      this.emit();
+      this.emit()
     },
 
     data: {
       handler() {
-        this.emit();
+        this.emit()
       },
     },
   },
 
   methods: {
     emit() {
-      this.$emit("update:model-value", this.output);
+      this.$emit('update:model-value', this.output)
     },
 
     persistFilters(filtersObject) {
-      if (!this.sluggedName || this.isUnmounting) return;
-      const key = `InfiniteScroll.${this.sluggedName}.filters`;
-      const cleaned = {};
+      if (!this.sluggedName || this.isUnmounting) return
+      const key = `InfiniteScroll.${this.sluggedName}.filters`
+      const cleaned = {}
       for (let k in filtersObject) {
-        if (
-          filtersObject[k] !== null &&
-          filtersObject[k] !== undefined &&
-          filtersObject[k] !== ""
-        )
-          cleaned[k] = filtersObject[k];
+        if (filtersObject[k] !== null && filtersObject[k] !== undefined && filtersObject[k] !== '')
+          cleaned[k] = filtersObject[k]
       }
-      if (Object.keys(cleaned).length > 0)
-        localStorage.setItem(key, JSON.stringify(cleaned));
-      else localStorage.removeItem(key);
+      if (Object.keys(cleaned).length > 0) localStorage.setItem(key, JSON.stringify(cleaned))
+      else localStorage.removeItem(key)
     },
 
     triggerReload() {
-      if (!this.DataURL) return;
+      if (!this.DataURL) return
 
       // If a load is in progress, queue the reload so it runs after loading finishes:
       if (this.isLoading) {
-        this.pendingReload = true;
-        return;
+        this.pendingReload = true
+        return
       }
 
-      this.pendingReload = false;
-      this.page = 1;
-      this.hasMoreData = true;
-      this.data = [];
-      this.errData = null;
-      this.startLoad = true;
-      this.reloadCount++;
+      this.pendingReload = false
+      this.page = 1
+      this.hasMoreData = true
+      this.data = []
+      this.errData = null
+      this.startLoad = true
+      this.reloadCount++
       if (this.$refs.infiniteScrollInternal) {
-        this.$refs.infiniteScrollInternal.poll();
-        this.$refs.infiniteScrollInternal.resume();
+        this.$refs.infiniteScrollInternal.poll()
+        this.$refs.infiniteScrollInternal.resume()
       }
     },
 
     async checkForMoreData() {
-      const params = this.params;
-      params.$page++;
-      const response = await this.$getService("toolcase/http").get(
-        this.DataURL,
-        params,
-      );
-      return !!response.data?.length;
+      const params = this.params
+      params.$page++
+      const response = await this.$getService('toolcase/http').get(this.DataURL, params)
+      return !!response.data?.length
     },
 
     async loadData(idx, done) {
-      if (!this.DataURL || this.isLoading) return;
+      if (!this.DataURL || this.isLoading) return
 
-      this.hasMoreData = false;
-      this.isLoading = true;
+      this.hasMoreData = false
+      this.isLoading = true
 
       try {
-        let params = this.params;
-        if (!!this.BeforeLoad) params = this.BeforeLoad(this.params);
+        let params = this.params
+        if (this.BeforeLoad) params = this.BeforeLoad(this.params)
 
-        const response = await this.$getService("toolcase/http").get(
-          this.DataURL,
-          params,
-        );
-        var responseData = JSON.parse(JSON.stringify(response.data ?? []));
-        const cloneData = responseData;
+        const response = await this.$getService('toolcase/http').get(this.DataURL, params)
+        var responseData = JSON.parse(JSON.stringify(response.data ?? []))
+        const cloneData = responseData
 
-        if (!!this.AfterLoad)
-          responseData = this.AfterLoad(cloneData, response) ?? responseData;
+        if (this.AfterLoad) responseData = this.AfterLoad(cloneData, response) ?? responseData
 
-        if (responseData.length)
-          this.data = [...this.data, ...responseData].filter(Boolean);
+        if (responseData.length) this.data = [...this.data, ...responseData].filter(Boolean)
 
-        this.hasMoreData = await this.checkForMoreData();
+        this.hasMoreData = await this.checkForMoreData()
 
-        this.page++;
-        if (!!done) done();
+        this.page++
+        if (done) done()
       } catch (error) {
-        this.page = 1;
-        this.errData = error;
-        console.error(
-          "There was a problem on the attempt to retrieve infinite scroll data.",
-          error,
-        );
+        this.page = 1
+        this.errData = error
+        console.error('There was a problem on the attempt to retrieve infinite scroll data.', error)
       } finally {
-        this.isLoading = false;
-        this.startLoad = false;
+        this.isLoading = false
+        this.startLoad = false
         // Drain any reload that was queued while we were loading:
-        if (this.pendingReload) this.triggerReload();
+        if (this.pendingReload) this.triggerReload()
       }
     },
   },
@@ -502,32 +443,28 @@ export default {
     // InputField children emit update:model-value with their Default value
     // during their own mounted(), which runs BEFORE this component's mounted().
     // Without this flag those emissions would wipe out the persisted filters.
-    this.isRestoring = true;
+    this.isRestoring = true
   },
 
   mounted() {
-    if (!this.sluggedName) return;
+    if (!this.sluggedName) return
 
     // Restore persisted filters:
-    const persistedFilters = localStorage.getItem(
-      `InfiniteScroll.${this.sluggedName}.filters`,
-    );
+    const persistedFilters = localStorage.getItem(`InfiniteScroll.${this.sluggedName}.filters`)
     if (persistedFilters) {
-      this.showFilterPanel = true;
+      this.showFilterPanel = true
       setTimeout(() => {
-        this.filterParams = JSON.parse(persistedFilters);
-        this.isRestoring = false;
-      }, 100);
-    } else this.isRestoring = false;
+        this.filterParams = JSON.parse(persistedFilters)
+        this.isRestoring = false
+      }, 100)
+    } else this.isRestoring = false
 
     // Restore persisted search term:
-    this.searchTerm =
-      localStorage.getItem(`InfiniteScroll.${this.sluggedName}.searchTerm`) ??
-      null;
+    this.searchTerm = localStorage.getItem(`InfiniteScroll.${this.sluggedName}.searchTerm`) ?? null
   },
 
   beforeUnmount() {
-    this.isUnmounting = true;
+    this.isUnmounting = true
   },
-};
+}
 </script>
