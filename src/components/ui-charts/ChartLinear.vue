@@ -48,8 +48,9 @@
 </template>
 
 <script>
-// Libs:
-import Chart from "chart.js";
+// Libs (chart.js v4 — ESM com tipos embutidos):
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 export default {
   name: "ui-charts-linear",
@@ -139,7 +140,6 @@ export default {
       },
     },
 
-    // Se os dados mudarem (via loadData), atualizamos o gráfico
     data: {
       deep: true,
       handler() {
@@ -147,7 +147,6 @@ export default {
       },
     },
 
-    // Se Datasets (estrutura) mudar, reconciliamos com o gráfico já criado
     Datasets: {
       deep: true,
       handler() {
@@ -155,21 +154,13 @@ export default {
       },
     },
 
-    // Se tipo de gráfico mudar, é mais seguro recriar a instância
-    // MAS o pedido foi "update ao invés de recreate".
-    // Aqui, faremos um fallback que tenta migrar o type no runtime (Chart.js 2.x suporta).
+    // v4 não suporta troca de tipo em runtime — recria o chart
     ChartType() {
-      if (this.chartElement) {
-        try {
-          this.chartElement.config.type = this.ChartType;
-          this.chartElement.update(0);
-        } catch (e) {
-          // Se der ruim, recriar seria a saída,
-          // mas mantendo a exigência do update, deixamos o tipo intacto.
-          // (Você pode optar por emitir um warning)
-          // console.warn('Could not switch chart type at runtime.', e)
-        }
-      }
+      this._destroyChart();
+      this.$nextTick(() => {
+        this.ensureChartInitialized();
+        this.updateChart();
+      });
     },
   },
 
@@ -223,78 +214,76 @@ export default {
         options: baseOptions,
       });
 
-      // Inicializa índice por field
       this.dsIndexByField = Object.create(null);
       this.reconcileDatasetsStructureAndUpdate(true);
     },
 
     buildBaseOptions() {
-      // Tooltips com callback por dataset (se houver)
-      const tooltipCallbacks = {
-        label: (tooltipItem, data) => {
-          const index = tooltipItem.datasetIndex;
-          const ds = this.Datasets[index];
-          if (ds && typeof ds.formatTooltip === "function") {
-            return ds.formatTooltip(
-              data.datasets[index].label,
-              tooltipItem.yLabel,
-            );
-          }
-          return data.datasets[index].label + ": " + tooltipItem.yLabel;
-        },
-      };
-
+      // v4: tooltips agora em plugins.tooltip; callback recebe (context)
       return {
         responsive: true,
         maintainAspectRatio: false,
-        legend: { display: !this.Configs.hideLegend },
-        tooltips: { mode: "label", callbacks: tooltipCallbacks },
-        animation: this.UseAnimation ? { duration: 400 } : { duration: 0 },
-        responsiveAnimationDuration: this.UseAnimation ? 200 : 0,
-        scales: {
-          xAxes: [
-            {
-              ticks: {
-                autoSkip: false,
-                callback: function (tick) {
-                  const characterLimit = 12;
-                  if ((tick?.length ?? 0) >= characterLimit) {
-                    tick =
-                      tick
-                        .slice(0, tick.length)
-                        .substring(0, characterLimit - 1)
-                        .trim() + "...";
-                  }
-                  return tick?.toLowerCase();
-                },
+        animation: this.UseAnimation ? { duration: 400 } : false,
+        plugins: {
+          legend: { display: !this.Configs.hideLegend },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            callbacks: {
+              label: (context) => {
+                const dsIndex = context.datasetIndex;
+                const ds = this.Datasets[dsIndex];
+                const value = context.parsed.y;
+                const label = context.dataset.label || "";
+                if (ds && typeof ds.formatTooltip === "function") {
+                  return ds.formatTooltip(label, value);
+                }
+                return `${label}: ${value}`;
               },
             },
-          ],
-          yAxes: [{ ticks: { beginAtZero: true } }],
+          },
+        },
+        // v4: scales são objetos com IDs diretos, não arrays
+        scales: {
+          x: {
+            ticks: {
+              autoSkip: false,
+              callback: function (val, index) {
+                const tick = this.getLabelForValue(val);
+                const characterLimit = 12;
+                if ((tick?.length ?? 0) >= characterLimit) {
+                  return tick
+                    .substring(0, characterLimit - 1)
+                    .trim()
+                    .toLowerCase() + "...";
+                }
+                return tick?.toLowerCase();
+              },
+            },
+          },
+          y: {
+            beginAtZero: true,
+          },
         },
       };
     },
 
     makePlainDatasetFromSpec(spec) {
-      // Gere uma cor determinística ou aleatória
       const color = this.$getService("toolcase/utils")?.randomHexColor
         ? this.$getService("toolcase/utils").randomHexColor()
         : "#3489db";
 
-      // Retorne um objeto PLANO (não reativo)
       return {
         label: spec.label,
-        data: [], // preenchido depois
+        data: [],
         fill: false,
         backgroundColor: color,
         borderColor: color,
         borderWidth: 3,
-        // não inclua o campo 'field' aqui para não poluir o objeto interno do Chart.js
       };
     },
 
     reconcileDatasetsStructureAndUpdate(firstInit = false) {
-      // Garante que chart exista
       this.ensureChartInitialized();
       if (!this.chartElement) return;
 
@@ -313,12 +302,11 @@ export default {
         }
       }
 
-      // 2) Adicionar datasets que faltam (na ordem de this.Datasets)
+      // 2) Adicionar/garantir datasets na ordem correta
       this.dsIndexByField = Object.create(null);
       for (let i = 0; i < this.Datasets.length; i++) {
         const spec = this.Datasets[i];
         if (current[i]) {
-          // Reusa a posição i e apenas garante label, cores (opcional)
           current[i].label = spec.label;
         } else {
           current.push(this.makePlainDatasetFromSpec(spec));
@@ -326,44 +314,37 @@ export default {
         this.dsIndexByField[spec.field] = i;
       }
 
-      // 3) Se foi chamado por um “primeiro init”, apenas faça um update leve
       if (firstInit) {
-        chart.update(0);
+        chart.update("none");
       } else {
-        // Atualize com a base de dados atual
         this.updateChart();
       }
     },
 
     rebuildDsIndexMapAfterRemoval(removedIndex) {
-      // Ajusta o mapa após remoção de dataset em 'removedIndex'
       const newMap = Object.create(null);
       for (const field in this.dsIndexByField) {
         const idx = this.dsIndexByField[field];
         if (idx < removedIndex) newMap[field] = idx;
         else if (idx > removedIndex) newMap[field] = idx - 1;
-        // se idx === removedIndex, some (dataset removido)
       }
       this.dsIndexByField = newMap;
     },
 
     updateChart() {
-      // Se ainda não há gráfico, inicializa
       this.ensureChartInitialized();
       const chart = this.chartElement;
       if (!chart) return;
 
-      // Caso não haja dados, limpe o gráfico
       if (!this.data || this.data.length === 0) {
         chart.data.labels = [];
         chart.data.datasets.forEach((d) => {
           d.data = [];
         });
-        chart.update(0);
+        chart.update("none");
         return;
       }
 
-      // Monta labels e valores por field
       const labels = [];
       const seriesByField = Object.create(null);
       for (const { field } of this.Datasets) {
@@ -380,57 +361,43 @@ export default {
         }
       }
 
-      // Aplica em chart.data (substituição completa, sem objetos reativos)
       chart.data.labels = labels.slice();
 
-      // Garante estrutura (ordem) sincronizada
       for (let i = 0; i < this.Datasets.length; i++) {
         const { field, label } = this.Datasets[i];
         const idx = this.dsIndexByField[field];
-        if (idx == null) continue; // em teoria não deve ocorrer, mas seja defensivo
+        if (idx == null) continue;
         const ds = chart.data.datasets[idx];
         ds.label = label;
         ds.data = (seriesByField[field] || []).slice();
       }
 
-      // Atualiza com/sem animação
-      chart.update(this.UseAnimation ? undefined : 0);
+      // v4: update sem animação usa 'none' (antes era 0)
+      chart.update(this.UseAnimation ? undefined : "none");
+    },
+
+    _destroyChart() {
+      if (this.chartElement) {
+        try {
+          this.chartElement.destroy();
+        } catch (_) {
+          // noop
+        } finally {
+          this.chartElement = null;
+          this.dsIndexByField = Object.create(null);
+        }
+      }
     },
   },
 
   mounted() {
-    // Inicializa e carrega
     this.ensureChartInitialized();
     this.loadData();
   },
 
   beforeUnmount() {
     if (this.debounce) clearTimeout(this.debounce);
-    // Destrói com segurança
-    if (this.chartElement) {
-      try {
-        if (typeof this.chartElement.stop === "function")
-          this.chartElement.stop();
-        if (
-          Chart.animationService &&
-          typeof Chart.animationService.removeChart === "function"
-        ) {
-          Chart.animationService.removeChart(this.chartElement);
-        }
-        // Remover listeners de resize (defensivo em 2.x)
-        if (
-          this.chartElement.$resize &&
-          typeof this.chartElement.$resize.unbind === "function"
-        ) {
-          this.chartElement.$resize.unbind();
-        }
-        this.chartElement.destroy();
-      } catch (e) {
-        // noop
-      } finally {
-        this.chartElement = null;
-      }
-    }
+    this._destroyChart();
   },
 };
 </script>

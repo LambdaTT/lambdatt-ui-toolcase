@@ -37,8 +37,9 @@
 </template>
 
 <script>
-// Libs:
-import Chart from "chart.js";
+// Libs (chart.js v4 — ESM com tipos embutidos):
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 export default {
   name: "ui-charts-pie",
@@ -53,7 +54,7 @@ export default {
     DataURL: { type: String, required: true },
     Filters: { type: Object, default: () => ({}) },
     /**
-     * Configs: { LabelField: 'name', ValueField: 'value', hideLegend?: boolean }
+     * Configs: { LabelField: 'name', ValueField: 'value' }
      */
     Configs: {
       type: Object,
@@ -69,7 +70,7 @@ export default {
       loading: false,
       showLoader: false,
       error: null,
-      state: "ready", // ready | loading | error
+      state: "ready",
       debounce: null,
     };
   },
@@ -77,17 +78,10 @@ export default {
   computed: {
     height() {
       const wrapper = this.$refs.canvas?.parentElement;
-      if (!wrapper) return "250px"; // fallback enquanto não renderizou
-
-      // obtém a largura real do wrapper (em px)
+      if (!wrapper) return "250px";
       const width = wrapper.offsetWidth || 300;
-
-      // calcula a altura proporcional ao tamanho da largura
-      // (ajuste o fator conforme o formato desejado)
-      const aspectRatio = 1; // 1 = quadrado; 0.75 = 4:3; 0.5 = metade da largura
-      const heightPx = width * aspectRatio;
-
-      return heightPx + "px";
+      const aspectRatio = 1;
+      return width * aspectRatio + "px";
     },
   },
 
@@ -110,16 +104,13 @@ export default {
       },
     },
 
-    // Tenta alternar entre 'pie' e 'doughnut' sem recriar
+    // v4 não suporta troca de tipo em runtime — recria o chart
     ChartType() {
-      if (this.chartElement) {
-        try {
-          this.chartElement.config.type = this.ChartType;
-          this.chartElement.update(0);
-        } catch (_) {
-          // se falhar, mantenha o tipo atual (evitamos recriar)
-        }
-      }
+      this._destroyChart();
+      this.$nextTick(() => {
+        this.ensureChartInitialized();
+        this.updateChart();
+      });
     },
   },
 
@@ -180,44 +171,46 @@ export default {
     },
 
     buildBaseOptions() {
-      const self = this;
       return {
         responsive: true,
         maintainAspectRatio: false,
-        legend: { display: this.ShowLegend },
-        tooltips: {
-          callbacks: {
-            label: function (tooltipItem, data) {
-              const ds = data.datasets[tooltipItem.datasetIndex];
-              const value = Number(ds.data[tooltipItem.index]) || 0;
-              const total = ds.data.reduce((a, b) => a + Number(b || 0), 0);
-              const pct =
-                total > 0 ? ((value / total) * 100).toFixed(2) + "%" : "0%";
-              const labelText = data.labels[tooltipItem.index] || "";
-              // Se ShowPercentage estiver ativo e o rótulo já tiver %, não duplica:
-              if (self.ShowPercentage) {
-                return `${labelText}: ${value} (${pct})`;
-              }
-              return `${labelText}: ${value}`;
+        animation: { duration: 400 },
+        plugins: {
+          legend: { display: this.ShowLegend },
+          // v4: callbacks de tooltip recebem (context)
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const value = Number(context.parsed) || 0;
+                const dataset = context.dataset;
+                const total = dataset.data.reduce(
+                  (a, b) => a + Number(b || 0),
+                  0,
+                );
+                const pct =
+                  total > 0
+                    ? ((value / total) * 100).toFixed(2) + "%"
+                    : "0%";
+                const labelText = context.label || "";
+                if (this.ShowPercentage) {
+                  return `${labelText}: ${value} (${pct})`;
+                }
+                return `${labelText}: ${value}`;
+              },
             },
           },
         },
-        animation: { duration: 400 },
-        responsiveAnimationDuration: 200,
       };
     },
 
-    // cor estável por rótulo (evita “piscar” a cada update)
+    // Cor estável por rótulo (evita "piscar" a cada update)
     colorForLabel(label) {
-      // hash simples -> hsl
       let h = 0;
       for (let i = 0; i < String(label).length; i++) {
         h = (h * 31 + String(label).charCodeAt(i)) >>> 0;
       }
       const hue = h % 360;
-      const sat = 65;
-      const light = 55;
-      return `hsl(${hue}, ${sat}%, ${light}%)`;
+      return `hsl(${hue}, 65%, 55%)`;
     },
 
     updateChart() {
@@ -229,17 +222,12 @@ export default {
         ch.data.labels = [];
         ch.data.datasets[0].data = [];
         ch.data.datasets[0].backgroundColor = [];
-        ch.update(0);
+        ch.update("none");
         return;
       }
 
       const labelKey = this.Configs.LabelField;
       const valueKey = this.Configs.ValueField;
-
-      const total = this.data.reduce(
-        (acc, row) => acc + Number(row?.[valueKey] || 0),
-        0,
-      );
 
       const labels = [];
       const values = [];
@@ -249,18 +237,28 @@ export default {
         const row = this.data[i];
         const label = row?.[labelKey];
         const value = Number(row?.[valueKey] || 0);
-
         labels.push(label);
         values.push(value);
         colors.push(this.colorForLabel(label));
       }
 
-      // substitui arrays por cópias planas (evita objetos reativos)
       ch.data.labels = labels.slice();
       ch.data.datasets[0].data = values.slice();
       ch.data.datasets[0].backgroundColor = colors.slice();
 
       ch.update();
+    },
+
+    _destroyChart() {
+      if (this.chartElement) {
+        try {
+          this.chartElement.destroy();
+        } catch (_) {
+          // noop
+        } finally {
+          this.chartElement = null;
+        }
+      }
     },
   },
 
@@ -270,29 +268,8 @@ export default {
   },
 
   beforeUnmount() {
-    // destrói com segurança, sem recriar nada
-    if (!this.chartElement) return;
-    try {
-      if (typeof this.chartElement.stop === "function")
-        this.chartElement.stop();
-      if (
-        Chart.animationService &&
-        typeof Chart.animationService.removeChart === "function"
-      ) {
-        Chart.animationService.removeChart(this.chartElement);
-      }
-      if (
-        this.chartElement.$resize &&
-        typeof this.chartElement.$resize.unbind === "function"
-      ) {
-        this.chartElement.$resize.unbind();
-      }
-      this.chartElement.destroy();
-    } catch (_) {
-      // noop
-    } finally {
-      this.chartElement = null;
-    }
+    if (this.debounce) clearTimeout(this.debounce);
+    this._destroyChart();
   },
 };
 </script>
