@@ -1,15 +1,20 @@
 <template>
   <div>
-    <div v-if="ShowProgression" class="text-center text-bold text-h6" :style="`color:${gaugeColor}`">
-      {{ FormatProgression ? FormatProgression(value) : value }} / {{ FormatProgression ? FormatProgression(maxValue) :
-        maxValue }}
+    <div
+      v-if="ShowProgression"
+      class="text-center text-bold text-h6"
+      :style="`color:${gaugeColor}`"
+    >
+      {{ FormatProgression ? FormatProgression(value) : value }} /
+      {{ FormatProgression ? FormatProgression(maxValue) : maxValue }}
     </div>
-    <canvas style="width: 100%;" ref="gaugeChart"></canvas>
+    <canvas style="width: 100%" ref="gaugeChart"></canvas>
   </div>
 </template>
 
 <script>
 // Libs:
+// chart.js v2 é um módulo CJS; no Vite, deve ser importado como default export
 import Chart from "chart.js";
 
 export default {
@@ -35,7 +40,7 @@ export default {
   data() {
     return {
       chartInstance: null,
-      gaugeColor: '#000',
+      gaugeColor: "#000",
       debounceTimeoutId: null,
     };
   },
@@ -44,7 +49,7 @@ export default {
     const ctx = this.$refs.gaugeChart.getContext("2d");
     const gaugeValue = Math.min(
       Math.max(this.value, this.minValue),
-      this.maxValue
+      this.maxValue,
     );
     const normalizedValue =
       ((gaugeValue - this.minValue) / (this.maxValue - this.minValue)) * 100;
@@ -53,8 +58,8 @@ export default {
       normalizedValue < 33
         ? "#FF0000" // Red for low
         : normalizedValue < 66
-          ? "#FFFF00" // Yellow for medium
-          : "#4CAF50"; // Green for high
+        ? "#FFFF00" // Yellow for medium
+        : "#4CAF50"; // Green for high
     this.gaugeColor = gaugeColor;
 
     this.chartInstance = new Chart(ctx, {
@@ -128,10 +133,9 @@ export default {
             ctx.fillText(
               `${Math.round(chart.data.datasets[0].data[0])}%`,
               centerX,
-              centerY - radius * 0.6 // Adjust position based on radius
+              centerY - radius * 0.6, // Adjust position based on radius
             );
           },
-
         },
       ],
     });
@@ -159,7 +163,7 @@ export default {
         if (this.chartInstance) {
           const gaugeValue = Math.min(
             Math.max(newValue, this.minValue),
-            this.maxValue
+            this.maxValue,
           );
           const normalizedValue =
             ((gaugeValue - this.minValue) / (this.maxValue - this.minValue)) *
@@ -169,8 +173,8 @@ export default {
             normalizedValue < 33
               ? "#FF0000" // Red for low
               : normalizedValue < 66
-                ? "#FFFF00" // Yellow for medium
-                : "#4CAF50"; // Green for high
+              ? "#FFFF00" // Yellow for medium
+              : "#4CAF50"; // Green for high
 
           this.gaugeColor = gaugeColor;
 
@@ -184,7 +188,7 @@ export default {
           ];
           this.chartInstance.update();
         }
-      }, 200)
+      }, 200);
     },
   },
 
