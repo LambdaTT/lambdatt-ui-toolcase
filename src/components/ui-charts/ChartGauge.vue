@@ -13,9 +13,9 @@
 </template>
 
 <script>
-// Libs:
-// chart.js v2 é um módulo CJS; no Vite, deve ser importado como default export
-import Chart from "chart.js";
+// Libs (chart.js v4 — ESM com tipos embutidos):
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 export default {
   name: "ui-charts-gauge",
@@ -62,82 +62,78 @@ export default {
         : "#4CAF50"; // Green for high
     this.gaugeColor = gaugeColor;
 
+    // Plugin inline (v4): acesso via chart.ctx, chart.chartArea, chart.getDatasetMeta()
+    const needlePlugin = {
+      id: "gaugeNeedle",
+      afterDraw: (chart) => {
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || meta.data.length === 0) return;
+
+        const arc = meta.data[0];
+        const outerRadius = arc.outerRadius;
+        const innerRadius = arc.innerRadius;
+        const radius = (innerRadius + outerRadius) / 2;
+
+        // Centro do semi-círculo
+        const centerX = arc.x;
+        const centerY = arc.y;
+
+        // Ângulo da agulha baseado no valor normalizado (0–100 → 180°–0°)
+        const normalizedValue = chart.data.datasets[0].data[0];
+        const angle =
+          Math.PI + (normalizedValue / chart.options._gaugeMax) * Math.PI;
+
+        // Desenha a agulha
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, -radius * 0.02);
+        ctx.lineTo(radius * 0.9, 0);
+        ctx.lineTo(0, radius * 0.02);
+        ctx.fillStyle = "#000000";
+        ctx.fill();
+        ctx.restore();
+
+        // Texto da porcentagem
+        const chartHeight = chart.chartArea.bottom - chart.chartArea.top;
+        ctx.font = `${Math.round(chartHeight / 5)}px Arial`;
+        ctx.fillStyle = "#000000";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          `${Math.round(normalizedValue)}%`,
+          centerX,
+          centerY - radius * 0.6,
+        );
+      },
+    };
+
     this.chartInstance = new Chart(ctx, {
       type: "doughnut",
       data: {
         datasets: [
           {
             data: [normalizedValue, 100 - normalizedValue],
-            backgroundColor: [gaugeColor, "#E0E0E0"], // Dynamic color
+            backgroundColor: [gaugeColor, "#E0E0E0"],
             borderWidth: 0,
           },
         ],
       },
       options: {
         responsive: true,
-        maintainAspectRatio: true, // Allow full control of height and width
-        rotation: Math.PI, // Start from the bottom
-        circumference: Math.PI, // Semi-circle
-        cutoutPercentage: 60, // Adjust thickness
-        tooltips: {
-          enabled: false, // Disable tooltips
+        maintainAspectRatio: true,
+        rotation: -Math.PI, // v4: radianos, começa da esquerda
+        circumference: Math.PI, // semi-círculo
+        cutout: "60%", // v4: usa string com %, não cutoutPercentage
+        _gaugeMax: 100, // valor customizado lido pelo plugin
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
         },
-        layout: {
-          padding: 0, // Remove all padding around the chart
-        },
-        animation: {
-          duration: 1000,
-        },
-        minValue: 0, // Minimum gauge value
-        maxValue: 100, // Maximum gauge value
+        animation: { duration: 1000 },
       },
-      plugins: [
-        {
-          afterDraw: (chart) => {
-            const ctx = chart.chart.ctx;
-            const width = chart.chart.width;
-            const height = chart.chart.height;
-
-            // Center coordinates
-            const centerX = width / 2;
-            const centerY = chart.chartArea.top + chart.chart.outerRadius;
-
-            // Radius for needle calculation
-            const outerRadius = chart.chart.outerRadius;
-            const innerRadius = chart.chart.innerRadius;
-            const radius = (innerRadius + outerRadius) / 2;
-
-            // Calculate needle angle based on normalized value
-            const normalizedValue =
-              ((chart.data.datasets[0].data[0] - chart.options.minValue) /
-                (chart.options.maxValue - chart.options.minValue)) *
-              Math.PI; // Normalize to half-circle
-            const angle = Math.PI + normalizedValue;
-
-            // Draw needle
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(angle);
-            ctx.beginPath();
-            ctx.moveTo(0, -radius * 0.02); // Needle width (2% of radius)
-            ctx.lineTo(radius * 0.9, 0); // Needle length (90% of radius)
-            ctx.lineTo(0, radius * 0.02); // Needle width (2% of radius)
-            ctx.fillStyle = "#000000"; // Needle color
-            ctx.fill();
-            ctx.restore();
-
-            // Draw percentage text
-            ctx.font = `${Math.round(height / 10)}px Arial`; // Font size dynamically based on height
-            ctx.fillStyle = "#000000";
-            ctx.textAlign = "center";
-            ctx.fillText(
-              `${Math.round(chart.data.datasets[0].data[0])}%`,
-              centerX,
-              centerY - radius * 0.6, // Adjust position based on radius
-            );
-          },
-        },
-      ],
+      plugins: [needlePlugin],
     });
   },
 
@@ -157,9 +153,9 @@ export default {
 
   methods: {
     updChartData(newValue) {
-      if (!!this.debounceTimeoutId) clearTimeout(this.debounceTimeoutId);
+      if (this.debounceTimeoutId) clearTimeout(this.debounceTimeoutId);
 
-      setTimeout(() => {
+      this.debounceTimeoutId = setTimeout(() => {
         if (this.chartInstance) {
           const gaugeValue = Math.min(
             Math.max(newValue, this.minValue),
@@ -171,10 +167,10 @@ export default {
 
           const gaugeColor =
             normalizedValue < 33
-              ? "#FF0000" // Red for low
+              ? "#FF0000"
               : normalizedValue < 66
-              ? "#FFFF00" // Yellow for medium
-              : "#4CAF50"; // Green for high
+              ? "#FFFF00"
+              : "#4CAF50";
 
           this.gaugeColor = gaugeColor;
 
@@ -193,8 +189,10 @@ export default {
   },
 
   beforeUnmount() {
+    if (this.debounceTimeoutId) clearTimeout(this.debounceTimeoutId);
     if (this.chartInstance) {
       this.chartInstance.destroy();
+      this.chartInstance = null;
     }
   },
 };
