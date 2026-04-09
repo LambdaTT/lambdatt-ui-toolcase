@@ -68,7 +68,9 @@ export default {
 
   methods: {
     isCustomIcon(name) {
-      return this.$isCustomIcon(name);
+      return typeof this.$isCustomIcon === "function"
+        ? this.$isCustomIcon(name)
+        : false;
     },
   },
 };
