@@ -106,7 +106,7 @@
         @load="loadData"
         :offset="250"
       >
-        <div class="q-pa-sm" v-for="row in data" :key="row.id ?? Math.random()">
+        <div class="q-pa-sm" v-for="(row, index) in data" :key="row.id ?? row.id_ctp_order_item ?? row.id_ctp_order ?? row.id_ctp_product ?? row.ds_key ?? row.id_bpm_execution ?? index">
           <slot :data="row"></slot>
         </div>
 
