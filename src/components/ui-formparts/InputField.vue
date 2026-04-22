@@ -420,6 +420,25 @@
     >
     </FileUpload>
 
+    <!-- Input money: -->
+    <InputMoney
+      v-if="type == 'money'"
+      :Icon="Icon"
+      :Currency="Currency"
+      :dense="dense"
+      :disable="disable"
+      :hint="hint"
+      :readonly="readonly"
+      :BgColor="BgColor"
+      v-model="value"
+      :Label="Label"
+      :Error="Error"
+      :ErrorMsg="ErrorMsg"
+      @focus="() => $emit('focus')"
+      @update:model-value="updModelValue"
+    >
+    </InputMoney>
+
     <!-- Input Editor -->
     <InputEditor
       v-if="type == 'editor'"
@@ -506,6 +525,12 @@ export default {
     },
     hint: String,
     unmaskedValue: Boolean,
+
+    // Money
+    Currency: {
+      type: String,
+      default: 'BRL',
+    },
   },
 
   data() {
