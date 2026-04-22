@@ -390,10 +390,19 @@ export default {
       this.errData = null
       this.startLoad = true
       this.reloadCount++
-      if (this.$refs.infiniteScrollInternal) {
-        this.$refs.infiniteScrollInternal.poll()
-        this.$refs.infiniteScrollInternal.resume()
-      }
+
+      // IMPORTANTE: poll() e resume() devem ser chamados APÓS o $nextTick para garantir
+      // que o Vue processou as atualizações reativas antes de disparar o scroll:
+      //  - :disable="!hasMoreData" precisa estar false (hasMoreData acabou de virar true)
+      //  - v-show="state == 'ready'" precisa estar true (startLoad acabou de virar true)
+      // Sem o $nextTick, o q-infinite-scroll enxerga valores stale e aborta o poll
+      // silenciosamente — o que é exatamente o que causava a falha após períodos de idle.
+      this.$nextTick(() => {
+        if (this.$refs.infiniteScrollInternal) {
+          this.$refs.infiniteScrollInternal.resume()
+          this.$refs.infiniteScrollInternal.poll()
+        }
+      })
     },
 
     async checkForMoreData() {
@@ -404,7 +413,13 @@ export default {
     },
 
     async loadData(idx, done) {
-      if (!this.DataURL || this.isLoading) return
+      // Se um carregamento já está em andamento, sinaliza o Quasar para parar
+      // (pass true = stop), evitando que isFetching fique preso como true.
+      // O pendingReload em triggerReload() garante que o reload seja refeito.
+      if (!this.DataURL || this.isLoading) {
+        if (done) done(true)
+        return
+      }
 
       this.hasMoreData = false
       this.isLoading = true
@@ -428,6 +443,8 @@ export default {
       } catch (error) {
         this.page = 1
         this.errData = error
+        // Sinaliza o Quasar para parar, evitando que isFetching fique preso como true.
+        if (done) done(true)
         console.error('There was a problem on the attempt to retrieve infinite scroll data.', error)
       } finally {
         this.isLoading = false
