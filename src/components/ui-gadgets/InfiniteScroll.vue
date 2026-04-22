@@ -390,10 +390,13 @@ export default {
       this.errData = null
       this.startLoad = true
       this.reloadCount++
-      if (this.$refs.infiniteScrollInternal) {
-        this.$refs.infiniteScrollInternal.poll()
-        this.$refs.infiniteScrollInternal.resume()
-      }
+
+      this.$nextTick(() => {
+        if (this.$refs.infiniteScrollInternal) {
+          this.$refs.infiniteScrollInternal.resume()
+          this.$refs.infiniteScrollInternal.poll()
+        }
+      })
     },
 
     async checkForMoreData() {
@@ -404,7 +407,10 @@ export default {
     },
 
     async loadData(idx, done) {
-      if (!this.DataURL || this.isLoading) return
+      if (!this.DataURL || this.isLoading) {
+        if (done) done(true)
+        return
+      }
 
       this.hasMoreData = false
       this.isLoading = true
@@ -428,6 +434,7 @@ export default {
       } catch (error) {
         this.page = 1
         this.errData = error
+        if (done) done(true)
         console.error('There was a problem on the attempt to retrieve infinite scroll data.', error)
       } finally {
         this.isLoading = false
