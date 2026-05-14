@@ -13,24 +13,21 @@ export default {
   characteristic: null,
   _onCharacteristicChanged: null,
 
-  connectToDevice(serviceUUID) {
-    return new Promise(async (resolve, reject) => {
-      serviceUUID = !!serviceUUID ? serviceUUID : ServiceUUID;
+  async connectToDevice(serviceUUID) {
+    serviceUUID = serviceUUID || ServiceUUID;
 
-      try {
-        // Connect to a Bluetoth device:
-        this.device = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [serviceUUID] }]
-        });
+    try {
+      // Connect to a Bluetoth device:
+      this.device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [serviceUUID] }]
+      });
 
-        const server = await this.device.gatt.connect();
-        this.service = await server.getPrimaryService(ServiceUUID);
-        resolve();
-      } catch (error) {
-        console.error('An error has occurred on the attempt to connect to device.', error);
-        reject(error);
-      }
-    });
+      const server = await this.device.gatt.connect();
+      this.service = await server.getPrimaryService(ServiceUUID);
+    } catch (error) {
+      console.error('An error has occurred on the attempt to connect to device.', error);
+      throw error;
+    }
   },
 
   disconnectDevice() {
@@ -48,21 +45,17 @@ export default {
 
   },
 
-  onCharacteristic(characteristicUUID) {
-    return new Promise(async (resolve, reject) => {
-      characteristicUUID = !!characteristicUUID ? characteristicUUID : CharacteristicUUID;
+  async onCharacteristic(characteristicUUID) {
+    characteristicUUID = characteristicUUID || CharacteristicUUID;
 
-      try {
-        this.characteristic = await this.service.getCharacteristic(characteristicUUID);
+    try {
+      this.characteristic = await this.service.getCharacteristic(characteristicUUID);
 
-        await this.characteristic.startNotifications();
-
-        resolve();
-      } catch (error) {
-        console.error("An error has occurred ont he attempt to setup service's characteristic.", error);
-        reject(error);
-      }
-    });
+      await this.characteristic.startNotifications();
+    } catch (error) {
+      console.error("An error has occurred ont he attempt to setup service's characteristic.", error);
+      throw error;
+    }
   },
 
   loadByChunks(loadHandler) {
@@ -103,9 +96,9 @@ export default {
   },
 
   loadAllChunks(chunkSeparator) {
-    chunkSeparator = !!chunkSeparator ? chunkSeparator : '';
+    chunkSeparator = chunkSeparator || '';
 
-    return new Promise(async (resolve) => {
+    return new Promise((resolve, reject) => {
       let receivedData = ''; // stores received chunks concatenated
       var transmissionStarted = false;
 

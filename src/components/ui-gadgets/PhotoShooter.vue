@@ -119,13 +119,10 @@ export default {
         switch (this.Orientation) {
           case "portrait":
             return this.Widescreen ? "9/16" : "3/4";
-            break;
           case "landscape":
             return this.Widescreen ? "16/9" : "4/3";
-            break;
           case "square":
             return "4/4";
-            break;
           default:
             return "4/3";
         }
@@ -138,7 +135,7 @@ export default {
       return {
         dataUrl: this.photoUrl,
         file: this.photoFile,
-        fileName: `${this.ResultFileName}.jpg` || "captura.jpg",
+        fileName: this.ResultFileName ? `${this.ResultFileName}.jpg` : "captura.jpg",
         fnReset: this.reset,
       };
     },

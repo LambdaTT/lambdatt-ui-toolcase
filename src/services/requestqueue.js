@@ -29,7 +29,7 @@ export default {
       try {
         var response = await http[req.method](req.url, req.body);
         if (req.callback) req.callback(response);
-      } catch (e) {
+      } catch {
         if (req.retry) markedForDel = false;
       } finally {
         if (markedForDel)

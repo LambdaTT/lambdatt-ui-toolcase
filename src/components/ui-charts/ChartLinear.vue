@@ -248,7 +248,7 @@ export default {
           x: {
             ticks: {
               autoSkip: false,
-              callback: function (val, index) {
+              callback: function (val) {
                 const tick = this.getLabelForValue(val);
                 const characterLimit = 12;
                 if ((tick?.length ?? 0) >= characterLimit) {
@@ -380,7 +380,7 @@ export default {
       if (this.chartElement) {
         try {
           this.chartElement.destroy();
-        } catch (_) {
+        } catch {
           // noop
         } finally {
           this.chartElement = null;

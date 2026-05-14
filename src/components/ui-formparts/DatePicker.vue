@@ -88,7 +88,7 @@ export default {
       var firstTime;
       var lastTime;
 
-      if (!!v) {
+      if (v) {
         // For date range:
         if (typeof v == 'object') {
           date = {
@@ -98,7 +98,7 @@ export default {
           firstTime = null;
           lastTime = null;
 
-          if (!!v.from) {
+          if (v.from) {
             if (v.from.includes(':')) {
               let arr = v.from.split(' ');
               date.from = arr[0];
@@ -108,7 +108,7 @@ export default {
             }
           }
 
-          if (!!v.to) {
+          if (v.to) {
             if (v.to.includes(':')) {
               let arr = v.to.split(' ');
               date.to = arr[0];
@@ -154,8 +154,7 @@ export default {
       if (this.range && this.date != null) {
         const normalize = (d) => (d ? d.replaceAll('/', '-') : null);
 
-        let from = null; 
-        let to = null;
+        let from, to;
         
         if(typeof this.date === 'object') {
           from = normalize(this.date.from);
@@ -188,7 +187,7 @@ export default {
       // For single date:
       else {
         // 1. Handle date:
-        val = !!this.date ? this.date.replaceAll('/', '-') : null;
+        val = this.date ? this.date.replaceAll('/', '-') : null;
         // 2. Handle first time:
         if (!!val && this.firstTime) val = `${val} ${this.firstTime}`
       }
@@ -209,7 +208,7 @@ export default {
 
   computed: {
     formattedDate() {
-      if (!!this.modelValue) {
+      if (this.modelValue) {
         if (typeof this.modelValue == 'object') {
           if (!this.modelValue?.from || !this.modelValue?.to) return null;
 

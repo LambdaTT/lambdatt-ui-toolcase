@@ -253,7 +253,7 @@ export default {
       if (this.chartElement) {
         try {
           this.chartElement.destroy();
-        } catch (_) {
+        } catch {
           // noop
         } finally {
           this.chartElement = null;

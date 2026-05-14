@@ -58,7 +58,7 @@ export default {
     },
 
     clear() {
-      if (!!this.Default) this.value = this.Default;
+      if (this.Default) this.value = this.Default;
       else this.value = this.modelValue;
     }
   },

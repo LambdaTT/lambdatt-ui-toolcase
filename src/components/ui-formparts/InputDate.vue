@@ -93,7 +93,7 @@ export default {
     emit(val) {
       let emitValue = null;
 
-      if (!!val) {
+      if (val) {
         const [datePart, timePart] = val.split(' ');
         const [day, month, year] = datePart.split('/').map(Number);
 
@@ -104,7 +104,7 @@ export default {
           return;
         }
 
-        if (!!timePart) {
+        if (timePart) {
           const timeParts = timePart.split(':');
           if (timeParts.length < 2 || timeParts.length > 3) {
             this.error = true;

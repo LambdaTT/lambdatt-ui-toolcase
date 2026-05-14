@@ -39,7 +39,7 @@ export default {
     mask() {
       let mask = '(##) ####-#####'
 
-      if (!!this.value) {
+      if (this.value) {
         const onlyDigits = this.value.replace(/\D+/g, '');
 
         if (onlyDigits.length > 10) mask = '(##) #####-####';

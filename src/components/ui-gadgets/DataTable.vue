@@ -550,7 +550,7 @@ export default {
     dense: Boolean,
     injectedRowActions: {
       type: Function,
-      default: (row) => [],
+      default: () => [],
     },
     CustomResources: Array,
   },
@@ -603,7 +603,7 @@ export default {
       clearTimeout(this.loadTimeout);
 
       this.loadTimeout = setTimeout(async () => {
-        if (!!this.searchTerm)
+        if (this.searchTerm)
           localStorage.setItem(
             `Datatable.${this.sluggedName}.searchTerm`,
             this.searchTerm,
@@ -620,7 +620,7 @@ export default {
       var persistedPagination = localStorage.getItem(
         `Datatable.${this.sluggedName}.pagination`,
       );
-      persistedPagination = !!persistedPagination
+      persistedPagination = persistedPagination
         ? JSON.parse(persistedPagination)
         : {};
       persistedPagination.currentPage = this.pagination.currentPage;
@@ -642,7 +642,7 @@ export default {
       var persistedPagination = localStorage.getItem(
         `Datatable.${this.sluggedName}.pagination`,
       );
-      persistedPagination = !!persistedPagination
+      persistedPagination = persistedPagination
         ? JSON.parse(persistedPagination)
         : {};
       persistedPagination.currentPage = this.pagination.currentPage;
@@ -664,7 +664,7 @@ export default {
       var persistedPagination = localStorage.getItem(
         `Datatable.${this.sluggedName}.pagination`,
       );
-      persistedPagination = !!persistedPagination
+      persistedPagination = persistedPagination
         ? JSON.parse(persistedPagination)
         : {};
       persistedPagination.sortBy = this.pagination.sortBy;
@@ -685,7 +685,7 @@ export default {
       var persistedPagination = localStorage.getItem(
         `Datatable.${this.sluggedName}.pagination`,
       );
-      persistedPagination = !!persistedPagination
+      persistedPagination = persistedPagination
         ? JSON.parse(persistedPagination)
         : {};
       persistedPagination.sortDir = this.pagination.sortDir;
@@ -914,7 +914,7 @@ export default {
         this.errorState = false;
 
         var params = this.setParams();
-        if (!!ignorePagination) {
+        if (ignorePagination) {
           delete params.$page;
           delete params.$limit;
         }
@@ -1045,9 +1045,9 @@ export default {
 
       // Extra filters:
       const extraFilters = {};
-      if (!!this.ExtraFilters) {
+      if (this.ExtraFilters) {
         for (let k in this.ExtraFilters)
-          if (!!this.ExtraFilters[k]) extraFilters[k] = this.ExtraFilters[k];
+          if (this.ExtraFilters[k]) extraFilters[k] = this.ExtraFilters[k];
       }
 
       return {
@@ -1059,7 +1059,7 @@ export default {
     },
 
     getColumnNumber(column) {
-      var sortNumber = null;
+      var sortNumber;
       if (!!column.sortBy === false) {
         // Find sort number:
         let columns = Object.keys(this.rawData[0] ?? {});
@@ -1156,7 +1156,7 @@ export default {
         this.pagination.currentPage +
         (Math.ceil(data.length / this.pagination.limit) - 1);
 
-      var initial = null;
+      var initial;
 
       if (this.pagination.finalPage - this.pagination.currentPage < 1) {
         initial = this.pagination.currentPage - 4;
@@ -1322,9 +1322,9 @@ export default {
           let clm = this.Columns[i];
           if (!this.visibleColumns.includes(clm.field)) continue;
           content += `<td>${
-            !!clm.format
+            clm.format
               ? clm.format(row)
-              : !!row[clm.field]
+              : row[clm.field]
               ? row[clm.field]
               : ""
           }</td>`;
@@ -1346,13 +1346,13 @@ export default {
       );
       var filters = Object.entries(this.filtersValues)
         .filter(
-          ([key, value]) =>
+          ([, value]) =>
             value !== null && value !== undefined && value !== "",
         )
         .map(
-          ([key, value]) =>
+          ([filterKey, value]) =>
             `<li>&#8250; ${this.escapeXml(
-              this.getColumnLabel(key),
+              this.getColumnLabel(filterKey),
             )}: <span style="font-weight: normal;">"${this.escapeXml(
               value,
             )}"</span></li>`,
@@ -1547,7 +1547,7 @@ export default {
     var persistedFilters = localStorage.getItem(
       `Datatable.${this.sluggedName}.filters`,
     );
-    if (!!persistedFilters) {
+    if (persistedFilters) {
       this.showFilterPanel = true;
       setTimeout(() => {
         this.filterParams = JSON.parse(persistedFilters);
@@ -1561,10 +1561,10 @@ export default {
     // Set persisted search term:
     this.searchTerm =
       localStorage.getItem(`Datatable.${this.sluggedName}.searchTerm`) ?? null;
-    if (!!this.searchTerm) loadFirstData = false;
+    if (this.searchTerm) loadFirstData = false;
 
     // Set sorting:
-    if (!!this.DefaultSorting) {
+    if (this.DefaultSorting) {
       this.pagination.sortBy = this.DefaultSorting.by;
       this.pagination.sortDir = this.DefaultSorting.direction;
       loadFirstData = false;
@@ -1574,7 +1574,7 @@ export default {
     var persistedPagination = localStorage.getItem(
       `Datatable.${this.sluggedName}.pagination`,
     );
-    if (!!persistedPagination) {
+    if (persistedPagination) {
       persistedPagination = JSON.parse(persistedPagination);
       for (let k in persistedPagination)
         if (k in this.pagination && k != "currentPage")

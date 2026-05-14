@@ -152,14 +152,14 @@ export default {
     },
 
     setSize() {
-      if (!!this.size) {
+      if (this.size) {
         return this.size + "px";
       }
       return "150px";
     },
 
     setIconSize() {
-      if (!!this.size) {
+      if (this.size) {
         if (this.size <= 70) return this.size / 7 + "px";
         if (this.size <= 100) return "sm";
         if (this.size <= 300) return "md";
@@ -169,7 +169,7 @@ export default {
     },
 
     setAlign() {
-      if (!!this.align) {
+      if (this.align) {
         switch (this.align) {
           case "left":
             return "text-left";

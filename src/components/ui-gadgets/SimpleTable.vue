@@ -354,7 +354,7 @@ export default {
     showActions() {
       for (let i = 0; i < this.RowActions.length; i++) {
         let a = this.RowActions[i];
-        if (!!a.hide) {
+        if (a.hide) {
           if (typeof a.hide == "function") {
             for (let j = 0; j < this.dataInPage.length; j++) {
               let row = this.dataInPage[j];
@@ -606,9 +606,9 @@ export default {
           let clm = this.Columns[i];
           if (!this.visibleColumns.includes(clm.field)) continue;
           content += `<td>${
-            !!clm.format
+            clm.format
               ? clm.format(row)
-              : !!row[clm.field]
+              : row[clm.field]
               ? row[clm.field]
               : ""
           }</td>`;

@@ -559,7 +559,7 @@ export default {
       if (this.SelectOnClick) {
         const nativeInput =
           this.$refs[this.inputRefId].$el.querySelector("input");
-        if (!!nativeInput) nativeInput.select();
+        if (nativeInput) nativeInput.select();
       }
     },
 

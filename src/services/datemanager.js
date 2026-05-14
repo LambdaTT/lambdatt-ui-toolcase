@@ -270,7 +270,7 @@ function datemanager(dateString) {
         }
         continue;
       }
-      output += tokens.hasOwnProperty(char) ? tokens[char] : char;
+      output += Object.prototype.hasOwnProperty.call(tokens, char) ? tokens[char] : char;
     }
     return output;
   }

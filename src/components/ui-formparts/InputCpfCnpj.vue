@@ -41,10 +41,10 @@ export default {
     mask() {
       let mask = '###.###.###-###';
 
-      if (!!this.CpfOnly) mask = '###.###.###-##';
-      if (!!this.CnpjOnly) mask = '##.###.###/####-##';
+      if (this.CpfOnly) mask = '###.###.###-##';
+      if (this.CnpjOnly) mask = '##.###.###/####-##';
 
-      if (!!this.value) {
+      if (this.value) {
         const onlyDigits = this.value.replace(/\D+/g, '');
         if (onlyDigits.length > 11) mask = '##.###.###/####-##';
       }

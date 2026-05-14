@@ -1,4 +1,4 @@
-import { is, Loading } from "quasar";
+import { Loading } from "quasar";
 
 const toLoad = [];
 var isLoading = false;

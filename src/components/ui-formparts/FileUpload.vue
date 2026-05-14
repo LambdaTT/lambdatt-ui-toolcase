@@ -123,7 +123,7 @@ export default {
     },
 
     readFile(file) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         var reader = new FileReader();
         reader.onload = function (evt) {
           resolve({

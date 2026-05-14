@@ -42,6 +42,7 @@
   </div>
 </template>
 <script>
+/* global google */
 export default {
   name: "ui-gadgets-map",
 
@@ -149,7 +150,7 @@ export default {
       this.map = map;
 
       // The marker, positioned at location
-      const marker = new google.maps.Marker({
+      new google.maps.Marker({
         position: location,
         map: map,
       });
@@ -158,7 +159,7 @@ export default {
       this.$emit("map-loaded");
     },
 
-    handleAddressStr(val) {
+    handleAddressStr() {
       if (!this.AddressStr) this.mapState = "empty";
       else this.updMapAddress(false);
     },
@@ -180,8 +181,8 @@ export default {
   mounted() {
     // Generate an uniqid
     var ts = String(new Date().getTime()),
-      i = 0,
       out = "";
+    var i;
     for (i = 0; i < ts.length; i += 2) {
       out += Number(ts.substr(i, 2)).toString(36);
     }
@@ -192,8 +193,8 @@ export default {
       return;
     }
 
-    if (!!this.AddressObj) this.handleAddressObj(this.AddressObj);
-    else if (!!this.AddressStr) this.handleAddressStr();
+    if (this.AddressObj) this.handleAddressObj(this.AddressObj);
+    else if (this.AddressStr) this.handleAddressStr();
   },
 };
 </script>

@@ -18,9 +18,8 @@ export default {
   get: function (url, params, signal) {
     url = `${isExternal ? "" : process.env.API}${url}`;
 
-    var _params = "";
     if (utils.objectSize(params) > 0) {
-      _params = utils.objToSerialString(params);
+      const _params = utils.objToSerialString(params);
       url = `${url}${url.includes("?") ? "&" : "?"}${_params}`;
     }
 
@@ -109,9 +108,8 @@ export default {
   delete: function (url, params) {
     url = `${isExternal ? "" : process.env.API}${url}`;
 
-    var _params = "";
     if (utils.objectSize(params) > 0) {
-      _params = utils.objToSerialString(params);
+      const _params = utils.objToSerialString(params);
       url = `${url}${url.includes("?") ? "&" : "?"}${_params}`;
     }
 
@@ -147,7 +145,7 @@ export default {
     console.log(url);
     url = `${isExternal ? "" : process.env.API}${url}`;
 
-    method = !!method ? method.toLowerCase() : "get";
+    method = method ? method.toLowerCase() : "get";
     if (utils.objectSize(params) > 0)
       url = `${url}${url.includes("?") ? "&" : "?"}${utils.objToSerialString(
         params,
@@ -173,9 +171,9 @@ export default {
     try {
       var reqPromise = axios[method](url, reqConf).then((response) => {
         let fname;
-        if (!!filename) {
+        if (filename) {
           fname = filename;
-        } else if (!!response.headers["content-filename"]) {
+        } else if (response.headers["content-filename"]) {
           fname = decodeURI(response.headers["content-filename"]).replaceAll(
             "+",
             " ",
@@ -214,7 +212,7 @@ export default {
     if (!(data instanceof FormData))
       throw "You can only upload data in the form a FormData object";
 
-    method = !!method ? method.toLowerCase() : "post";
+    method = method ? method.toLowerCase() : "post";
     url = `${isExternal ? "" : process.env.API}${url}`;
 
     if (utils.objectSize(params) > 0)

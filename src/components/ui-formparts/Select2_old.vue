@@ -49,7 +49,7 @@ export default {
 
   computed: {
     options() {
-      if (!!this.rawData?.length) {
+      if (this.rawData?.length) {
         return [...this.rawData].sort((a, b) =>
           String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' }))
       }
@@ -59,7 +59,7 @@ export default {
 
   watch: {
     selected(v) {
-      const emitVal = !!this.EmitWholeOption ? v : v?.value;
+      const emitVal = this.EmitWholeOption ? v : v?.value;
       this.$emit('update:model-value', emitVal);
     },
 
@@ -78,7 +78,7 @@ export default {
 
   methods: {
     setValue(v) {
-      if(!!this.debounceId){
+      if(this.debounceId){
         clearTimeout(this.debounceId);
         this.debounceId = null;
       }
@@ -86,7 +86,7 @@ export default {
       if (!(this.rawData?.length))
         this.debounceId = setTimeout(() => this.setValue(v), 100);
       else {
-        if (!(!!v)) {
+        if (!v) {
           this.selected = null;
         } else {
           this.selected = this.rawData.find((opt) => {
@@ -97,7 +97,7 @@ export default {
     },
 
     filterFn(val, update) {
-      if (!(!!val)) {
+      if (!val) {
         update(() => {
           this.rawData = this.Options;
         })
