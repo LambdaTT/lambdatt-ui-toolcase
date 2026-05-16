@@ -39,7 +39,7 @@ const CURRENCIES = {
     decimalSep: '.',
     decimalPlaces: 2,
   },
-};
+}
 
 export default {
   name: 'ui-formparts-input-money',
@@ -69,12 +69,12 @@ export default {
     return {
       displayValue: '',
       focused: false,
-    };
+    }
   },
 
   computed: {
     cfg() {
-      return CURRENCIES[this.Currency] ?? CURRENCIES.BRL;
+      return CURRENCIES[this.Currency] ?? CURRENCIES.BRL
     },
   },
 
@@ -83,14 +83,14 @@ export default {
       immediate: true,
       handler(val) {
         if (!this.focused) {
-          this.displayValue = this.formatFloat(val);
+          this.displayValue = this.formatFloat(val)
         }
       },
     },
 
     Currency() {
-      const floatVal = this.parseDisplay(this.displayValue);
-      this.displayValue = this.formatFloat(floatVal);
+      const floatVal = this.parseDisplay(this.displayValue)
+      this.displayValue = this.formatFloat(floatVal)
     },
   },
 
@@ -101,17 +101,18 @@ export default {
      * Float → "R$ 1.234,56" / "$ 1,234.56"
      */
     formatFloat(val) {
-      if (val === null || val === undefined || val === '') return this.cfg.symbol + this.formatDigitsAsCents('0');
+      if (val === null || val === undefined || val === '')
+        return this.formatDigitsAsCents('0')
 
-      const num = parseFloat(val);
-      if (isNaN(num)) return this.cfg.symbol + this.formatDigitsAsCents('0');
+      const num = parseFloat(val)
+      if (isNaN(num)) return this.formatDigitsAsCents('0')
 
-      const { thousandsSep, decimalSep, decimalPlaces, symbol } = this.cfg;
-      const fixed = Math.abs(num).toFixed(decimalPlaces);
-      const [intPart, decPart] = fixed.split('.');
-      const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep);
+      const { thousandsSep, decimalSep, decimalPlaces, symbol } = this.cfg
+      const fixed = Math.abs(num).toFixed(decimalPlaces)
+      const [intPart, decPart] = fixed.split('.')
+      const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep)
 
-      return `${symbol}${num < 0 ? '-' : ''}${intFormatted}${decimalSep}${decPart}`;
+      return `${symbol}${num < 0 ? '-' : ''}${intFormatted}${decimalSep}${decPart}`
     },
 
     /**
@@ -119,23 +120,23 @@ export default {
      * Strips the symbol prefix, then normalizes separators.
      */
     parseDisplay(str) {
-      if (!str && str !== 0) return null;
+      if (!str && str !== 0) return null
 
-      const { thousandsSep, decimalSep, symbol } = this.cfg;
+      const { thousandsSep, decimalSep, symbol } = this.cfg
 
       // Remove symbol prefix (handles "R$ ", "$ ")
-      let normalized = String(str);
+      let normalized = String(str)
       if (normalized.startsWith(symbol)) {
-        normalized = normalized.slice(symbol.length);
+        normalized = normalized.slice(symbol.length)
       }
 
       // Remove thousands sep, swap decimal sep with dot
       normalized = normalized
         .replace(new RegExp('\\' + thousandsSep, 'g'), '')
-        .replace(new RegExp('\\' + decimalSep, 'g'), '.');
+        .replace(new RegExp('\\' + decimalSep, 'g'), '.')
 
-      const num = parseFloat(normalized);
-      return isNaN(num) ? null : Math.round(num * 100) / 100;
+      const num = parseFloat(normalized)
+      return isNaN(num) ? null : Math.round(num * 100) / 100
     },
 
     /**
@@ -143,74 +144,79 @@ export default {
      * e.g. digits "123456" (BRL) → "R$ 1.234,56"
      */
     formatDigitsAsCents(digits) {
-      const { thousandsSep, decimalSep, decimalPlaces, symbol } = this.cfg;
+      const { thousandsSep, decimalSep, decimalPlaces, symbol } = this.cfg
 
-      const padded = digits.padStart(decimalPlaces + 1, '0');
-      const intDigits = padded.slice(0, padded.length - decimalPlaces);
-      const decDigits = padded.slice(padded.length - decimalPlaces);
-      const intFormatted = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep);
+      const padded = digits.padStart(decimalPlaces + 1, '0')
+      const intDigits = padded.slice(0, padded.length - decimalPlaces)
+      const decDigits = padded.slice(padded.length - decimalPlaces)
+      const intFormatted = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep)
 
-      return `${symbol}${intFormatted}${decimalSep}${decDigits}`;
+      return `${symbol}${intFormatted}${decimalSep}${decDigits}`
     },
 
     // ─── Event Handlers ───────────────────────────────────────────────────────
 
     onFocus() {
-      this.focused = true;
-      this.$emit('focus');
+      this.focused = true
+      this.$emit('focus')
     },
 
     onBlur() {
-      this.focused = false;
-      const floatVal = this.parseDisplay(this.displayValue);
-      this.displayValue = this.formatFloat(floatVal);
-      this.emitValue(floatVal);
+      this.focused = false
+      const floatVal = this.parseDisplay(this.displayValue)
+      this.displayValue = this.formatFloat(floatVal)
+      this.emitValue(floatVal)
     },
 
     onKeydown(e) {
       // Allow navigation/control keys
       const allowed = [
-        'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight',
-        'ArrowUp', 'ArrowDown', 'Home', 'End',
-      ];
-      if (allowed.includes(e.key)) return;
+        'Backspace',
+        'Delete',
+        'Tab',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Home',
+        'End',
+      ]
+      if (allowed.includes(e.key)) return
 
       // Allow digits only
       if (!/^\d$/.test(e.key)) {
-        e.preventDefault();
+        e.preventDefault()
       }
     },
 
     onInput(val) {
-      const { symbol } = this.cfg;
+      const { symbol } = this.cfg
 
       // Strip symbol prefix before extracting digits
-      let raw = String(val ?? '');
-      if (raw.startsWith(symbol)) raw = raw.slice(symbol.length);
+      let raw = String(val ?? '')
+      if (raw.startsWith(symbol)) raw = raw.slice(symbol.length)
 
       // Extract only digits
-      const digits = raw.replace(/\D/g, '');
+      const digits = raw.replace(/\D/g, '')
 
       if (!digits || /^0+$/.test(digits)) {
-        this.displayValue = this.formatDigitsAsCents('');
-        this.emitValue(null);
-        return;
+        this.displayValue = this.formatDigitsAsCents('')
+        this.emitValue(null)
+        return
       }
 
-      const trimmed = digits.replace(/^0+/, '') || '0';
-      this.displayValue = this.formatDigitsAsCents(trimmed);
+      const trimmed = digits.replace(/^0+/, '') || '0'
+      this.displayValue = this.formatDigitsAsCents(trimmed)
 
-      const floatVal = parseFloat(trimmed) / Math.pow(10, this.cfg.decimalPlaces);
-      this.emitValue(Math.round(floatVal * 100) / 100);
+      const floatVal = parseFloat(trimmed) / Math.pow(10, this.cfg.decimalPlaces)
+      this.emitValue(Math.round(floatVal * 100) / 100)
     },
 
     emitValue(floatVal) {
-      this.$emit('update:modelValue', floatVal);
+      this.$emit('update:modelValue', floatVal)
     },
   },
 
-  mounted() {
-    this.displayValue = this.formatFloat(this.modelValue);
-  },
-};
+
+}
 </script>

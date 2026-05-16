@@ -111,9 +111,9 @@
           v-for="(row, index) in data"
           :key="
             row.id ??
-            row.id_ctp_order_item ??
-            row.id_ctp_order ??
-            row.id_ctp_product ??
+            row.id_ord_order_item ??
+            row.id_ord_order ??
+            row.id_srv_serving ??
             row.ds_key ??
             row.id_bpm_execution ??
             index

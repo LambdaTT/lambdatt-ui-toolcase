@@ -896,8 +896,10 @@ export default {
         params: this.setParams(),
         filterValues: this.filtersValues,
         dataInPage: this.dataInPage,
+        rowsInPage: this.dataInPage.length ?? 0,
         visibleColumns: this.visibleColumns,
         reload: this.reload,
+        totalRows: this.fullData.length ?? 0
       });
     },
 
