@@ -39,6 +39,7 @@
 <script>
 // Libs (chart.js v4 — ESM com tipos embutidos):
 import { Chart, registerables } from "chart.js";
+import { markRaw } from "vue";
 Chart.register(...registerables);
 
 export default {
@@ -153,7 +154,7 @@ export default {
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
 
-      this.chartElement = new Chart(ctx, {
+      this.chartElement = markRaw(new Chart(ctx, {
         type: this.ChartType,
         data: {
           labels: [],
@@ -167,7 +168,7 @@ export default {
           ],
         },
         options: this.buildBaseOptions(),
-      });
+      }));
     },
 
     buildBaseOptions() {

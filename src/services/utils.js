@@ -180,26 +180,29 @@ export default {
 
   notifyError: function (error) {
     const closeAction = { icon: "close", color: "white", round: true, handler: () => {} };
-    if (
-      error.response &&
-      error.response.data &&
-      (error.response.data.accessible || error.response.data.userReadable)
-    ) {
-      Notify.create({
-        message: error.response.data.message,
-        type: "negative",
-        position: "top-right",
-        actions: [closeAction],
-      });
-    } else {
-      Notify.create({
-        message:
-          "Houve um problema para executar esta ação. Tente novamente mais tarde.",
-        type: "negative",
-        position: "top-right",
-        actions: [closeAction],
-      });
+    let message = "Houve um problema para executar esta ação. Tente novamente mais tarde.";
+
+    // Só sobrescreve a mensagem-padrão por uma STRING não-vazia. Antes, o envelope de erro do
+    // backend ({ error: true, ... }) caía no ramo `data.error` e a mensagem virava o BOOLEANO `true`
+    // — o Notify então renderizava uma notificação SEM texto ("erro sem mensagem"). Agora, campos
+    // não-string (como `error: true`) são ignorados e cai-se no texto padrão legível.
+    const data = error?.response?.data;
+    if (data && typeof data === "object") {
+      const userMsg =
+        (data.accessible || data.userReadable) && typeof data.message === "string" ? data.message : null;
+      const candidate =
+        userMsg ??
+        (typeof data.error === "string" ? data.error : null) ??
+        (typeof data.message === "string" ? data.message : null);
+      if (candidate && candidate.trim() !== "") message = candidate;
     }
+
+    Notify.create({
+      message,
+      type: "negative",
+      position: "top-right",
+      actions: [closeAction],
+    });
   },
 
   dateDiffDays(date1, date2) {

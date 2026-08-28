@@ -121,7 +121,7 @@
       <!-- Search Field -->
       <div class="col-12 col-md-4">
         <q-input
-          v-if="searchableColumns.length > 0"
+          v-if="hasSearchableColumns"
           dense
           square
           filled
@@ -714,11 +714,23 @@ export default {
       return null
     },
 
+    // Controls the visibility of the search field. A column counts as
+    // searchable simply by being a real, searchable-by-default column — it must
+    // NOT depend on filterParams, otherwise filling every column filter (or the
+    // null defaults emitted on mount) would empty the list and hide the field.
+    hasSearchableColumns() {
+      return this.columns.some((col) => col.field && col.field !== '' && col.searchable !== false)
+    },
+
     searchableColumns() {
       return this.columns.filter((col) => {
         const hasValidField = col.field && col.field !== ''
         const isSearchable = col.searchable !== false
-        const isNotFiltered = !(col.field in this.filterParams)
+        // Exclude a column from the search only when it has an ACTIVE column
+        // filter, since search and filter share the same request param key and
+        // would collide. A present-but-null key (mount defaults) is not active.
+        const filterValue = this.filterParams[col.field]
+        const isNotFiltered = filterValue === null || filterValue === undefined || filterValue === ''
 
         return hasValidField && isSearchable && isNotFiltered
       })
