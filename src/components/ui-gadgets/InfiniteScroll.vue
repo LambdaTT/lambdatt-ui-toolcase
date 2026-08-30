@@ -301,7 +301,7 @@ export default {
         }
         // Last field:
         else {
-          search[f] = '$or$lkof$endFilterGroup|' + this.searchTerm
+          search[f] = '$endFilterGroup$or$lkof|' + this.searchTerm
         }
       })
 
