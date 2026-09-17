@@ -419,6 +419,8 @@
 </template>
 
 <script>
+import { computePagination } from '../../services/datatable-pagination.js'
+
 export default {
   name: 'ui-gadgets-datatable',
 
@@ -632,13 +634,16 @@ export default {
 
     fullData: {
       handler(data) {
-        if (data.length > 0) {
-          this.pagination.finalPage = Math.ceil(data.length / this.pagination.limit)
-        } else {
-          this.pagination.finalPage =
-            this.pagination.currentPage +
-            (Math.ceil(this.rawData.length / this.pagination.limit) - 1)
-        }
+        // Recalcula finalPage E a janela de botões a partir do total real, mantendo os
+        // dois em sincronia independentemente da ordem de chegada das respostas (total x fatia).
+        const { finalPage, pages } = computePagination({
+          totalItems: data.length,
+          pageItems: this.rawData.length,
+          currentPage: this.pagination.currentPage,
+          limit: this.pagination.limit,
+        })
+        this.pagination.finalPage = finalPage
+        this.pagination.pages = pages
       },
     },
   },
@@ -1049,25 +1054,15 @@ export default {
     },
 
     paginate(data) {
-      this.pagination.finalPage =
-        this.pagination.currentPage + (Math.ceil(data.length / this.pagination.limit) - 1)
-
-      var initial
-
-      if (this.pagination.finalPage - this.pagination.currentPage < 1) {
-        initial = this.pagination.currentPage - 4
-      } else if (this.pagination.finalPage - this.pagination.currentPage < 2) {
-        initial = this.pagination.currentPage - 3
-      } else {
-        initial = this.pagination.currentPage - 2
-      }
-      initial = initial < 1 ? 1 : initial
-
-      this.pagination.pages = []
-      for (let i = initial; i <= this.pagination.finalPage; i++) {
-        this.pagination.pages.push(i)
-        if (this.pagination.pages.length > 4) break
-      }
+      // finalPage/pages derivam do total real (fullData), não da fatia limitada pelo servidor.
+      const { finalPage, pages } = computePagination({
+        totalItems: this.fullData.length,
+        pageItems: data.length,
+        currentPage: this.pagination.currentPage,
+        limit: this.pagination.limit,
+      })
+      this.pagination.finalPage = finalPage
+      this.pagination.pages = pages
 
       this.pagination.pageFirstItem =
         data.length > 0
