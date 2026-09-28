@@ -102,13 +102,16 @@ export default {
       this.emitValue(v)
     },
 
-    modelValue(v) {
-      if (this.internalUpdate) {
-        this.internalUpdate = false
-        return
-      }
+    modelValue: {
+      immediate: true,
+      handler(v) {
+        if (this.internalUpdate) {
+          this.internalUpdate = false
+          return
+        }
 
-      this.setValue(v);
+        this.setValue(v);
+      }
     },
 
     Options(v) {
