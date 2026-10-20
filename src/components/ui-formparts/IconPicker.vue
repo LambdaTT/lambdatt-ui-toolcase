@@ -1,13 +1,6 @@
 <template>
   <div class="icon-picker">
-    <q-input
-      v-model="search"
-      placeholder="Pesquisar ícones..."
-      outlined
-      dense
-      class="q-mb-md"
-      clearable
-    >
+    <q-input v-model="search" placeholder="Pesquisar ícones..." outlined dense class="q-mb-md" clearable>
       <template v-slot:append>
         <q-icon name="fas fa-search" />
       </template>
@@ -16,13 +9,8 @@
     <q-scroll-area style="height: 300px; max-width: 100%">
       <div class="row q-col-gutter-xs justify-center">
         <div v-for="icon in filteredIcons" :key="icon" class="col-auto">
-          <q-btn
-            flat
-            padding="sm"
-            :color="modelValue === icon ? 'primary' : 'grey-7'"
-            @click="selectIcon(icon)"
-            :class="modelValue === icon ? 'bg-blue-1' : ''"
-          >
+          <q-btn flat padding="sm" :color="modelValue === icon ? 'primary' : 'grey-7'" @click="selectIcon(icon)"
+            :class="modelValue === icon ? 'bg-blue-1' : ''">
             <q-icon :name="icon" size="24px" />
             <q-tooltip>{{ icon }}</q-tooltip>
           </q-btn>
@@ -225,6 +213,41 @@ export default {
         "fas fa-wine-glass-empty",
         "fas fa-utensils",
         "fas fa-coffee",
+        // "fas fa-strawberry",
+        // "fas fa-grapes",
+        // "fas fa-melon",
+        // "fas fa-pumpkin",
+        "fas fa-kiwi-bird",
+        "fas fa-mortar-pestle",
+        // "fas fa-salt-shaker",
+        "fas fa-spoon",
+        // "fas fa-bowl-chopsticks",
+        "fas fa-kitchen-set",
+        "fas fa-fire-burner",
+        // "fas fa-french-fries",
+        // "fas fa-sandwich",
+        // "fas fa-taco",
+        // "fas fa-burrito",
+        // "fas fa-popsicle",
+        "fas fa-cookie-bite",
+        // "fas fa-cupcake",
+        // "fas fa-pie",
+        // "fas fa-bread-loaf",
+        // "fas fa-pretzel",
+        // "fas fa-cake-slice",
+        // "fas fa-candy",
+        // "fas fa-glass",
+        "fas fa-glass-cheers",
+        "fas fa-faucet-drip",
+        "fas fa-fill-drip",
+        "fas fa-temperature-high",
+        "fas fa-temperature-low",
+        "fas fa-scale-balanced",
+        "fas fa-sink",
+        // "fas fa-knife",
+        "fas fa-utensil-spoon",
+        // "fas fa-utensil-fork",
+        // "fas fa-utensil-knife",
         // Others
         "fas fa-map-marker-alt",
         "fas fa-map",
@@ -233,6 +256,14 @@ export default {
         "fas fa-car",
         "fas fa-bicycle",
         "fas fa-motorcycle",
+        "fas fa-bell-concierge",
+        "fas fa-chair",
+        "fas fa-table",
+        "fas fa-clipboard-list",
+        "fas fa-book-open",
+        "fas fa-cash-register",
+        "fas fa-receipt",
+        "fas fa-person-walking-luggage"
       ],
     };
   },

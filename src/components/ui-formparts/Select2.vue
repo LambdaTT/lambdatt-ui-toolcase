@@ -102,13 +102,16 @@ export default {
       this.emitValue(v)
     },
 
-    modelValue(v) {
-      if (this.internalUpdate) {
-        this.internalUpdate = false
-        return
-      }
+    modelValue: {
+      immediate: true,
+      handler(v) {
+        if (this.internalUpdate) {
+          this.internalUpdate = false
+          return
+        }
 
-      this.setValue(v);
+        this.setValue(v);
+      }
     },
 
     Options(v) {
@@ -214,24 +217,24 @@ export default {
           this.error = this.errorDict[e.status];
           console.error('Erro ao buscar opções remotas:', e)
         }
+
+        this.loading = false;
+      } else {
+        return await this.$getService('toolcase/utils').sleep(200)
       }
 
-      this.loading = false;
     }
   },
 
-  mounted() {
+  async mounted() {
     if (this.OptionsURL && !this.OptionMap) {
       console.warn('Select2: OptionsURL fornecida sem OptionMap. As opções remotas não serão carregadas.')
     }
 
-    setTimeout(async () => {
-      await this.getRemoteOptions();
-
-      if (this.Default) {
-        this.selected = this.Default;
-      }
-    }, 200);
+    await this.getRemoteOptions();
+    if (this.Default) {
+      this.selected = this.Default;
+    }
   }
 }
 </script>
