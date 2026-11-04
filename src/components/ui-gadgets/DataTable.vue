@@ -838,6 +838,37 @@ export default {
         )
       }
 
+      for (const filter of this.availableFilters) {
+        const value = this.filterParams[filter.field]
+        if (value == null || value === '') continue
+
+        if (typeof filter.filterFn === 'function') {
+          rows = rows.filter((row) => filter.filterFn(row, value))
+        } else if (filter.type === 'timerangepicker') {
+          if (!value.from || !value.to) continue
+
+          const toSeconds = (time) => {
+            const match = String(time).match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+            if (!match) return null
+            return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3] || 0)
+          }
+
+          const from = toSeconds(value.from)
+          const to = toSeconds(value.to)
+          if (from === null || to === null) continue
+
+          rows = rows.filter((row) => {
+            const rowTime = String(row[filter.field] ?? '').match(/(?:^|\s)(\d{1,2}:\d{2}(?::\d{2})?)$/)
+            if (!rowTime) return false
+
+            const time = toSeconds(rowTime[1])
+            return time !== null && time >= from && time <= to
+          })
+        } else if (filter.type === 'select') {
+          rows = rows.filter((row) => String(row[filter.field]) === String(value))
+        }
+      }
+
       // Sort by the active column (sortBy is a 1-based column number):
       const sortNum = parseInt(this.pagination.sortBy ?? '1', 10)
       const sortCol = this.Columns[sortNum - 1]
@@ -998,6 +1029,9 @@ export default {
           filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`
         else if (filterConfig?.type == 'datetimerange')
           filters[k] = `$btwn|${value.from}|${value.to}`
+        else if (filterConfig?.type == 'timerangepicker') {
+          if (value.from && value.to) filters[k] = `$btwn|${value.from}|${value.to}`
+        }
         else filters[k] = value
       }
 

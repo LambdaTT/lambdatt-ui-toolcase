@@ -365,13 +365,14 @@
 
     <!-- Input time: -->
     <TimePicker
-      v-if="type == 'time'"
+      v-if="type == 'time' || type == 'timerangepicker'"
       :withSeconds="withSeconds"
       :BgColor="BgColor"
       :dense="dense"
       :disable="disable"
       :hint="hint"
       :readonly="readonly"
+      :range="type == 'timerangepicker'"
       v-model="value"
       :Default="Default"
       :Label="Label"

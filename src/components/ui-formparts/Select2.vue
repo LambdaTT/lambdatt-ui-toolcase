@@ -200,29 +200,27 @@ export default {
 
     async getRemoteOptions() {
       this.loading = true
-      if (this.OptionsURL && this.OptionMap) {
-        try {
+      try {
+        if (this.OptionsURL && this.OptionMap) {
           const { data } = await this.$getService('toolcase/http').get(this.OptionsURL)
           this.remoteOptions = data.map(item => ({
             label: item[this.OptionMap.label],
             value: item[this.OptionMap.value],
           }));
-          const opts = this.definedOpts
-            .sort(
-              (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
-            );
-          this.filteredOptions = opts;
-          this.error = null; // Limpa erros anteriores ao atualizar opções
-        } catch (e) {
-          this.error = this.errorDict[e.status];
-          console.error('Erro ao buscar opções remotas:', e)
+        } else {
+          this.remoteOptions = []
         }
 
-        this.loading = false;
-      } else {
-        return await this.$getService('toolcase/utils').sleep(200)
+        this.filteredOptions = [...this.definedOpts].sort(
+          (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
+        );
+        this.error = null; // Limpa erros anteriores ao atualizar opções
+      } catch (e) {
+        this.error = this.errorDict[e.status];
+        console.error('Erro ao buscar opções remotas:', e)
+      } finally {
+        this.loading = false
       }
-
     }
   },
 
