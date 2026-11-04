@@ -434,8 +434,16 @@ export default {
       required: true,
     },
     DataURL: {
+      // Optional when `StaticData` is provided (local/mock mode, no HTTP).
       type: String,
-      required: true,
+      required: false,
+      default: '',
+    },
+    StaticData: {
+      // When provided, the table runs fully client-side over this array
+      // (search/sort/pagination) instead of fetching from `DataURL`.
+      type: Array,
+      default: null,
     },
     Columns: {
       type: Object,
@@ -811,6 +819,50 @@ export default {
     /////////////
     // Getters:
     /////////////
+    // Single entry point for fetching: delegates to the server, or computes the
+    // result locally when `StaticData` is provided (search/sort/pagination).
+    async fetchData(params, ignorePagination) {
+      if (this.StaticData) return this.getStaticResponse(ignorePagination)
+      return this.$getService('toolcase/http').get(this.DataURL, params)
+    },
+
+    getStaticResponse(ignorePagination) {
+      let rows = Array.isArray(this.StaticData) ? this.StaticData.slice() : []
+
+      // Search across searchable columns (substring, case-insensitive):
+      const term = (this.searchTerm || '').toString().trim().toLowerCase()
+      if (term && this.searchableColumns.length) {
+        const fields = this.searchableColumns.map((c) => c.field)
+        rows = rows.filter((r) =>
+          fields.some((f) => String(r[f] ?? '').toLowerCase().includes(term)),
+        )
+      }
+
+      // Sort by the active column (sortBy is a 1-based column number):
+      const sortNum = parseInt(this.pagination.sortBy ?? '1', 10)
+      const sortCol = this.Columns[sortNum - 1]
+      if (sortCol && sortCol.field) {
+        const f = sortCol.field
+        const dir = (this.pagination.sortDir ?? 'ASC') === 'DESC' ? -1 : 1
+        rows.sort((a, b) => {
+          const av = a[f]
+          const bv = b[f]
+          if (av == null && bv == null) return 0
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+          return (
+            String(av ?? '').localeCompare(String(bv ?? ''), 'pt-BR', { numeric: true }) * dir
+          )
+        })
+      }
+
+      if (ignorePagination) return { data: rows }
+
+      const page = Number(this.pagination.currentPage || 1)
+      const limit = Number(this.pagination.limit || 10)
+      const start = (page - 1) * limit
+      return { data: rows.slice(start, start + limit) }
+    },
+
     async loadData(ignorePagination) {
       if (!this.loading) {
         this.loadFullData()
@@ -830,8 +882,8 @@ export default {
           // Before Load callback:
           if (this.BeforeLoad) await this.BeforeLoad(params)
 
-          // fetch data from server
-          const response = await this.$getService('toolcase/http').get(this.DataURL, params)
+          // fetch data (server or local StaticData)
+          const response = await this.fetchData(params, ignorePagination)
 
           // On Loaded callback:
           if (this.OnLoaded) await this.OnLoaded(response)
@@ -857,7 +909,7 @@ export default {
       delete params.$limit
 
       try {
-        const response = await this.$getService('toolcase/http').get(this.DataURL, params)
+        const response = await this.fetchData(params, true)
         this.fullData = response.data
       } catch (err) {
         this.$emit('error-thrown', err)
