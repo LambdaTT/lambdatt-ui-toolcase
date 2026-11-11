@@ -62,7 +62,12 @@ export default {
     Height: { type: String, default: () => "100%" },
     Width: { type: String, default: () => "100%" },
     ChartType: { type: String, default: () => "line" }, // 'line' | 'bar' | etc
-    DataURL: { type: String, required: true },
+    // Optional when `Data` is provided (local/mock mode, no HTTP).
+    DataURL: { type: String, required: false, default: "" },
+    // When provided, the chart renders this array directly instead of fetching
+    // from `DataURL` (presentation/mock mode). Additive & backward-compatible:
+    // when null, the HTTP path is used exactly as before.
+    Data: { type: Array, default: null },
     Filters: { type: Object, default: () => ({}) },
 
     /**
@@ -116,13 +121,29 @@ export default {
       throw new Error("Invalid chart type");
     },
 
+    // Horizontal bars (Configs.indexAxis === 'y') grow in HEIGHT with the number
+    // of categories so the chart scrolls vertically inside its container; width
+    // stays fluid. Everything else keeps the original vertical behavior.
+    isHorizontalBars() {
+      return this.Configs?.indexAxis === "y";
+    },
+
     dynamicWidth() {
+      if (this.isHorizontalBars) return this.Width;
       if (this.orientation === "vertical") return this.Width;
       const w = Math.max(250, this.data.length * 25);
       return `${Math.ceil(w)}px`;
     },
 
     dynamicHeight() {
+      if (this.isHorizontalBars) {
+        // Stacked ⇒ one bar per category; grouped ⇒ one per dataset.
+        const perCategory = this.Configs?.stacked
+          ? 44
+          : Math.max(44, (this.Datasets?.length || 1) * 22);
+        const h = Math.max(250, this.data.length * perCategory);
+        return `${Math.ceil(h)}px`;
+      }
       if (this.orientation === "horizontal") return this.Height;
       const w = Math.max(250, this.data.length * 25);
       return `${Math.ceil(w)}px`;
@@ -138,6 +159,14 @@ export default {
       deep: true,
       handler() {
         this.debouncedLoad();
+      },
+    },
+
+    // Local/mock mode: re-render when the provided array changes (e.g. filters).
+    Data: {
+      deep: true,
+      handler() {
+        this.loadData();
       },
     },
 
@@ -177,6 +206,14 @@ export default {
       this.state = "loading";
       try {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
+
+        // Local/mock mode: render the provided array, skip HTTP entirely.
+        if (Array.isArray(this.Data)) {
+          this.data = this.Data.slice();
+          if (this.OnLoaded) await this.OnLoaded({ data: this.data });
+          this.state = "ready";
+          return;
+        }
 
         const response = await this.$getService("toolcase/http").get(
           this.DataURL,
@@ -220,10 +257,34 @@ export default {
     },
 
     buildBaseOptions() {
+      // Optional orientation/stacking via Configs (default: current behavior).
+      const indexAxis = this.Configs.indexAxis === "y" ? "y" : "x";
+      const stacked = !!this.Configs.stacked;
+      const horizontal = indexAxis === "y";
+      const hasSecondary = (this.Datasets || []).some((d) => d.secondaryAxis);
+
+      // The category axis gets the truncating tick callback; it is the x axis
+      // for vertical charts and the y axis for horizontal bars.
+      const categoryTicks = {
+        autoSkip: false,
+        callback: function (val) {
+          const tick = this.getLabelForValue(val);
+          const characterLimit = 12;
+          if ((tick?.length ?? 0) >= characterLimit) {
+            return tick
+              .substring(0, characterLimit - 1)
+              .trim()
+              .toLowerCase() + "...";
+          }
+          return tick?.toLowerCase();
+        },
+      };
+
       // v4: tooltips agora em plugins.tooltip; callback recebe (context)
       return {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis,
         animation: this.UseAnimation ? { duration: 400 } : false,
         plugins: {
           legend: { display: !this.Configs.hideLegend },
@@ -234,7 +295,8 @@ export default {
               label: (context) => {
                 const dsIndex = context.datasetIndex;
                 const ds = this.Datasets[dsIndex];
-                const value = context.parsed.y;
+                // On horizontal bars the measured value lives on the x axis.
+                const value = horizontal ? context.parsed.x : context.parsed.y;
                 const label = context.dataset.label || "";
                 if (ds && typeof ds.formatTooltip === "function") {
                   return ds.formatTooltip(label, value);
@@ -247,41 +309,61 @@ export default {
         // v4: scales são objetos com IDs diretos, não arrays
         scales: {
           x: {
-            ticks: {
-              autoSkip: false,
-              callback: function (val) {
-                const tick = this.getLabelForValue(val);
-                const characterLimit = 12;
-                if ((tick?.length ?? 0) >= characterLimit) {
-                  return tick
-                    .substring(0, characterLimit - 1)
-                    .trim()
-                    .toLowerCase() + "...";
-                }
-                return tick?.toLowerCase();
-              },
-            },
+            stacked,
+            beginAtZero: horizontal ? true : undefined,
+            ticks: horizontal ? {} : categoryTicks,
           },
           y: {
-            beginAtZero: true,
+            stacked,
+            beginAtZero: horizontal ? undefined : true,
+            ticks: horizontal ? categoryTicks : {},
           },
+          // Opt-in secondary value axis (e.g. a small-magnitude series like
+          // quantity shown next to large currency series). Datasets request it
+          // via `secondaryAxis: true`; the axis id is 'v2'.
+          ...(hasSecondary
+            ? {
+                v2: horizontal
+                  ? { axis: "x", position: "top", beginAtZero: true, grid: { drawOnChartArea: false } }
+                  : { axis: "y", position: "right", beginAtZero: true, grid: { drawOnChartArea: false } },
+              }
+            : {}),
         },
       };
     },
 
     makePlainDatasetFromSpec(spec) {
-      const color = this.$getService("toolcase/utils")?.randomHexColor
-        ? this.$getService("toolcase/utils").randomHexColor()
-        : "#3489db";
+      // Honor an explicit per-series color when provided (stable across
+      // reloads); otherwise fall back to a random color.
+      const color = spec.color
+        ? spec.color
+        : this.$getService("toolcase/utils")?.randomHexColor
+          ? this.$getService("toolcase/utils").randomHexColor()
+          : "#3489db";
 
-      return {
+      // Line smoothing: opt-in via Configs.tension (or per-series spec.tension).
+      // Default 0 keeps the original straight segments for existing consumers.
+      // Ignored by chart.js for non-line datasets (e.g. bars).
+      const tension = spec.tension ?? this.Configs?.tension ?? 0;
+
+      const ds = {
         label: spec.label,
         data: [],
         fill: false,
         backgroundColor: color,
         borderColor: color,
         borderWidth: 3,
+        tension,
       };
+
+      // Bind to the secondary value axis when requested (id 'v2'); the value
+      // axis is x for horizontal bars and y otherwise.
+      if (spec.secondaryAxis) {
+        if (this.isHorizontalBars) ds.xAxisID = "v2";
+        else ds.yAxisID = "v2";
+      }
+
+      return ds;
     },
 
     reconcileDatasetsStructureAndUpdate(firstInit = false) {

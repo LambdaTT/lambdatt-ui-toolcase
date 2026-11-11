@@ -52,7 +52,11 @@ export default {
     OnLoaded: Function,
     Size: { type: String, default: () => "100%" },
     ChartType: { type: String, default: () => "pie" }, // 'pie' | 'doughnut'
-    DataURL: { type: String, required: true },
+    // Optional when `Data` is provided (local/mock mode, no HTTP).
+    DataURL: { type: String, required: false, default: "" },
+    // When provided, the chart renders this array directly instead of fetching
+    // from `DataURL`. Additive & backward-compatible (null ⇒ HTTP path as before).
+    Data: { type: Array, default: null },
     Filters: { type: Object, default: () => ({}) },
     /**
      * Configs: { LabelField: 'name', ValueField: 'value' }
@@ -98,6 +102,14 @@ export default {
       },
     },
 
+    // Local/mock mode: re-render when the provided array changes (e.g. filters).
+    Data: {
+      deep: true,
+      handler() {
+        this.loadData();
+      },
+    },
+
     data: {
       deep: true,
       handler() {
@@ -127,6 +139,14 @@ export default {
       this.state = "loading";
       try {
         if (this.BeforeLoad) await this.BeforeLoad(this.Filters);
+
+        // Local/mock mode: render the provided array, skip HTTP entirely.
+        if (Array.isArray(this.Data)) {
+          this.data = this.Data.slice();
+          if (this.OnLoaded) await this.OnLoaded({ data: this.data });
+          this.state = "ready";
+          return;
+        }
 
         const resp = await this.$getService("toolcase/http").get(
           this.DataURL,
