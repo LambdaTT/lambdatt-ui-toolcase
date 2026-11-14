@@ -24,13 +24,13 @@
         <q-icon v-if="!!Icon" :name="Icon" />
       </template>
     </q-input>
-    <div v-show="this.fileData.size != null" class="text-caption text-right">
-      {{ (this.fileData.size / 1024).toFixed(2) }}
+    <div v-show="fileData.size != null" class="text-caption text-right">
+      {{ (fileData.size / 1024).toFixed(2) }}
       kb
     </div>
     <input
       :disabled="readonly"
-      :ref="inputRefId"
+      ref="inputEl"
       :accept="accept"
       type="file"
       v-on:change="fileChange"
@@ -38,142 +38,143 @@
     />
   </div>
 </template>
-<script>
-export default {
-  name: "ui-formparts-fileupload",
+<script setup>
+import { ref, watch, onMounted, getCurrentInstance } from "vue";
 
-  props: {
-    clearable: Boolean,
-    disable: Boolean,
-    readonly: Boolean,
-    accept: String,
-    modelValue: Object,
-    Icon: String,
-    Label: String,
-    Color: String,
-    Error: Boolean,
-    ReadAsURL: Boolean,
-    hint: String,
+defineOptions({ name: "ui-formparts-fileupload" });
+
+const props = defineProps({
+  clearable: Boolean,
+  disable: Boolean,
+  readonly: Boolean,
+  accept: String,
+  modelValue: Object,
+  Icon: String,
+  Label: String,
+  Color: String,
+  Error: Boolean,
+  ReadAsURL: Boolean,
+  hint: String,
+});
+
+const emit = defineEmits([
+  "focus",
+  "update:model-value",
+  "activateFn",
+  "expose-ref",
+]);
+
+// Submódulo acessa os serviços do app pelo $getService global (resolução por URI) — equivalente
+// ao this.$getService do Options API.
+const getService =
+  getCurrentInstance().appContext.config.globalProperties.$getService;
+
+const inputEl = ref(null);
+const fileData = ref({
+  file: null,
+  name: null,
+  src: null,
+  size: null,
+});
+let dialogIsOpen = false;
+let repetitionLock = false;
+
+watch(
+  () => props.modelValue,
+  (v) => {
+    fileData.value = v;
   },
+  { deep: true },
+);
 
-  data() {
-    return {
-      fileData: {
-        file: null,
-        name: null,
-        src: null,
-        size: null,
-      },
-      dialogIsOpen: false,
-      repetitionLock: false,
-      inputRefId: null,
+watch(
+  fileData,
+  (v) => {
+    emit("update:model-value", v);
+  },
+  { deep: true },
+);
+
+function sleep(miliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(miliseconds), miliseconds);
+  });
+}
+
+async function inputClicked() {
+  if (!repetitionLock) {
+    repetitionLock = true;
+    getService("toolcase/eventbroadcaster").$broadcast(
+      "fileupload-before-choose",
+    );
+    await sleep(100);
+    dialogIsOpen = true;
+    window.addEventListener("focus", onWindowFocus);
+    inputEl.value.click();
+    document.activeElement.blur();
+  }
+}
+
+function clearFile() {
+  var input = inputEl.value;
+  input.value = null;
+  clearFileData();
+}
+
+function clearFileData() {
+  fileData.value = {
+    file: null,
+    name: null,
+    src: null,
+    size: null,
+  };
+}
+
+function readFile(file) {
+  return new Promise((resolve) => {
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      resolve({
+        src: evt.target.result,
+        file: file,
+      });
     };
-  },
 
-  watch: {
-    modelValue: {
-      handler(v) {
-        this.fileData = v;
-      },
-      deep: true,
-    },
+    if (props.ReadAsURL) reader.readAsDataURL(file);
+    else reader.readAsText(file);
+  });
+}
 
-    fileData: {
-      handler(v) {
-        this.$emit("update:model-value", v);
-      },
-      deep: true,
-    },
-  },
+async function fileChange(evt) {
+  dialogIsOpen = false;
+  var input = evt.target;
 
-  methods: {
-    sleep(miliseconds) {
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(miliseconds), miliseconds);
-      });
-    },
+  if (input.files.length > 0) {
+    let filedata = await readFile(input.files[0]);
+    fileData.value = {
+      file: filedata.file,
+      name: filedata.file.name,
+      src: filedata.src,
+      size: filedata.file.size,
+    };
+  } else {
+    clearFileData();
+  }
 
-    async inputClicked() {
-      if (!this.repetitionLock) {
-        this.repetitionLock = true;
-        this.$getService("toolcase/eventbroadcaster").$broadcast(
-          "fileupload-before-choose",
-        );
-        await this.sleep(100);
-        this.dialogIsOpen = true;
-        window.addEventListener("focus", this.onWindowFocus);
-        this.$refs[this.inputRefId].click();
-        document.activeElement.blur();
-      }
-    },
+  repetitionLock = false;
+  getService("toolcase/eventbroadcaster").$broadcast("fileupload-chosen");
+}
 
-    clearFile() {
-      var input = this.$refs[this.inputRefId];
-      input.value = null;
-      this.clearFileData();
-    },
+function onWindowFocus() {
+  window.removeEventListener("focus", onWindowFocus);
 
-    clearFileData() {
-      this.fileData = {
-        file: null,
-        name: null,
-        src: null,
-        size: null,
-      };
-    },
+  setTimeout(() => {
+    if (dialogIsOpen) fileChange({ target: { files: [] } });
+  }, 100);
+}
 
-    readFile(file) {
-      return new Promise((resolve) => {
-        var reader = new FileReader();
-        reader.onload = function (evt) {
-          resolve({
-            src: evt.target.result,
-            file: file,
-          });
-        };
-
-        if (this.ReadAsURL) reader.readAsDataURL(file);
-        else reader.readAsText(file);
-      });
-    },
-
-    async fileChange(evt) {
-      this.dialogIsOpen = false;
-      var input = evt.target;
-
-      if (input.files.length > 0) {
-        let filedata = await this.readFile(input.files[0]);
-        this.fileData = {
-          file: filedata.file,
-          name: filedata.file.name,
-          src: filedata.src,
-          size: filedata.file.size,
-        };
-      } else {
-        this.clearFileData();
-      }
-
-      this.repetitionLock = false;
-      this.$getService("toolcase/eventbroadcaster").$broadcast(
-        "fileupload-chosen",
-      );
-    },
-
-    onWindowFocus() {
-      window.removeEventListener("focus", this.onWindowFocus);
-
-      setTimeout(() => {
-        if (this.dialogIsOpen) this.fileChange({ target: { files: [] } });
-      }, 100);
-    },
-  },
-
-  mounted() {
-    this.$emit("activateFn", this.inputClicked);
-    this.inputRefId = `InputFileRef-${this.$getService(
-      "toolcase/utils",
-    ).uniqid()}`;
-    this.$emit("expose-ref", this.$refs[this.inputRefId]);
-  },
-};
+onMounted(() => {
+  emit("activateFn", inputClicked);
+  emit("expose-ref", inputEl.value);
+});
 </script>

@@ -264,303 +264,295 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "ui-gadgets-simpletable",
+<script setup>
+import { ref, computed, watch, onMounted } from "vue";
 
-  props: {
-    Name: {
-      type: String,
-      required: true,
-    },
-    modelValue: {
-      type: Object,
-      required: true,
-    },
-    Data: {
-      type: Array,
-      required: true,
-    },
-    Columns: {
-      type: Object,
-      required: true,
-    },
-    RowActions: Object,
-    Export: Object,
-    Printable: Boolean,
-    dense: Boolean,
-    IntervalRule: Function,
-    CustomResources: Array,
+defineOptions({ name: "ui-gadgets-simpletable" });
+
+const props = defineProps({
+  Name: {
+    type: String,
+    required: true,
   },
-
-  data() {
-    return {
-      // Filters related vars:
-      searchTerm: null,
-      searchDebounceTimeout: null,
-
-      // Columns settings:
-      visibleColumns: [],
-      columns: [],
-
-      // Data:
-      loadTimeout: null,
-      error: null,
-
-      // State:
-      loading: false,
-      showLoader: false,
-      errorState: false,
-    };
+  modelValue: {
+    type: Object,
+    required: true,
   },
+  Data: {
+    type: Array,
+    required: true,
+  },
+  Columns: {
+    type: Object,
+    required: true,
+  },
+  RowActions: Object,
+  Export: Object,
+  Printable: Boolean,
+  dense: Boolean,
+  IntervalRule: Function,
+  CustomResources: Array,
+});
 
-  computed: {
-    data() {
-      var result = [...this.Data];
-      let offset = 0;
+const emit = defineEmits(["update:state", "update:model-value"]);
 
-      if (this.searchTerm) {
-        result = result.filter((row) => {
-          for (let i = 0; i < this.searchableColumns.length; i++) {
-            let column = this.searchableColumns[i];
-            if (
-              String(row[column.field])
-                .toLowerCase()
-                .includes(this.searchTerm.toLowerCase())
-            ) {
-              return true;
-            }
-          }
-          return false;
-        });
-      }
+// Filters related vars:
+const searchTerm = ref(null);
 
-      if (!!this.IntervalRule && typeof this.IntervalRule == "function") {
-        for (let i = -1; i < result.length; i++) {
-          let previous = result[i - 1];
-          let current = result[i];
-          let next = result[i + 1];
+// Columns settings:
+const visibleColumns = ref([]);
+const columns = ref([]);
 
-          if (this.IntervalRule(previous, current, next) === true) {
-            result.splice(i + 1 + offset, 0, "interval");
-            offset++;
-          }
+// Data:
+const error = ref(null);
+
+// State:
+const loading = ref(false);
+const showLoader = ref(false);
+const errorState = ref(false);
+
+const data = computed(() => {
+  var result = [...props.Data];
+  let offset = 0;
+
+  if (searchTerm.value) {
+    result = result.filter((row) => {
+      for (let i = 0; i < searchableColumns.value.length; i++) {
+        let column = searchableColumns.value[i];
+        if (
+          String(row[column.field])
+            .toLowerCase()
+            .includes(searchTerm.value.toLowerCase())
+        ) {
+          return true;
         }
       }
-
-      return result;
-    },
-
-    showActions() {
-      for (let i = 0; i < this.RowActions.length; i++) {
-        let a = this.RowActions[i];
-        if (a.hide) {
-          if (typeof a.hide == "function") {
-            for (let j = 0; j < this.dataInPage.length; j++) {
-              let row = this.dataInPage[j];
-              if (!a.hide(row)) return true;
-            }
-          } else return !a.hide;
-        } else return true;
-      }
-
       return false;
-    },
+    });
+  }
 
-    columnOptions() {
-      return this.columns
-        .map((clm) => {
-          return clm.name != "actions"
-            ? {
-                label: clm.label,
-                value: clm.field,
-              }
-            : null;
-        })
-        .filter((item) => item != null);
-    },
+  if (!!props.IntervalRule && typeof props.IntervalRule == "function") {
+    for (let i = -1; i < result.length; i++) {
+      let previous = result[i - 1];
+      let current = result[i];
+      let next = result[i + 1];
 
-    exportOptions() {
-      var typeIcons = {
-        xls: "fas fa-file-excel",
-        csv: "fas fa-file-csv",
-      };
-      var typeLabels = {
-        xls: "Exportar XLS",
-        csv: "Exportar CSV",
-      };
-
-      if (!(this.Export instanceof Array))
-        return [
-          {
-            ...this.Export,
-            icon: typeIcons[this.Export.filetype],
-            label: typeLabels[this.Export.filetype],
-          },
-        ];
-
-      return this.Export.map((opt) => ({
-        ...opt,
-        icon: typeIcons[opt.filetype],
-        label: typeLabels[opt.filetype],
-      }));
-    },
-
-    state() {
-      if (this.showLoader) return "loading";
-      if (this.errorState) return "error";
-      if (this.data.length > 0) return "ready";
-      if (this.data.length == 0) return "empty";
-      return null;
-    },
-
-    searchableColumns() {
-      var searchableColumns = [];
-      for (let i = 0; i < this.columns.length; i++) {
-        let column = this.columns[i];
-        if (!column.field || column.field == "" || column.searchable === false)
-          continue;
-
-        searchableColumns.push(column);
+      if (props.IntervalRule(previous, current, next) === true) {
+        result.splice(i + 1 + offset, 0, "interval");
+        offset++;
       }
+    }
+  }
 
-      return searchableColumns;
-    },
-  },
+  return result;
+});
 
-  watch: {
-    visibleColumns(newVal) {
-      if (newVal.length < 1) {
-        this.visibleColumns = [this.Columns[0].field];
-      }
+const showActions = computed(() => {
+  for (let i = 0; i < props.RowActions.length; i++) {
+    let a = props.RowActions[i];
+    if (a.hide) {
+      if (typeof a.hide == "function") {
+        for (let j = 0; j < data.value.length; j++) {
+          let row = data.value[j];
+          if (!a.hide(row)) return true;
+        }
+      } else return !a.hide;
+    } else return true;
+  }
 
-      localStorage.setItem(
-        `SimpleTable.${this.Name}.visibleColumns`,
-        JSON.stringify(newVal),
-      );
+  return false;
+});
 
-      this.exposeFactory();
-    },
-
-    loading(isLoading) {
-      this.showLoader = isLoading;
-    },
-
-    state(v) {
-      this.$emit("update:state", v);
-    },
-
-    // searchTerm(term) {
-    //   if (!!this.searchDebounceTimeout) {
-    //     clearTimeout(this.searchDebounceTimeout)
-    //     this.searchDebounceTimeout = null;
-    //   }
-
-    //   this.searchDebounceTimeout = setTimeout(() => {
-    //     var result = {};
-
-    //     if (term) {
-
-    //     }
-
-    //     this.$emit('search', result);
-    //   }, 200)
-    // }
-  },
-
-  methods: {
-    showActionsBtnInRow(row) {
-      var show = false;
-      for (let i = 0; i < this.RowActions.length; i++) {
-        let a = this.RowActions[i];
-        if ("hide" in a) {
-          if (typeof a.hide == "function") {
-            if (!a.hide(row)) {
-              show = true;
-            }
-          } else {
-            if (!a.hide) {
-              show = true;
-            }
+const columnOptions = computed(() =>
+  columns.value
+    .map((clm) => {
+      return clm.name != "actions"
+        ? {
+            label: clm.label,
+            value: clm.field,
           }
-        } else show = true;
+        : null;
+    })
+    .filter((item) => item != null),
+);
+
+const exportOptions = computed(() => {
+  var typeIcons = {
+    xls: "fas fa-file-excel",
+    csv: "fas fa-file-csv",
+  };
+  var typeLabels = {
+    xls: "Exportar XLS",
+    csv: "Exportar CSV",
+  };
+
+  if (!(props.Export instanceof Array))
+    return [
+      {
+        ...props.Export,
+        icon: typeIcons[props.Export.filetype],
+        label: typeLabels[props.Export.filetype],
+      },
+    ];
+
+  return props.Export.map((opt) => ({
+    ...opt,
+    icon: typeIcons[opt.filetype],
+    label: typeLabels[opt.filetype],
+  }));
+});
+
+const state = computed(() => {
+  if (showLoader.value) return "loading";
+  if (errorState.value) return "error";
+  if (data.value.length > 0) return "ready";
+  if (data.value.length == 0) return "empty";
+  return null;
+});
+
+const searchableColumns = computed(() => {
+  var cols = [];
+  for (let i = 0; i < columns.value.length; i++) {
+    let column = columns.value[i];
+    if (!column.field || column.field == "" || column.searchable === false)
+      continue;
+
+    cols.push(column);
+  }
+
+  return cols;
+});
+
+watch(visibleColumns, (newVal) => {
+  if (newVal.length < 1) {
+    visibleColumns.value = [props.Columns[0].field];
+  }
+
+  localStorage.setItem(
+    `SimpleTable.${props.Name}.visibleColumns`,
+    JSON.stringify(newVal),
+  );
+
+  exposeFactory();
+});
+
+watch(loading, (isLoading) => {
+  showLoader.value = isLoading;
+});
+
+watch(state, (v) => {
+  emit("update:state", v);
+});
+
+// searchTerm(term) {
+//   if (!!searchDebounceTimeout) {
+//     clearTimeout(searchDebounceTimeout)
+//     searchDebounceTimeout = null;
+//   }
+
+//   searchDebounceTimeout = setTimeout(() => {
+//     var result = {};
+
+//     if (term) {
+
+//     }
+
+//     emit('search', result);
+//   }, 200)
+// }
+
+function showActionsBtnInRow(row) {
+  var show = false;
+  for (let i = 0; i < props.RowActions.length; i++) {
+    let a = props.RowActions[i];
+    if ("hide" in a) {
+      if (typeof a.hide == "function") {
+        if (!a.hide(row)) {
+          show = true;
+        }
+      } else {
+        if (!a.hide) {
+          show = true;
+        }
       }
-      return show;
+    } else show = true;
+  }
+  return show;
+}
+
+function exportFile(filetype, filename) {
+  filename = filename.indexOf(`.${filetype}`)
+    ? filename
+    : `${filename}.${filetype}`;
+
+  var blobType;
+  var content;
+  switch (filetype) {
+    case "xls":
+      blobType = "application/vnd.ms-excel;charset=utf-8;";
+      content = buildContentTable(data.value);
+      break;
+    case "csv":
+      blobType = "text/csv;charset=utf-8;";
+      content = buildCsvContent(data.value);
+      break;
+  }
+
+  // Encode the content to UTF-8
+  const encoder = new TextEncoder();
+  const utf8Content = encoder.encode(content);
+
+  // Create a blob with the UTF-8 encoded content
+  const blob = new Blob([utf8Content], { type: blobType });
+
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+
+  link.style.visibility = "hidden";
+
+  // Adiciona o link ao DOM e dispara o clique
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function printData() {
+  const content = `${buildContentTable(data.value)}`;
+
+  // Open a new window or tab for printing
+  const newWindow = window.open();
+  newWindow.document.open();
+  newWindow.document.write(content);
+  newWindow.document.close();
+  newWindow.print();
+}
+
+function exposeFactory() {
+  emit("update:model-value", {
+    loadState: (flag) => (loading.value = flag),
+    setError: (err) => {
+      error.value = err;
+      errorState.value = true;
     },
+    visibleColumns: visibleColumns.value,
+  });
+}
 
-    exportFile(filetype, filename) {
-      filename = filename.indexOf(`.${filetype}`)
-        ? filename
-        : `${filename}.${filetype}`;
+function escapeXml(value) {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-      var blobType;
-      var content;
-      switch (filetype) {
-        case "xls":
-          blobType = "application/vnd.ms-excel;charset=utf-8;";
-          content = this.buildContentTable(this.data);
-          break;
-        case "csv":
-          blobType = "text/csv;charset=utf-8;";
-          content = this.buildCsvContent(this.data);
-          break;
-      }
-
-      // Encode the content to UTF-8
-      const encoder = new TextEncoder();
-      const utf8Content = encoder.encode(content);
-
-      // Create a blob with the UTF-8 encoded content
-      const blob = new Blob([utf8Content], { type: blobType });
-
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", filename);
-
-      link.style.visibility = "hidden";
-
-      // Adiciona o link ao DOM e dispara o clique
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    },
-
-    printData() {
-      const content = `${this.buildContentTable(this.data)}`;
-
-      // Open a new window or tab for printing
-      const newWindow = window.open();
-      newWindow.document.open();
-      newWindow.document.write(content);
-      newWindow.document.close();
-      newWindow.print();
-    },
-
-    exposeFactory() {
-      this.$emit("update:model-value", {
-        loadState: (flag) => (this.loading = flag),
-        setError: (err) => {
-          this.error = err;
-          this.errorState = true;
-        },
-        visibleColumns: this.visibleColumns,
-      });
-    },
-
-    escapeXml(value) {
-      if (value === null || value === undefined) return "";
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    },
-
-    buildContentTable(data) {
-      // Início do XML
-      let content = `
+function buildContentTable(tableData) {
+  // Início do XML
+  let content = `
       <?xml version="1.0" encoding="UTF-8"?>
   <html xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:x="urn:schemas-microsoft-com:office:excel"
@@ -587,104 +579,102 @@ export default {
   <table>
     <thead>
       <tr>
-        ${this.Columns.filter((column) =>
-          this.visibleColumns.includes(column.field),
+        ${props.Columns.filter((column) =>
+          visibleColumns.value.includes(column.field),
         )
-          .map((column) => `<th>${this.escapeXml(column.label)}</th>`)
+          .map((column) => `<th>${escapeXml(column.label)}</th>`)
           .join("")}
       </tr>
     </thead>
     <tbody>
   `;
 
-      // Adiciona as linhas
-      for (let j = 0; j < data.length; j++) {
-        content += "<tr>";
-        let row = data[j];
+  // Adiciona as linhas
+  for (let j = 0; j < tableData.length; j++) {
+    content += "<tr>";
+    let row = tableData[j];
 
-        for (let i = 0; i < this.Columns.length; i++) {
-          let clm = this.Columns[i];
-          if (!this.visibleColumns.includes(clm.field)) continue;
-          content += `<td>${
-            clm.format
-              ? clm.format(row)
-              : row[clm.field]
-              ? row[clm.field]
-              : ""
-          }</td>`;
-        }
-        content += "</tr>";
-      }
-      // Fecha o XML
-      content += `
+    for (let i = 0; i < props.Columns.length; i++) {
+      let clm = props.Columns[i];
+      if (!visibleColumns.value.includes(clm.field)) continue;
+      content += `<td>${
+        clm.format
+          ? clm.format(row)
+          : row[clm.field]
+          ? row[clm.field]
+          : ""
+      }</td>`;
+    }
+    content += "</tr>";
+  }
+  // Fecha o XML
+  content += `
     </tbody>
   </table>
   `;
 
-      return content;
-    },
+  return content;
+}
 
-    buildCsvContent(rawdata) {
-      // Ensure the data is an array of objects
-      if (
-        !Array.isArray(rawdata) ||
-        !rawdata.length ||
-        typeof rawdata[0] !== "object"
-      ) {
-        console.error("The provided data could not be converted to CSV.");
-        return;
-      }
+function buildCsvContent(rawdata) {
+  // Ensure the data is an array of objects
+  if (
+    !Array.isArray(rawdata) ||
+    !rawdata.length ||
+    typeof rawdata[0] !== "object"
+  ) {
+    console.error("The provided data could not be converted to CSV.");
+    return;
+  }
 
-      // Extract headers (keys of the first object in the array)
-      const headers = this.Columns.filter((column) =>
-        this.visibleColumns.includes(column.field),
-      ).map((column) => column.label);
+  // Extract headers (keys of the first object in the array)
+  const headers = props.Columns.filter((column) =>
+    visibleColumns.value.includes(column.field),
+  ).map((column) => column.label);
 
-      const data = [];
-      for (let j = 0; j < rawdata.length; j++) {
-        let row = rawdata[j];
-        let rowValues = [];
+  const rows = [];
+  for (let j = 0; j < rawdata.length; j++) {
+    let row = rawdata[j];
+    let rowValues = [];
 
-        for (let i = 0; i < this.Columns.length; i++) {
-          let clm = this.Columns[i];
-          if (!this.visibleColumns.includes(clm.field)) continue;
+    for (let i = 0; i < props.Columns.length; i++) {
+      let clm = props.Columns[i];
+      if (!visibleColumns.value.includes(clm.field)) continue;
 
-          rowValues.push(row[clm.field]);
-        }
-        data.push(rowValues);
-      }
+      rowValues.push(row[clm.field]);
+    }
+    rows.push(rowValues);
+  }
 
-      // Generate CSV content
-      const csvContent = [
-        headers.join(";"), // Join headers with commas
-        ...data.map((row) => row.join(";")), // Map each row to CSV string
-      ].join("\r\n"); // Separate rows with a newline
+  // Generate CSV content
+  const csvContent = [
+    headers.join(";"), // Join headers with commas
+    ...rows.map((row) => row.join(";")), // Map each row to CSV string
+  ].join("\r\n"); // Separate rows with a newline
 
-      return csvContent;
-    },
-  },
+  return csvContent;
+}
 
-  async mounted() {
-    // Set columns:
-    this.columns = [...this.Columns];
-    this.visibleColumns =
-      JSON.parse(
-        localStorage.getItem(`SimpleTable.${this.Name}.visibleColumns`),
-      ) ?? this.Columns.map((clm) => clm.field);
-    if (this.RowActions && this.RowActions?.length > 0)
-      this.columns.push({
-        name: "actions",
-        label: "Ações",
-        align: "center",
-        sortable: false,
-        filterable: false,
-      });
+onMounted(() => {
+  // Set columns:
+  columns.value = [...props.Columns];
+  visibleColumns.value =
+    JSON.parse(
+      localStorage.getItem(`SimpleTable.${props.Name}.visibleColumns`),
+    ) ?? props.Columns.map((clm) => clm.field);
+  if (props.RowActions && props.RowActions?.length > 0)
+    columns.value.push({
+      name: "actions",
+      label: "Ações",
+      align: "center",
+      sortable: false,
+      filterable: false,
+    });
 
-    // Set persisted search term:
-    this.searchTerm =
-      localStorage.getItem(`SimpleTable.${this.Name}.searchTerm`) ?? null;
-  },
-};
+  // Set persisted search term:
+  searchTerm.value =
+    localStorage.getItem(`SimpleTable.${props.Name}.searchTerm`) ?? null;
+});
 </script>
 
 <style scoped>

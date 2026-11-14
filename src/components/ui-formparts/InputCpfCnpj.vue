@@ -10,77 +10,69 @@
   </q-input>
 </template>
 
-<script>
-export default {
-  name: 'ui-formparts-input-cpf-cnpj',
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
 
-  props: {
-    Icon: String,
-    modelValue: String,
-    readonly: Boolean,
-    disable: Boolean,
-    dense: Boolean,
-    clearable: Boolean,
-    Default: String,
-    Label: String,
-    Error: Boolean,
-    ErrorMsg: String,
-    CpfOnly: Boolean,
-    CnpjOnly: Boolean,
-    BgColor: String,
-    hint: String,
-  },
+defineOptions({ name: 'ui-formparts-input-cpf-cnpj' })
 
-  data() {
-    return {
-      value: null,
-    }
-  },
+const props = defineProps({
+  Icon: String,
+  modelValue: String,
+  readonly: Boolean,
+  disable: Boolean,
+  dense: Boolean,
+  clearable: Boolean,
+  Default: String,
+  Label: String,
+  Error: Boolean,
+  ErrorMsg: String,
+  CpfOnly: Boolean,
+  CnpjOnly: Boolean,
+  BgColor: String,
+  hint: String,
+})
 
-  computed: {
-    mask() {
-      let mask = '###.###.###-###';
+const emit = defineEmits(['focus', 'update:modelValue'])
 
-      if (this.CpfOnly) mask = '###.###.###-##';
-      if (this.CnpjOnly) mask = '##.###.###/####-##';
+const value = ref(null)
 
-      if (this.value) {
-        const onlyDigits = this.value.replace(/\D+/g, '');
-        if (onlyDigits.length > 11) mask = '##.###.###/####-##';
-      }
+const mask = computed(() => {
+  let mask = '###.###.###-###'
 
-      return mask;
-    }
-  },
+  if (props.CpfOnly) mask = '###.###.###-##'
+  if (props.CnpjOnly) mask = '##.###.###/####-##'
 
-  watch: {
-    modelValue(val) {
-      this.value = val ?? null;
-    },
-
-    value(val) {
-      if (!val) return this.clear();
-      else if (val.length < 14) return;
-
-      this.emit();
+  if (value.value) {
+    const onlyDigits = value.value.replace(/\D+/g, '')
+    if (onlyDigits.length > 11) mask = '##.###.###/####-##'
   }
-  },
 
-  methods: {
-    clear() {
-      this.value = this.Default || null;
-      this.emit();
-    },
+  return mask
+})
 
-    emit() {
-      this.$emit('update:modelValue', this.value);
-    }
-  },
+watch(() => props.modelValue, (val) => {
+  value.value = val ?? null
+})
 
-  mounted() {
-    if (this.Default) {
-      this.value = this.Default;
-    }
-  }
+watch(value, (val) => {
+  if (!val) return clear()
+  else if (val.length < 14) return
+
+  emitValue()
+})
+
+function clear() {
+  value.value = props.Default || null
+  emitValue()
 }
+
+function emitValue() {
+  emit('update:modelValue', value.value)
+}
+
+onMounted(() => {
+  if (props.Default) {
+    value.value = props.Default
+  }
+})
 </script>

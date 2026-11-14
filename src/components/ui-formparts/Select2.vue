@@ -41,198 +41,189 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ui-formparts-select2',
+<script setup>
+import { ref, computed, watch, onMounted, getCurrentInstance } from 'vue'
 
-  props: {
-    modelValue: {
-      type: [String, Number, Array, Object],
-      default: null
-    },
-    Options: {
-      type: Array,
-      default: () => []
-    },
-    OptionsURL: String,
-    OptionMap: Object,
+defineOptions({ name: 'ui-formparts-select2' })
 
-    BgColor: String,
-    Label: String,
-    Icon: String,
-    Error: Boolean,
-
-    readonly: Boolean,
-    disable: Boolean,
-    dense: Boolean,
-    clearable: Boolean,
-
-    Multiple: Boolean,
-    UseChips: Boolean,
-    StackLabel: Boolean,
-
-    Default: [String, Object, Number],
+const props = defineProps({
+  modelValue: {
+    type: [String, Number, Array, Object],
+    default: null
   },
-
-  data() {
-    return {
-      filteredOptions: [],
-      selected: null,
-      isOpen: false,
-      internalUpdate: false, // Evita loop infinito entre: selected -> emitValue -> modelValue -> setValue -> selected
-      error: null,
-      errorDict: {
-        400: '400 - Requisição inválida.',
-        401: '401 - Não autenticado.',
-        403: '403 - Permissão negada.',
-        404: '404 - Não Encontrado',
-        500: '500 - Erro interno do servidor. Tente novamente mais tarde.',
-        502: '502 - Bad Gateway.',
-        503: '503 - Serviço temporariamente indisponível.',
-        504: '504 - Gateway Timeout.'
-      },
-      remoteOptions: [],
-      loading: true,
-    }
+  Options: {
+    type: Array,
+    default: () => []
   },
+  OptionsURL: String,
+  OptionMap: Object,
 
-  watch: {
-    selected(v) {
-      v = v ?? this.Default ?? null;
-      this.emitValue(v)
-    },
+  BgColor: String,
+  Label: String,
+  Icon: String,
+  Error: Boolean,
 
-    modelValue: {
-      immediate: true,
-      handler(v) {
-        if (this.internalUpdate) {
-          this.internalUpdate = false
-          return
-        }
+  readonly: Boolean,
+  disable: Boolean,
+  dense: Boolean,
+  clearable: Boolean,
 
-        this.setValue(v);
-      }
-    },
+  Multiple: Boolean,
+  UseChips: Boolean,
+  StackLabel: Boolean,
 
-    Options(v) {
-      const opts = v.length ? [...v] : (this.remoteOptions ?? []);
-      this.filteredOptions = opts.sort(
+  Default: [String, Object, Number],
+})
+
+const emit = defineEmits(['focus', 'update:model-value'])
+
+// Submódulo acessa os serviços do app pelo $getService global (resolução por URI) — equivalente
+// ao this.$getService do Options API.
+const getService = getCurrentInstance().appContext.config.globalProperties.$getService
+
+const filteredOptions = ref([])
+const selected = ref(null)
+const isOpen = ref(false)
+let internalUpdate = false // Evita loop infinito entre: selected -> emitValue -> modelValue -> setValue -> selected
+const error = ref(null)
+const errorDict = {
+  400: '400 - Requisição inválida.',
+  401: '401 - Não autenticado.',
+  403: '403 - Permissão negada.',
+  404: '404 - Não Encontrado',
+  500: '500 - Erro interno do servidor. Tente novamente mais tarde.',
+  502: '502 - Bad Gateway.',
+  503: '503 - Serviço temporariamente indisponível.',
+  504: '504 - Gateway Timeout.'
+}
+const remoteOptions = ref([])
+const loading = ref(true)
+
+const options = computed(() => filteredOptions.value)
+
+const definedOpts = computed(() =>
+  props.Options.length ? props.Options : (remoteOptions.value ?? [])
+)
+
+watch(selected, (v) => {
+  v = v ?? props.Default ?? null;
+  emitValue(v)
+})
+
+watch(() => props.modelValue, (v) => {
+  if (internalUpdate) {
+    internalUpdate = false
+    return
+  }
+
+  setValue(v);
+}, { immediate: true })
+
+watch(() => props.Options, (v) => {
+  const opts = v.length ? [...v] : (remoteOptions.value ?? []);
+  filteredOptions.value = opts.sort(
+    (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
+  );
+  error.value = null; // Limpa erros anteriores ao atualizar opções
+  setValue(props.modelValue)
+})
+
+watch(() => props.OptionsURL, () => {
+  getRemoteOptions()
+})
+
+function setValue(v) {
+  if (loading.value && props.Options.length === 0) {
+    setTimeout(() => setValue(v), 300);
+    return;
+  }
+
+  const source = definedOpts.value
+  if (!source?.length) return
+
+  if (!v) {
+    selected.value = props.Multiple ? [] : null
+    return
+  }
+
+  selected.value = props.Multiple
+    ? source.filter(opt => (Array.isArray(v) ? v : []).includes(opt.value))
+    : source.find(opt =>
+      String(opt.value).toLowerCase() === String(v).toLowerCase()
+    ) || null
+}
+
+function filterFn(val, update) {
+  update(() => {
+    const opts = definedOpts.value
+      .sort(
         (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
       );
-      this.error = null; // Limpa erros anteriores ao atualizar opções
-      this.setValue(this.modelValue)
-    },
-
-    OptionsURL() {
-      this.getRemoteOptions()
-    }
-  },
-
-  computed: {
-    options() {
-      return this.filteredOptions
-    },
-
-    definedOpts() {
-      return this.Options.length ? this.Options : (this.remoteOptions ?? [])
-    }
-  },
-
-  methods: {
-    setValue(v) {
-      if (this.loading && this.Options.length === 0) {
-        setTimeout(() => this.setValue(v), 300);
-        return;
-      }
-
-      const source = this.definedOpts
-      if (!source?.length) return
-
-      if (!v) {
-        this.selected = this.Multiple ? [] : null
-        return
-      }
-
-      this.selected = this.Multiple
-        ? source.filter(opt => (Array.isArray(v) ? v : []).includes(opt.value))
-        : source.find(opt =>
-          String(opt.value).toLowerCase() === String(v).toLowerCase()
-        ) || null
-    },
-
-    filterFn(val, update) {
-      update(() => {
-        const opts = this.definedOpts
-          .sort(
-            (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
-          );
-        if (!(val)) {
-          this.filteredOptions = opts
-          return
-        }
-
-        const needle = val.toLowerCase()
-        this.filteredOptions = opts
-          .filter(opt =>
-            String(opt.label).toLowerCase().includes(needle)
-          )
-      })
-    },
-
-    emitValue(v) {
-      if (this.Multiple) {
-        this.internalUpdate = true
-        const values = Array.isArray(v)
-          ? v.map(item => (item instanceof Object && 'value' in item) ? item.value : item)
-          : []
-        this.$emit('update:model-value', values)
-        return
-      }
-
-      if (v instanceof Object && "value" in v) v = v.value;
-
-      const payload = v ? v : null
-      if (payload === this.modelValue) return
-
-      this.internalUpdate = true
-      this.$emit('update:model-value', payload)
-    },
-
-    async getRemoteOptions() {
-      this.loading = true
-      try {
-        if (this.OptionsURL && this.OptionMap) {
-          const { data } = await this.$getService('toolcase/http').get(this.OptionsURL)
-          this.remoteOptions = data.map(item => ({
-            label: item[this.OptionMap.label],
-            value: item[this.OptionMap.value],
-          }));
-        } else {
-          this.remoteOptions = []
-        }
-
-        this.filteredOptions = [...this.definedOpts].sort(
-          (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
-        );
-        this.error = null; // Limpa erros anteriores ao atualizar opções
-      } catch (e) {
-        this.error = this.errorDict[e.status];
-        console.error('Erro ao buscar opções remotas:', e)
-      } finally {
-        this.loading = false
-      }
-    }
-  },
-
-  async mounted() {
-    if (this.OptionsURL && !this.OptionMap) {
-      console.warn('Select2: OptionsURL fornecida sem OptionMap. As opções remotas não serão carregadas.')
+    if (!(val)) {
+      filteredOptions.value = opts
+      return
     }
 
-    await this.getRemoteOptions();
-    if (this.Default) {
-      this.selected = this.Default;
+    const needle = val.toLowerCase()
+    filteredOptions.value = opts
+      .filter(opt =>
+        String(opt.label).toLowerCase().includes(needle)
+      )
+  })
+}
+
+function emitValue(v) {
+  if (props.Multiple) {
+    internalUpdate = true
+    const values = Array.isArray(v)
+      ? v.map(item => (item instanceof Object && 'value' in item) ? item.value : item)
+      : []
+    emit('update:model-value', values)
+    return
+  }
+
+  if (v instanceof Object && "value" in v) v = v.value;
+
+  const payload = v ? v : null
+  if (payload === props.modelValue) return
+
+  internalUpdate = true
+  emit('update:model-value', payload)
+}
+
+async function getRemoteOptions() {
+  loading.value = true
+  try {
+    if (props.OptionsURL && props.OptionMap) {
+      const { data } = await getService('toolcase/http').get(props.OptionsURL)
+      remoteOptions.value = data.map(item => ({
+        label: item[props.OptionMap.label],
+        value: item[props.OptionMap.value],
+      }));
+    } else {
+      remoteOptions.value = []
     }
+
+    filteredOptions.value = [...definedOpts.value].sort(
+      (a, b) => String(a.label).localeCompare(String(b.label), 'pt-BR', { sensitivity: 'base' })
+    );
+    error.value = null; // Limpa erros anteriores ao atualizar opções
+  } catch (e) {
+    error.value = errorDict[e.status];
+    console.error('Erro ao buscar opções remotas:', e)
+  } finally {
+    loading.value = false
   }
 }
+
+onMounted(async () => {
+  if (props.OptionsURL && !props.OptionMap) {
+    console.warn('Select2: OptionsURL fornecida sem OptionMap. As opções remotas não serão carregadas.')
+  }
+
+  await getRemoteOptions();
+  if (props.Default) {
+    selected.value = props.Default;
+  }
+})
 </script>

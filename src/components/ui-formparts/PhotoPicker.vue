@@ -94,109 +94,97 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "ui-formparts-photopicker",
+<script setup>
+import { ref, computed, watch } from "vue";
 
-  props: {
-    DefaultImgPath: String,
-    modelValue: Object,
-    disable: Boolean,
-    square: Boolean,
-    size: String,
-    cover: Boolean,
-    coverHeight: String,
-    coverWidth: String,
-    align: String,
-    fit: String,
-    accept: {
-      type: String,
-      validator: (val) =>
-        val === "image/*" ||
-        val === "image/png" ||
-        val === "image/jpeg" ||
-        val === "image/jpg",
-    },
+defineOptions({ name: "ui-formparts-photopicker" });
+
+const props = defineProps({
+  DefaultImgPath: String,
+  modelValue: Object,
+  disable: Boolean,
+  square: Boolean,
+  size: String,
+  cover: Boolean,
+  coverHeight: String,
+  coverWidth: String,
+  align: String,
+  fit: String,
+  accept: {
+    type: String,
+    validator: (val) =>
+      val === "image/*" ||
+      val === "image/png" ||
+      val === "image/jpeg" ||
+      val === "image/jpg",
   },
+});
 
-  data() {
-    return {
-      activateFileInput: null,
-      input: {
-        file: null,
-        name: null,
-        src: null,
-        size: null,
-      },
-    };
-  },
+const emit = defineEmits(["update:model-value"]);
 
-  watch: {
-    modelValue: {
-      handler(v) {
-        if (!v) return;
-        for (let k in this.input) {
-          if (v[k] !== undefined && this.input[k] !== v[k]) {
-            this.input[k] = v[k];
-          }
-        }
-      },
-      deep: true,
-      immediate: true,
-    },
-  },
+const activateFileInput = ref(null);
+const input = ref({
+  file: null,
+  name: null,
+  src: null,
+  size: null,
+});
 
-  computed: {
-    setSrc() {
-      return this.input.src ? this.input.src : this.DefaultImgPath;
-    },
-
-    setSize() {
-      if (this.size) {
-        return this.size + "px";
+watch(
+  () => props.modelValue,
+  (v) => {
+    if (!v) return;
+    for (let k in input.value) {
+      if (v[k] !== undefined && input.value[k] !== v[k]) {
+        input.value[k] = v[k];
       }
-      return "150px";
-    },
-
-    setIconSize() {
-      if (this.size) {
-        if (this.size <= 70) return this.size / 7 + "px";
-        if (this.size <= 100) return "sm";
-        if (this.size <= 300) return "md";
-        return "lg";
-      }
-      return "md";
-    },
-
-    setAlign() {
-      if (this.align) {
-        switch (this.align) {
-          case "left":
-            return "text-left";
-          case "right":
-            return "text-right";
-          default:
-            return "text-center";
-        }
-      }
-      return "text-center";
-    },
-
-    setRatio() {
-      return this.cover ? 16 / 9 : 1;
-    },
-
-    setFit() {
-      return this.fit ? this.fit : "cover";
-    },
+    }
   },
+  { deep: true, immediate: true },
+);
 
-  methods: {
-    updModelValue(v) {
-      this.$emit("update:model-value", v);
-    },
-  },
-};
+const setSrc = computed(() =>
+  input.value.src ? input.value.src : props.DefaultImgPath,
+);
+
+const setSize = computed(() => {
+  if (props.size) {
+    return props.size + "px";
+  }
+  return "150px";
+});
+
+const setIconSize = computed(() => {
+  if (props.size) {
+    if (props.size <= 70) return props.size / 7 + "px";
+    if (props.size <= 100) return "sm";
+    if (props.size <= 300) return "md";
+    return "lg";
+  }
+  return "md";
+});
+
+const setAlign = computed(() => {
+  if (props.align) {
+    switch (props.align) {
+      case "left":
+        return "text-left";
+      case "right":
+        return "text-right";
+      default:
+        return "text-center";
+    }
+  }
+  return "text-center";
+});
+
+const setRatio = computed(() => (props.cover ? 16 / 9 : 1));
+
+const setFit = computed(() => (props.fit ? props.fit : "cover"));
+
+function updModelValue(v) {
+  emit("update:model-value", v);
+}
 </script>
 
 <style scoped>

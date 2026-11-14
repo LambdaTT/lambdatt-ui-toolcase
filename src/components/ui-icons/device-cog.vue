@@ -26,8 +26,6 @@
   </span>
 </template>
 
-<script>
-export default {
-  name: "device-cog",
-};
+<script setup>
+defineOptions({ name: "device-cog" });
 </script>

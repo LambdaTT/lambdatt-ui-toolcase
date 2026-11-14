@@ -9,17 +9,15 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ui-gadgets-notedialog',
+<script setup>
+defineOptions({ name: 'ui-gadgets-notedialog' })
 
-  props: {
-    BgColorClass: String,
-    Rounded: Boolean,
-    BorderStyle: String,
-    Icon: String,
-    Label: String,
-    DefaultOpened: Boolean,
-  }
-}
+defineProps({
+  BgColorClass: String,
+  Rounded: Boolean,
+  BorderStyle: String,
+  Icon: String,
+  Label: String,
+  DefaultOpened: Boolean,
+})
 </script>

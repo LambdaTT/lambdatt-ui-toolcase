@@ -10,73 +10,65 @@
   </q-input>
 </template>
 
-<script>
-export default {
-  name: 'ui-formparts-inputphone',
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
 
-  props: {
-    Icon: String,
-    modelValue: String,
-    readonly: Boolean,
-    disable: Boolean,
-    dense: Boolean,
-    clearable: Boolean,
-    Default: String,
-    Label: String,
-    Error: Boolean,
-    ErrorMsg: String,
-    BgColor: String,
-    hint: String
-  },
+defineOptions({ name: 'ui-formparts-inputphone' })
 
-  data() {
-    return {
-      value: null,
-    }
-  },
+const props = defineProps({
+  Icon: String,
+  modelValue: String,
+  readonly: Boolean,
+  disable: Boolean,
+  dense: Boolean,
+  clearable: Boolean,
+  Default: String,
+  Label: String,
+  Error: Boolean,
+  ErrorMsg: String,
+  BgColor: String,
+  hint: String
+})
 
-  computed: {
-    mask() {
-      let mask = '(##) ####-#####'
+const emit = defineEmits(['focus', 'update:modelValue'])
 
-      if (this.value) {
-        const onlyDigits = this.value.replace(/\D+/g, '');
+const value = ref(null)
 
-        if (onlyDigits.length > 10) mask = '(##) #####-####';
-      }
+const mask = computed(() => {
+  let mask = '(##) ####-#####'
 
-      return mask
-    },
-  },
+  if (value.value) {
+    const onlyDigits = value.value.replace(/\D+/g, '')
 
-  watch: {
-    modelValue(val) {
-      this.value = val ?? null;
-    },
-
-    value(val) {
-      if (!val) return this.emit();
-      else if (val.length < 14) return;
-
-      this.emit();
-    }
-  },
-
-  methods: {
-    clear() {
-      this.value = this.Default ?? null;
-      this.emit();
-    },
-
-    emit() {
-      this.$emit('update:modelValue', this.value);
-    }
-  },
-
-  mounted() {
-    if (this.Default) {
-      this.value = this.Default;
-    }
+    if (onlyDigits.length > 10) mask = '(##) #####-####'
   }
+
+  return mask
+})
+
+watch(() => props.modelValue, (val) => {
+  value.value = val ?? null
+})
+
+watch(value, (val) => {
+  if (!val) return emitValue()
+  else if (val.length < 14) return
+
+  emitValue()
+})
+
+function clear() {
+  value.value = props.Default ?? null
+  emitValue()
 }
+
+function emitValue() {
+  emit('update:modelValue', value.value)
+}
+
+onMounted(() => {
+  if (props.Default) {
+    value.value = props.Default
+  }
+})
 </script>

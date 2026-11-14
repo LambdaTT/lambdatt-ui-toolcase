@@ -4,18 +4,16 @@
   </ChartLinear>
 </template>
 
-<script>
-export default {
-  name: 'ui-charts-line',
+<script setup>
+defineOptions({ name: 'ui-charts-line' })
 
-  props: {
-    BeforeLoad: Function,
-    OnLoaded: Function,
-    Height: String,
-    DataURL: String,
-    Filters: Object,
-    Datasets: Array,
-    Configs: Object,
-  },
-}
+defineProps({
+  BeforeLoad: Function,
+  OnLoaded: Function,
+  Height: String,
+  DataURL: String,
+  Filters: Object,
+  Datasets: Array,
+  Configs: Object,
+})
 </script>

@@ -36,7 +36,7 @@
           </q-menu>
         </q-btn>
         <q-btn
-          :disable="this.fullData.length === 0"
+          :disable="fullData.length === 0"
           v-if="!!Export"
           flat
           round
@@ -66,7 +66,7 @@
           </q-menu>
         </q-btn>
         <q-btn
-          :disable="this.fullData.length === 0"
+          :disable="fullData.length === 0"
           v-if="!!Printable"
           flat
           round
@@ -82,7 +82,7 @@
         <q-btn
           v-for="(r, i) in CustomResources"
           :key="i"
-          :disable="this.fullData.length === 0"
+          :disable="fullData.length === 0"
           flat
           round
           color="primary"
@@ -196,7 +196,7 @@
                 v-if="column.sortable !== false"
                 size="0.9em"
                 :name="getSortIcon(column)"
-                :color="getColumnNumber(column) == this.pagination.sortBy ? 'primary' : null"
+                :color="getColumnNumber(column) == pagination.sortBy ? 'primary' : null"
               >
               </q-icon>
               <q-tooltip v-if="column.sortable !== false"
@@ -408,7 +408,7 @@
         <q-btn
           :disable="fullData.length === 0"
           color="primary"
-          @click="goToPage(this.pagination.finalPage)"
+          @click="goToPage(pagination.finalPage)"
         >
           <q-tooltip>Última Página</q-tooltip>
           <q-icon size="xs" name="fas fa-angles-right"></q-icon>
@@ -418,834 +418,844 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from 'vue'
 import { computePagination } from '../../services/datatable-pagination.js'
 
-export default {
-  name: 'ui-gadgets-datatable',
+defineOptions({ name: 'ui-gadgets-datatable' })
 
-  props: {
-    Name: {
-      type: String,
-      required: true,
-    },
-    modelValue: {
-      type: Object,
-      required: true,
-    },
-    DataURL: {
-      // Optional when `StaticData` is provided (local/mock mode, no HTTP).
-      type: String,
-      required: false,
-      default: '',
-    },
-    StaticData: {
-      // When provided, the table runs fully client-side over this array
-      // (search/sort/pagination) instead of fetching from `DataURL`.
-      type: Array,
-      default: null,
-    },
-    Columns: {
-      type: Object,
-      required: true,
-    },
-    DefaultSorting: {
-      type: Object,
-      validator: (v) => 'by' in v && 'direction' in v,
-    },
-    RowActions: Object,
-    Filters: {
-      type: Array,
-      default: () => [],
-    },
-    ExtraFilters: Object,
-    Export: Object,
-    Printable: Boolean,
-    BeforeLoad: Function,
-    OnLoaded: Function,
-    IntervalRule: Function,
-    IgnorePagination: Boolean,
-    dense: Boolean,
-    injectedRowActions: {
-      type: Function,
-      default: () => [],
-    },
-    CustomResources: Array,
+const props = defineProps({
+  Name: {
+    type: String,
+    required: true,
   },
-
-  data() {
-    return {
-      // Pagination related vars:
-      pagination: {
-        pages: [],
-        currentPage: 1,
-        finalPage: null,
-        totalPages: null,
-        totalItems: null,
-        pageFirstItem: null,
-        pageLastItem: null,
-        pageLastIndex: null,
-        limit: 10,
-        sortBy: '1',
-        sortDir: 'ASC',
-      },
-
-      // Filters related vars:
-      searchTerm: null,
-      showFilterPanel: false,
-      filterParams: {},
-      isRestoring: false,
-
-      // Columns settings:
-      visibleColumns: [],
-      columns: [],
-
-      // Data:
-      fullData: [],
-      rawData: [],
-      dataInPage: [],
-      loadTimeout: null,
-      error: null,
-
-      // State:
-      loading: false,
-      loadingFullData: false,
-      showLoader: true,
-      errorState: false,
-    }
+  modelValue: {
+    type: Object,
+    required: true,
   },
-
-  watch: {
-    searchTerm() {
-      this.showLoader = true
-      this.pagination.currentPage = 1
-      clearTimeout(this.loadTimeout)
-
-      this.loadTimeout = setTimeout(async () => {
-        if (this.searchTerm)
-          localStorage.setItem(`Datatable.${this.sluggedName}.searchTerm`, this.searchTerm)
-        else localStorage.removeItem(`Datatable.${this.sluggedName}.searchTerm`)
-
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
-
-    'pagination.currentPage'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`)
-      persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
-      persistedPagination.currentPage = this.pagination.currentPage
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(
-        `Datatable.${this.sluggedName}.pagination`,
-        JSON.stringify(persistedPagination),
-      )
-      clearTimeout(this.loadTimeout)
-
-      this.loadTimeout = setTimeout(async () => {
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
-
-    'pagination.limit'() {
-      this.pagination.currentPage = 1
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`)
-      persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
-      persistedPagination.currentPage = this.pagination.currentPage
-      persistedPagination.limit = this.pagination.limit
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(
-        `Datatable.${this.sluggedName}.pagination`,
-        JSON.stringify(persistedPagination),
-      )
-      clearTimeout(this.loadTimeout)
-
-      this.loadTimeout = setTimeout(async () => {
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
-
-    'pagination.sortBy'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`)
-      persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
-      persistedPagination.sortBy = this.pagination.sortBy
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(
-        `Datatable.${this.sluggedName}.pagination`,
-        JSON.stringify(persistedPagination),
-      )
-      clearTimeout(this.loadTimeout)
-
-      this.loadTimeout = setTimeout(async () => {
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
-
-    'pagination.sortDir'() {
-      var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`)
-      persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
-      persistedPagination.sortDir = this.pagination.sortDir
-      localStorage.removeItem(`Datatable.${this.sluggedName}.pagination`)
-      localStorage.setItem(
-        `Datatable.${this.sluggedName}.pagination`,
-        JSON.stringify(persistedPagination),
-      )
-      clearTimeout(this.loadTimeout)
-
-      this.loadTimeout = setTimeout(async () => {
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
-
-    filterParams: {
-      handler(v) {
-        if (this.isRestoring) return
-        this.filterHandler(v, 'filters')
-      },
-      deep: true,
-    },
-
-    ExtraFilters: {
-      handler(v) {
-        this.filterHandler(v, 'extrafilters')
-      },
-      deep: true,
-    },
-
-    visibleColumns(newVal) {
-      if (newVal.length < 1) {
-        this.visibleColumns = [this.Columns[0].field]
-      }
-
-      localStorage.setItem(`Datatable.${this.sluggedName}.visibleColumns`, JSON.stringify(newVal))
-    },
-
-    loading(isLoading) {
-      this.showLoader = isLoading
-    },
-
-    rawData: {
-      handler(data) {
-        if (this.IgnorePagination) this.dataInPage = data
-        else this.paginate(data)
-        // Expose factory:
-        this.exposeFactory()
-        // turn off loading indicator
-        this.loading = false
-      },
-      deep: true,
-    },
-
-    fullData: {
-      handler(data) {
-        // Recalcula finalPage E a janela de botões a partir do total real, mantendo os
-        // dois em sincronia independentemente da ordem de chegada das respostas (total x fatia).
-        const { finalPage, pages } = computePagination({
-          totalItems: data.length,
-          pageItems: this.rawData.length,
-          currentPage: this.pagination.currentPage,
-          limit: this.pagination.limit,
-        })
-        this.pagination.finalPage = finalPage
-        this.pagination.pages = pages
-      },
-    },
+  DataURL: {
+    // Optional when `StaticData` is provided (local/mock mode, no HTTP).
+    type: String,
+    required: false,
+    default: '',
   },
+  StaticData: {
+    // When provided, the table runs fully client-side over this array
+    // (search/sort/pagination) instead of fetching from `DataURL`.
+    type: Array,
+    default: null,
+  },
+  Columns: {
+    type: Object,
+    required: true,
+  },
+  DefaultSorting: {
+    type: Object,
+    validator: (v) => 'by' in v && 'direction' in v,
+  },
+  RowActions: Object,
+  Filters: {
+    type: Array,
+    default: () => [],
+  },
+  ExtraFilters: Object,
+  Export: Object,
+  Printable: Boolean,
+  BeforeLoad: Function,
+  OnLoaded: Function,
+  IntervalRule: Function,
+  IgnorePagination: Boolean,
+  dense: Boolean,
+  injectedRowActions: {
+    type: Function,
+    default: () => [],
+  },
+  CustomResources: Array,
+})
 
-  computed: {
-    showActionsColumn() {
-      // Show the actions column if at least one row has a visible action
-      return this.dataInPage.some((row) => this.showActionsBtnInRow(row))
-    },
+const emit = defineEmits(['update:model-value', 'error-thrown'])
 
-    columnOptions() {
-      return this.columns
-        .map((clm) => {
-          return clm.name != 'actions'
-            ? {
-                label: clm.label,
-                value: clm.field,
-              }
-            : null
-        })
-        .filter((item) => item != null)
-    },
+// Submódulo acessa os serviços do app pelo $getService global (resolução por URI) — equivalente
+// ao this.$getService do Options API.
+const getService = getCurrentInstance().appContext.config.globalProperties.$getService
 
-    columnFilters() {
-      return this.Columns.map((clm) => {
-        if (!!clm.filter == false) return null
+// Pagination related vars:
+const pagination = reactive({
+  pages: [],
+  currentPage: 1,
+  finalPage: null,
+  totalPages: null,
+  totalItems: null,
+  pageFirstItem: null,
+  pageLastItem: null,
+  pageLastIndex: null,
+  limit: 10,
+  sortBy: '1',
+  sortDir: 'ASC',
+})
 
-        if (typeof clm.filter == 'string') {
-          return {
+// Filters related vars:
+const searchTerm = ref(null)
+const showFilterPanel = ref(false)
+const filterParams = ref({})
+
+// Columns settings:
+const visibleColumns = ref([])
+const columns = ref([])
+
+// Data:
+const fullData = ref([])
+const rawData = ref([])
+const dataInPage = ref([])
+const error = ref(null)
+
+// State:
+const loading = ref(false)
+const showLoader = ref(true)
+const errorState = ref(false)
+
+// Internal (non-reactive) state:
+// Block filterParams watcher while restoring persisted filters.
+// InputField children emit update:model-value with their Default value
+// during their own mounted(), which runs BEFORE this component's mounted().
+// Without this flag those emissions would wipe out the persisted filters.
+let isRestoring = true
+let loadTimeout = null
+let loadingFullData = false
+
+const showActionsColumn = computed(() =>
+  // Show the actions column if at least one row has a visible action
+  dataInPage.value.some((row) => showActionsBtnInRow(row)),
+)
+
+const columnOptions = computed(() =>
+  columns.value
+    .map((clm) => {
+      return clm.name != 'actions'
+        ? {
             label: clm.label,
-            field: clm.field,
-            type: clm.filter,
+            value: clm.field,
           }
-        }
+        : null
+    })
+    .filter((item) => item != null),
+)
 
-        if (!('field' in clm.filter)) clm.filter.field = clm.field
+const columnFilters = computed(() =>
+  props.Columns.map((clm) => {
+    if (!!clm.filter == false) return null
 
-        return { label: clm.label, ...clm.filter }
-      }).filter((item) => item != null)
-    },
-
-    exportOptions() {
-      var typeIcons = {
-        xls: 'fas fa-file-excel',
-        csv: 'fas fa-file-csv',
-      }
-      var typeLabels = {
-        xls: 'Exportar XLS',
-        csv: 'Exportar CSV',
-      }
-
-      if (!(this.Export instanceof Array))
-        return [
-          {
-            ...this.Export,
-            icon: typeIcons[this.Export.filetype],
-            label: typeLabels[this.Export.filetype],
-          },
-        ]
-
-      return this.Export.map((opt) => ({
-        ...opt,
-        icon: typeIcons[opt.filetype],
-        label: typeLabels[opt.filetype],
-      }))
-    },
-
-    state() {
-      if (this.showLoader) return 'loading'
-      if (this.errorState) return 'error'
-      if (this.dataInPage.length > 0) return 'ready'
-      if (this.dataInPage.length == 0) return 'empty'
-      return null
-    },
-
-    // Controls the visibility of the search field. A column counts as
-    // searchable simply by being a real, searchable-by-default column — it must
-    // NOT depend on filterParams, otherwise filling every column filter (or the
-    // null defaults emitted on mount) would empty the list and hide the field.
-    hasSearchableColumns() {
-      return this.columns.some((col) => col.field && col.field !== '' && col.searchable !== false)
-    },
-
-    searchableColumns() {
-      return this.columns.filter((col) => {
-        const hasValidField = col.field && col.field !== ''
-        const isSearchable = col.searchable !== false
-        // Exclude a column from the search only when it has an ACTIVE column
-        // filter, since search and filter share the same request param key and
-        // would collide. A present-but-null key (mount defaults) is not active.
-        const filterValue = this.filterParams[col.field]
-        const isNotFiltered = filterValue === null || filterValue === undefined || filterValue === ''
-
-        return hasValidField && isSearchable && isNotFiltered
-      })
-    },
-
-    rows() {
-      if (typeof this.IntervalRule !== 'function') return [...this.dataInPage]
-
-      const result = []
-
-      this.dataInPage.forEach((current, i) => {
-        const prev = this.dataInPage[i - 1]
-        const next = this.dataInPage[i + 1]
-
-        result.push(current)
-        if (this.IntervalRule(prev, current, next) === true) result.push('interval')
-      })
-
-      return result
-    },
-
-    hasAnyColumnFooter() {
-      return this.Columns.some((column) => !!column.footer)
-    },
-
-    filtersValues() {
+    if (typeof clm.filter == 'string') {
       return {
-        searchTerm: this.searchTerm,
-        ...this.filterParams,
-        ...this.ExtraFilters,
+        label: clm.label,
+        field: clm.field,
+        type: clm.filter,
       }
-    },
+    }
 
-    activeFiltersCount() {
-      const filters = JSON.parse(JSON.stringify(this.filterParams))
-      return Object.values(filters).filter((v) => v !== null && v !== undefined && v !== '').length
-    },
+    if (!('field' in clm.filter)) clm.filter.field = clm.field
 
-    sluggedName() {
-      // Remove spaces, lowercases and replace accents and special chars:
-      return this.Name.toSlug()
-    },
+    return { label: clm.label, ...clm.filter }
+  }).filter((item) => item != null),
+)
 
-    availableFilters() {
-      return [...this.columnFilters, ...this.Filters]
-    },
+const exportOptions = computed(() => {
+  var typeIcons = {
+    xls: 'fas fa-file-excel',
+    csv: 'fas fa-file-csv',
+  }
+  var typeLabels = {
+    xls: 'Exportar XLS',
+    csv: 'Exportar CSV',
+  }
+
+  if (!(props.Export instanceof Array))
+    return [
+      {
+        ...props.Export,
+        icon: typeIcons[props.Export.filetype],
+        label: typeLabels[props.Export.filetype],
+      },
+    ]
+
+  return props.Export.map((opt) => ({
+    ...opt,
+    icon: typeIcons[opt.filetype],
+    label: typeLabels[opt.filetype],
+  }))
+})
+
+const state = computed(() => {
+  if (showLoader.value) return 'loading'
+  if (errorState.value) return 'error'
+  if (dataInPage.value.length > 0) return 'ready'
+  if (dataInPage.value.length == 0) return 'empty'
+  return null
+})
+
+// Controls the visibility of the search field. A column counts as
+// searchable simply by being a real, searchable-by-default column — it must
+// NOT depend on filterParams, otherwise filling every column filter (or the
+// null defaults emitted on mount) would empty the list and hide the field.
+const hasSearchableColumns = computed(() =>
+  columns.value.some((col) => col.field && col.field !== '' && col.searchable !== false),
+)
+
+const searchableColumns = computed(() =>
+  columns.value.filter((col) => {
+    const hasValidField = col.field && col.field !== ''
+    const isSearchable = col.searchable !== false
+    // Exclude a column from the search only when it has an ACTIVE column
+    // filter, since search and filter share the same request param key and
+    // would collide. A present-but-null key (mount defaults) is not active.
+    const filterValue = filterParams.value[col.field]
+    const isNotFiltered = filterValue === null || filterValue === undefined || filterValue === ''
+
+    return hasValidField && isSearchable && isNotFiltered
+  }),
+)
+
+const rows = computed(() => {
+  if (typeof props.IntervalRule !== 'function') return [...dataInPage.value]
+
+  const result = []
+
+  dataInPage.value.forEach((current, i) => {
+    const prev = dataInPage.value[i - 1]
+    const next = dataInPage.value[i + 1]
+
+    result.push(current)
+    if (props.IntervalRule(prev, current, next) === true) result.push('interval')
+  })
+
+  return result
+})
+
+const hasAnyColumnFooter = computed(() => props.Columns.some((column) => !!column.footer))
+
+const filtersValues = computed(() => ({
+  searchTerm: searchTerm.value,
+  ...filterParams.value,
+  ...props.ExtraFilters,
+}))
+
+const activeFiltersCount = computed(() => {
+  const filters = JSON.parse(JSON.stringify(filterParams.value))
+  return Object.values(filters).filter((v) => v !== null && v !== undefined && v !== '').length
+})
+
+const sluggedName = computed(() =>
+  // Remove spaces, lowercases and replace accents and special chars:
+  props.Name.toSlug(),
+)
+
+const availableFilters = computed(() => [...columnFilters.value, ...props.Filters])
+
+watch(searchTerm, () => {
+  showLoader.value = true
+  pagination.currentPage = 1
+  clearTimeout(loadTimeout)
+
+  loadTimeout = setTimeout(async () => {
+    if (searchTerm.value)
+      localStorage.setItem(`Datatable.${sluggedName.value}.searchTerm`, searchTerm.value)
+    else localStorage.removeItem(`Datatable.${sluggedName.value}.searchTerm`)
+
+    const response = await loadData(props.IgnorePagination)
+    if (response) rawData.value = response.data
+  }, 200)
+})
+
+watch(
+  () => pagination.currentPage,
+  () => {
+    var persistedPagination = localStorage.getItem(`Datatable.${sluggedName.value}.pagination`)
+    persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
+    persistedPagination.currentPage = pagination.currentPage
+    localStorage.removeItem(`Datatable.${sluggedName.value}.pagination`)
+    localStorage.setItem(
+      `Datatable.${sluggedName.value}.pagination`,
+      JSON.stringify(persistedPagination),
+    )
+    clearTimeout(loadTimeout)
+
+    loadTimeout = setTimeout(async () => {
+      const response = await loadData(props.IgnorePagination)
+      if (response) rawData.value = response.data
+    }, 200)
   },
+)
 
-  methods: {
-    /////////////
-    // Factory:
-    /////////////
-    exposeFactory() {
-      const fn = () => {
-        if (this.loading || this.loadingFullData) setTimeout(() => fn(), 200)
-        else
-          this.$emit('update:model-value', {
-            state: (() => this.state)(),
-            params: (() => this.setParams())(),
-            filterValues: (() => this.filtersValues)(),
-            dataInPage: (() => this.dataInPage)(),
-            rowsInPage: (() => this.dataInPage.length)(),
-            visibleColumns: (() => this.visibleColumns)(),
-            reload: this.reload,
-            fullData: (() => this.fullData)(),
-            totalRows: (() => this.fullData.length)(),
-          })
+watch(
+  () => pagination.limit,
+  () => {
+    pagination.currentPage = 1
+    var persistedPagination = localStorage.getItem(`Datatable.${sluggedName.value}.pagination`)
+    persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
+    persistedPagination.currentPage = pagination.currentPage
+    persistedPagination.limit = pagination.limit
+    localStorage.removeItem(`Datatable.${sluggedName.value}.pagination`)
+    localStorage.setItem(
+      `Datatable.${sluggedName.value}.pagination`,
+      JSON.stringify(persistedPagination),
+    )
+    clearTimeout(loadTimeout)
+
+    loadTimeout = setTimeout(async () => {
+      const response = await loadData(props.IgnorePagination)
+      if (response) rawData.value = response.data
+    }, 200)
+  },
+)
+
+watch(
+  () => pagination.sortBy,
+  () => {
+    var persistedPagination = localStorage.getItem(`Datatable.${sluggedName.value}.pagination`)
+    persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
+    persistedPagination.sortBy = pagination.sortBy
+    localStorage.removeItem(`Datatable.${sluggedName.value}.pagination`)
+    localStorage.setItem(
+      `Datatable.${sluggedName.value}.pagination`,
+      JSON.stringify(persistedPagination),
+    )
+    clearTimeout(loadTimeout)
+
+    loadTimeout = setTimeout(async () => {
+      const response = await loadData(props.IgnorePagination)
+      if (response) rawData.value = response.data
+    }, 200)
+  },
+)
+
+watch(
+  () => pagination.sortDir,
+  () => {
+    var persistedPagination = localStorage.getItem(`Datatable.${sluggedName.value}.pagination`)
+    persistedPagination = persistedPagination ? JSON.parse(persistedPagination) : {}
+    persistedPagination.sortDir = pagination.sortDir
+    localStorage.removeItem(`Datatable.${sluggedName.value}.pagination`)
+    localStorage.setItem(
+      `Datatable.${sluggedName.value}.pagination`,
+      JSON.stringify(persistedPagination),
+    )
+    clearTimeout(loadTimeout)
+
+    loadTimeout = setTimeout(async () => {
+      const response = await loadData(props.IgnorePagination)
+      if (response) rawData.value = response.data
+    }, 200)
+  },
+)
+
+watch(
+  filterParams,
+  (v) => {
+    if (isRestoring) return
+    filterHandler(v, 'filters')
+  },
+  { deep: true },
+)
+
+watch(
+  () => props.ExtraFilters,
+  (v) => {
+    filterHandler(v, 'extrafilters')
+  },
+  { deep: true },
+)
+
+watch(visibleColumns, (newVal) => {
+  if (newVal.length < 1) {
+    visibleColumns.value = [props.Columns[0].field]
+  }
+
+  localStorage.setItem(`Datatable.${sluggedName.value}.visibleColumns`, JSON.stringify(newVal))
+})
+
+watch(loading, (isLoading) => {
+  showLoader.value = isLoading
+})
+
+watch(
+  rawData,
+  (data) => {
+    if (props.IgnorePagination) dataInPage.value = data
+    else paginate(data)
+    // Expose factory:
+    exposeFactory()
+    // turn off loading indicator
+    loading.value = false
+  },
+  { deep: true },
+)
+
+watch(fullData, (data) => {
+  // Recalcula finalPage E a janela de botões a partir do total real, mantendo os
+  // dois em sincronia independentemente da ordem de chegada das respostas (total x fatia).
+  const { finalPage, pages } = computePagination({
+    totalItems: data.length,
+    pageItems: rawData.value.length,
+    currentPage: pagination.currentPage,
+    limit: pagination.limit,
+  })
+  pagination.finalPage = finalPage
+  pagination.pages = pages
+})
+
+/////////////
+// Factory:
+/////////////
+function exposeFactory() {
+  const fn = () => {
+    if (loading.value || loadingFullData) setTimeout(() => fn(), 200)
+    else
+      emit('update:model-value', {
+        state: (() => state.value)(),
+        params: (() => setParams())(),
+        filterValues: (() => filtersValues.value)(),
+        dataInPage: (() => dataInPage.value)(),
+        rowsInPage: (() => dataInPage.value.length)(),
+        visibleColumns: (() => visibleColumns.value)(),
+        reload: reload,
+        fullData: (() => fullData.value)(),
+        totalRows: (() => fullData.value.length)(),
+      })
+  }
+
+  fn()
+}
+
+/////////////
+// Getters:
+/////////////
+// Single entry point for fetching: delegates to the server, or computes the
+// result locally when `StaticData` is provided (search/sort/pagination).
+async function fetchData(params, ignorePagination) {
+  if (props.StaticData) return getStaticResponse(ignorePagination)
+  return getService('toolcase/http').get(props.DataURL, params)
+}
+
+function getStaticResponse(ignorePagination) {
+  let rows = Array.isArray(props.StaticData) ? props.StaticData.slice() : []
+
+  // Search across searchable columns (substring, case-insensitive):
+  const term = (searchTerm.value || '').toString().trim().toLowerCase()
+  if (term && searchableColumns.value.length) {
+    const fields = searchableColumns.value.map((c) => c.field)
+    rows = rows.filter((r) =>
+      fields.some((f) => String(r[f] ?? '').toLowerCase().includes(term)),
+    )
+  }
+
+  for (const filter of availableFilters.value) {
+    const value = filterParams.value[filter.field]
+    if (value == null || value === '') continue
+
+    if (typeof filter.filterFn === 'function') {
+      rows = rows.filter((row) => filter.filterFn(row, value))
+    } else if (filter.type === 'timerangepicker') {
+      if (!value.from || !value.to) continue
+
+      const toSeconds = (time) => {
+        const match = String(time).match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+        if (!match) return null
+        return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3] || 0)
       }
 
-      fn()
-    },
+      const from = toSeconds(value.from)
+      const to = toSeconds(value.to)
+      if (from === null || to === null) continue
 
-    /////////////
-    // Getters:
-    /////////////
-    // Single entry point for fetching: delegates to the server, or computes the
-    // result locally when `StaticData` is provided (search/sort/pagination).
-    async fetchData(params, ignorePagination) {
-      if (this.StaticData) return this.getStaticResponse(ignorePagination)
-      return this.$getService('toolcase/http').get(this.DataURL, params)
-    },
+      rows = rows.filter((row) => {
+        const rowTime = String(row[filter.field] ?? '').match(/(?:^|\s)(\d{1,2}:\d{2}(?::\d{2})?)$/)
+        if (!rowTime) return false
 
-    getStaticResponse(ignorePagination) {
-      let rows = Array.isArray(this.StaticData) ? this.StaticData.slice() : []
+        const time = toSeconds(rowTime[1])
+        return time !== null && time >= from && time <= to
+      })
+    } else if (filter.type === 'select') {
+      rows = rows.filter((row) => String(row[filter.field]) === String(value))
+    }
+  }
 
-      // Search across searchable columns (substring, case-insensitive):
-      const term = (this.searchTerm || '').toString().trim().toLowerCase()
-      if (term && this.searchableColumns.length) {
-        const fields = this.searchableColumns.map((c) => c.field)
-        rows = rows.filter((r) =>
-          fields.some((f) => String(r[f] ?? '').toLowerCase().includes(term)),
-        )
-      }
+  // Sort by the active column (sortBy is a 1-based column number):
+  const sortNum = parseInt(pagination.sortBy ?? '1', 10)
+  const sortCol = props.Columns[sortNum - 1]
+  if (sortCol && sortCol.field) {
+    const f = sortCol.field
+    const dir = (pagination.sortDir ?? 'ASC') === 'DESC' ? -1 : 1
+    rows.sort((a, b) => {
+      const av = a[f]
+      const bv = b[f]
+      if (av == null && bv == null) return 0
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
+      return (
+        String(av ?? '').localeCompare(String(bv ?? ''), 'pt-BR', { numeric: true }) * dir
+      )
+    })
+  }
 
-      for (const filter of this.availableFilters) {
-        const value = this.filterParams[filter.field]
-        if (value == null || value === '') continue
+  if (ignorePagination) return { data: rows }
 
-        if (typeof filter.filterFn === 'function') {
-          rows = rows.filter((row) => filter.filterFn(row, value))
-        } else if (filter.type === 'timerangepicker') {
-          if (!value.from || !value.to) continue
+  const page = Number(pagination.currentPage || 1)
+  const limit = Number(pagination.limit || 10)
+  const start = (page - 1) * limit
+  return { data: rows.slice(start, start + limit) }
+}
 
-          const toSeconds = (time) => {
-            const match = String(time).match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
-            if (!match) return null
-            return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3] || 0)
-          }
+async function loadData(ignorePagination) {
+  if (!loading.value) {
+    loadFullData()
 
-          const from = toSeconds(value.from)
-          const to = toSeconds(value.to)
-          if (from === null || to === null) continue
+    // turn on loading indicator
+    loading.value = true
+    error.value = null
+    errorState.value = false
 
-          rows = rows.filter((row) => {
-            const rowTime = String(row[filter.field] ?? '').match(/(?:^|\s)(\d{1,2}:\d{2}(?::\d{2})?)$/)
-            if (!rowTime) return false
-
-            const time = toSeconds(rowTime[1])
-            return time !== null && time >= from && time <= to
-          })
-        } else if (filter.type === 'select') {
-          rows = rows.filter((row) => String(row[filter.field]) === String(value))
-        }
-      }
-
-      // Sort by the active column (sortBy is a 1-based column number):
-      const sortNum = parseInt(this.pagination.sortBy ?? '1', 10)
-      const sortCol = this.Columns[sortNum - 1]
-      if (sortCol && sortCol.field) {
-        const f = sortCol.field
-        const dir = (this.pagination.sortDir ?? 'ASC') === 'DESC' ? -1 : 1
-        rows.sort((a, b) => {
-          const av = a[f]
-          const bv = b[f]
-          if (av == null && bv == null) return 0
-          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir
-          return (
-            String(av ?? '').localeCompare(String(bv ?? ''), 'pt-BR', { numeric: true }) * dir
-          )
-        })
-      }
-
-      if (ignorePagination) return { data: rows }
-
-      const page = Number(this.pagination.currentPage || 1)
-      const limit = Number(this.pagination.limit || 10)
-      const start = (page - 1) * limit
-      return { data: rows.slice(start, start + limit) }
-    },
-
-    async loadData(ignorePagination) {
-      if (!this.loading) {
-        this.loadFullData()
-
-        // turn on loading indicator
-        this.loading = true
-        this.error = null
-        this.errorState = false
-
-        var params = this.setParams()
-        if (ignorePagination) {
-          delete params.$page
-          delete params.$limit
-        }
-
-        try {
-          // Before Load callback:
-          if (this.BeforeLoad) await this.BeforeLoad(params)
-
-          // fetch data (server or local StaticData)
-          const response = await this.fetchData(params, ignorePagination)
-
-          // On Loaded callback:
-          if (this.OnLoaded) await this.OnLoaded(response)
-
-          return response
-        } catch (err) {
-          this.loading = false
-          this.errorState = true
-          this.error = err
-          this.$emit('error-thrown', err)
-          throw err
-        }
-      }
-    },
-
-    async loadFullData() {
-      if (this.loadingFullData) return
-
-      this.loadingFullData = true
-      this.fullData = []
-      var params = this.setParams()
+    var params = setParams()
+    if (ignorePagination) {
       delete params.$page
       delete params.$limit
+    }
 
-      try {
-        const response = await this.fetchData(params, true)
-        this.fullData = response.data
-      } catch (err) {
-        this.$emit('error-thrown', err)
-        throw err
-      } finally {
-        this.loadingFullData = false
-      }
-    },
+    try {
+      // Before Load callback:
+      if (props.BeforeLoad) await props.BeforeLoad(params)
 
-    /////////////////////
-    // Sort and Filter:
-    /////////////////////
-    filterHandler(filtersObject, name) {
-      // console.log(
-      //   name,
-      //   localStorage.getItem(`Datatable.${this.sluggedName}.${name}`),
-      // );
-      // Save filters state:
-      localStorage.removeItem(`Datatable.${this.sluggedName}.${name}`)
+      // fetch data (server or local StaticData)
+      const response = await fetchData(params, ignorePagination)
 
-      if (Object.keys(filtersObject).length > 0)
-        localStorage.setItem(`Datatable.${this.sluggedName}.${name}`, JSON.stringify(filtersObject))
+      // On Loaded callback:
+      if (props.OnLoaded) await props.OnLoaded(response)
 
-      this.showLoader = true
-      this.pagination.currentPage = 1
-      clearTimeout(this.loadTimeout)
+      return response
+    } catch (err) {
+      loading.value = false
+      errorState.value = true
+      error.value = err
+      emit('error-thrown', err)
+      throw err
+    }
+  }
+}
 
-      for (let k in filtersObject) {
-        if (filtersObject[k] == null) delete filtersObject[k]
-      }
+async function loadFullData() {
+  if (loadingFullData) return
 
-      this.loadTimeout = setTimeout(async () => {
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
+  loadingFullData = true
+  fullData.value = []
+  var params = setParams()
+  delete params.$page
+  delete params.$limit
 
-    setParams() {
-      // Pagination Params:
-      const pagination = {
-        $sort_by: this.pagination.sortBy ?? '1',
-        $sort_direction: this.pagination.sortDir ?? 'ASC',
-        $page: this.pagination.currentPage,
-        $limit: Number(this.pagination.limit),
-      }
+  try {
+    const response = await fetchData(params, true)
+    fullData.value = response.data
+  } catch (err) {
+    emit('error-thrown', err)
+    throw err
+  } finally {
+    loadingFullData = false
+  }
+}
 
-      // Search Filter:
-      const search = {}
-      if (this.searchTerm) {
-        for (let i = 0; i < this.searchableColumns.length; i++) {
-          let column = this.searchableColumns[i]
+/////////////////////
+// Sort and Filter:
+/////////////////////
+function filterHandler(filtersObject, name) {
+  // console.log(
+  //   name,
+  //   localStorage.getItem(`Datatable.${sluggedName.value}.${name}`),
+  // );
+  // Save filters state:
+  localStorage.removeItem(`Datatable.${sluggedName.value}.${name}`)
 
-          const f = column.field
+  if (Object.keys(filtersObject).length > 0)
+    localStorage.setItem(`Datatable.${sluggedName.value}.${name}`, JSON.stringify(filtersObject))
 
-          // First field:
-          if (i == 0) {
-            if (i == this.searchableColumns.length - 1) {
-              search[f] = '$startFilterGroup$lkof$endFilterGroup|' + this.searchTerm
-            } else {
-              search[f] = '$startFilterGroup$lkof|' + this.searchTerm
-            }
-          }
-          // All fields in the middle:
-          else if (i < this.searchableColumns.length - 1) {
-            search[f] = '$or$lkof|' + this.searchTerm
-          }
-          // Last field:
-          else {
-            search[f] = '$endFilterGroup$or$lkof|' + this.searchTerm
-          }
+  showLoader.value = true
+  pagination.currentPage = 1
+  clearTimeout(loadTimeout)
+
+  for (let k in filtersObject) {
+    if (filtersObject[k] == null) delete filtersObject[k]
+  }
+
+  loadTimeout = setTimeout(async () => {
+    const response = await loadData(props.IgnorePagination)
+    if (response) rawData.value = response.data
+  }, 200)
+}
+
+function setParams() {
+  // Pagination Params:
+  const paginationParams = {
+    $sort_by: pagination.sortBy ?? '1',
+    $sort_direction: pagination.sortDir ?? 'ASC',
+    $page: pagination.currentPage,
+    $limit: Number(pagination.limit),
+  }
+
+  // Search Filter:
+  const search = {}
+  if (searchTerm.value) {
+    for (let i = 0; i < searchableColumns.value.length; i++) {
+      let column = searchableColumns.value[i]
+
+      const f = column.field
+
+      // First field:
+      if (i == 0) {
+        if (i == searchableColumns.value.length - 1) {
+          search[f] = '$startFilterGroup$lkof$endFilterGroup|' + searchTerm.value
+        } else {
+          search[f] = '$startFilterGroup$lkof|' + searchTerm.value
         }
       }
-
-      // Filters:
-      const filters = {}
-      for (let k in this.filterParams) {
-        let filterConfig = this.availableFilters.find((x) => x.field == k)
-        let value =
-          !!filterConfig?.modifierFn && typeof filterConfig?.modifierFn === 'function'
-            ? filterConfig?.modifierFn(this.filterParams[k])
-            : this.filterParams[k]
-        if (value == null) continue
-
-        if (filterConfig?.type == 'text') filters[k] = `$lkof|${value}`
-        else if (filterConfig?.type == 'daterangepicker')
-          filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`
-        else if (filterConfig?.type == 'datetimerange')
-          filters[k] = `$btwn|${value.from}|${value.to}`
-        else if (filterConfig?.type == 'timerangepicker') {
-          if (value.from && value.to) filters[k] = `$btwn|${value.from}|${value.to}`
-        }
-        else filters[k] = value
+      // All fields in the middle:
+      else if (i < searchableColumns.value.length - 1) {
+        search[f] = '$or$lkof|' + searchTerm.value
       }
-
-      // Extra filters:
-      const extraFilters = {}
-      if (this.ExtraFilters) {
-        for (let k in this.ExtraFilters)
-          if (this.ExtraFilters[k]) extraFilters[k] = this.ExtraFilters[k]
+      // Last field:
+      else {
+        search[f] = '$endFilterGroup$or$lkof|' + searchTerm.value
       }
+    }
+  }
 
-      return {
-        ...pagination,
-        ...search,
-        ...filters,
-        ...extraFilters,
-      }
-    },
+  // Filters:
+  const filters = {}
+  for (let k in filterParams.value) {
+    let filterConfig = availableFilters.value.find((x) => x.field == k)
+    let value =
+      !!filterConfig?.modifierFn && typeof filterConfig?.modifierFn === 'function'
+        ? filterConfig?.modifierFn(filterParams.value[k])
+        : filterParams.value[k]
+    if (value == null) continue
 
-    getColumnNumber(column) {
-      var sortNumber
-      if (!!column.sortBy === false) {
-        // Find sort number:
-        let columns = Object.keys(this.rawData[0] ?? {})
-        let idx = columns.indexOf(column.field)
+    if (filterConfig?.type == 'text') filters[k] = `$lkof|${value}`
+    else if (filterConfig?.type == 'daterangepicker')
+      filters[k] = `$btwn|${value.from} 00:00:00|${value.to} 23:59:59`
+    else if (filterConfig?.type == 'datetimerange')
+      filters[k] = `$btwn|${value.from}|${value.to}`
+    else if (filterConfig?.type == 'timerangepicker') {
+      if (value.from && value.to) filters[k] = `$btwn|${value.from}|${value.to}`
+    }
+    else filters[k] = value
+  }
 
-        if (idx == -1) return
+  // Extra filters:
+  const extraFilters = {}
+  if (props.ExtraFilters) {
+    for (let k in props.ExtraFilters)
+      if (props.ExtraFilters[k]) extraFilters[k] = props.ExtraFilters[k]
+  }
 
-        sortNumber = idx + 1
-      } else if (typeof column.sortBy == 'string') {
-        // Find sort number:
-        let columns = Object.keys(this.rawData[0] ?? {})
-        let idx = columns.indexOf(column.sortBy)
+  return {
+    ...paginationParams,
+    ...search,
+    ...filters,
+    ...extraFilters,
+  }
+}
 
-        if (idx == -1) return
+function getColumnNumber(column) {
+  var sortNumber
+  if (!!column.sortBy === false) {
+    // Find sort number:
+    let cols = Object.keys(rawData.value[0] ?? {})
+    let idx = cols.indexOf(column.field)
 
-        sortNumber = idx + 1
-      } else {
-        sortNumber = column.sortBy
-      }
+    if (idx == -1) return
 
-      return sortNumber
-    },
+    sortNumber = idx + 1
+  } else if (typeof column.sortBy == 'string') {
+    // Find sort number:
+    let cols = Object.keys(rawData.value[0] ?? {})
+    let idx = cols.indexOf(column.sortBy)
 
-    getColumnLabel(field) {
-      const columns = this.Columns.map((c) => ({
-        label: c.label,
-        field: c.field,
-      }))
-      const filters = this.Filters.map((f) => ({
-        label: f.label,
-        field: f.field,
-      }))
-      const available = [...columns, ...filters]
+    if (idx == -1) return
 
-      let target = available.find((item) => item.field == field)
+    sortNumber = idx + 1
+  } else {
+    sortNumber = column.sortBy
+  }
 
-      return target?.label ?? field
-    },
+  return sortNumber
+}
 
-    getSortIcon(column) {
-      if (this.getColumnNumber(column) == this.pagination.sortBy) {
-        if (this.pagination.sortDir == 'ASC') return 'fas fa-sort-up'
-        else if (this.pagination.sortDir == 'DESC') return 'fas fa-sort-down'
-        else return 'fas fa-ban'
-      } else return 'fas fa-sort'
-    },
+function getColumnLabel(field) {
+  const cols = props.Columns.map((c) => ({
+    label: c.label,
+    field: c.field,
+  }))
+  const filters = props.Filters.map((f) => ({
+    label: f.label,
+    field: f.field,
+  }))
+  const available = [...cols, ...filters]
 
-    sort(column) {
-      if (column.sortable === false || (!!column.sortBy === false && this.rawData.length == 0))
-        return
+  let target = available.find((item) => item.field == field)
 
-      var sortNumber = this.getColumnNumber(column)
+  return target?.label ?? field
+}
 
-      if (this.pagination.sortBy == sortNumber) {
-        if (this.pagination.sortDir == 'ASC') this.pagination.sortDir = 'DESC'
-        else if (this.pagination.sortDir == 'DESC') this.pagination.sortDir = 'ASC'
-      } else {
-        this.pagination.sortBy = sortNumber
-        this.pagination.sortDir = 'ASC'
-      }
-    },
+function getSortIcon(column) {
+  if (getColumnNumber(column) == pagination.sortBy) {
+    if (pagination.sortDir == 'ASC') return 'fas fa-sort-up'
+    else if (pagination.sortDir == 'DESC') return 'fas fa-sort-down'
+    else return 'fas fa-ban'
+  } else return 'fas fa-sort'
+}
 
-    showActionsBtnInRow(row) {
-      return this.RowActions.some((action) => {
-        const hide = action.hide
+function sort(column) {
+  if (column.sortable === false || (!!column.sortBy === false && rawData.value.length == 0))
+    return
 
-        // Execution
-        if (hide === undefined) return true
-        if (hide === Boolean) return !hide
-        if (typeof hide === 'function') return !hide(row, action)
+  var sortNumber = getColumnNumber(column)
 
-        return true
-      })
-    },
+  if (pagination.sortBy == sortNumber) {
+    if (pagination.sortDir == 'ASC') pagination.sortDir = 'DESC'
+    else if (pagination.sortDir == 'DESC') pagination.sortDir = 'ASC'
+  } else {
+    pagination.sortBy = sortNumber
+    pagination.sortDir = 'ASC'
+  }
+}
 
-    ///////////////////////////
-    // Operational Functions:
-    ///////////////////////////
-    reload() {
-      clearTimeout(this.loadTimeout)
+function showActionsBtnInRow(row) {
+  return props.RowActions.some((action) => {
+    const hide = action.hide
 
-      this.loadTimeout = setTimeout(async () => {
-        const response = await this.loadData(this.IgnorePagination)
-        if (response) this.rawData = response.data
-      }, 200)
-    },
+    // Execution
+    if (hide === undefined) return true
+    if (hide === Boolean) return !hide
+    if (typeof hide === 'function') return !hide(row, action)
 
-    paginate(data) {
-      // finalPage/pages derivam do total real (fullData), não da fatia limitada pelo servidor.
-      const { finalPage, pages } = computePagination({
-        totalItems: this.fullData.length,
-        pageItems: data.length,
-        currentPage: this.pagination.currentPage,
-        limit: this.pagination.limit,
-      })
-      this.pagination.finalPage = finalPage
-      this.pagination.pages = pages
+    return true
+  })
+}
 
-      this.pagination.pageFirstItem =
-        data.length > 0
-          ? this.pagination.currentPage * this.pagination.limit - this.pagination.limit + 1
-          : 0
+///////////////////////////
+// Operational Functions:
+///////////////////////////
+function reload() {
+  clearTimeout(loadTimeout)
 
-      if (data.length > 0) {
-        this.pagination.pageLastItem = this.pagination.pageFirstItem
-        for (let i = 1; i < data.length; i++) {
-          this.pagination.pageLastItem++
-        }
-      } else this.pagination.pageLastItem = 0
+  loadTimeout = setTimeout(async () => {
+    const response = await loadData(props.IgnorePagination)
+    if (response) rawData.value = response.data
+  }, 200)
+}
 
-      this.pagination.pageLastIndex =
-        data.length < this.pagination.limit ? data.length - 1 : this.pagination.limit - 1
+function paginate(data) {
+  // finalPage/pages derivam do total real (fullData), não da fatia limitada pelo servidor.
+  const { finalPage, pages } = computePagination({
+    totalItems: fullData.value.length,
+    pageItems: data.length,
+    currentPage: pagination.currentPage,
+    limit: pagination.limit,
+  })
+  pagination.finalPage = finalPage
+  pagination.pages = pages
 
-      this.dataInPage = []
-      for (let i = 0; i <= this.pagination.pageLastIndex; i++) {
-        this.dataInPage.push(this.rawData[i])
-      }
+  pagination.pageFirstItem =
+    data.length > 0
+      ? pagination.currentPage * pagination.limit - pagination.limit + 1
+      : 0
 
-      if (this.dataInPage.length == 0 && this.pagination.currentPage > 1) {
-        this.goToPage('prev')
-      }
-    },
+  if (data.length > 0) {
+    pagination.pageLastItem = pagination.pageFirstItem
+    for (let i = 1; i < data.length; i++) {
+      pagination.pageLastItem++
+    }
+  } else pagination.pageLastItem = 0
 
-    async goToPage(page) {
-      switch (page) {
-        case 'next':
-          if (this.pagination.currentPage + 1 > this.pagination.finalPage) return
-          this.pagination.currentPage++
-          break
-        case 'prev':
-          if (this.pagination.currentPage - 1 < 1) return
-          this.pagination.currentPage--
-          break
-        default:
-          if (page != this.pagination.currentPage) this.pagination.currentPage = page
-      }
-    },
+  pagination.pageLastIndex =
+    data.length < pagination.limit ? data.length - 1 : pagination.limit - 1
 
-    async exportFile(filetype, filename) {
-      filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`
+  dataInPage.value = []
+  for (let i = 0; i <= pagination.pageLastIndex; i++) {
+    dataInPage.value.push(rawData.value[i])
+  }
 
-      var data = this.fullData
-      var blobType
-      var content
+  if (dataInPage.value.length == 0 && pagination.currentPage > 1) {
+    goToPage('prev')
+  }
+}
 
-      switch (filetype) {
-        case 'xls':
-          blobType = 'application/vnd.ms-excel;charset=utf-8;'
-          content = this.buildContentTable(data)
-          break
-        case 'csv':
-          blobType = 'text/csv;charset=utf-8;'
-          content = this.buildCsvContent(data)
-          break
-      }
+async function goToPage(page) {
+  switch (page) {
+    case 'next':
+      if (pagination.currentPage + 1 > pagination.finalPage) return
+      pagination.currentPage++
+      break
+    case 'prev':
+      if (pagination.currentPage - 1 < 1) return
+      pagination.currentPage--
+      break
+    default:
+      if (page != pagination.currentPage) pagination.currentPage = page
+  }
+}
 
-      // Encode the content to UTF-8
-      const encoder = new TextEncoder()
-      const utf8Content = encoder.encode(content)
+async function exportFile(filetype, filename) {
+  filename = filename.indexOf(`.${filetype}`) ? filename : `${filename}.${filetype}`
 
-      // Create a blob with the UTF-8 encoded content
-      const blob = new Blob([utf8Content], { type: blobType })
+  var data = fullData.value
+  var blobType
+  var content
 
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', filename)
+  switch (filetype) {
+    case 'xls':
+      blobType = 'application/vnd.ms-excel;charset=utf-8;'
+      content = buildContentTable(data)
+      break
+    case 'csv':
+      blobType = 'text/csv;charset=utf-8;'
+      content = buildCsvContent(data)
+      break
+  }
 
-      link.style.visibility = 'hidden'
+  // Encode the content to UTF-8
+  const encoder = new TextEncoder()
+  const utf8Content = encoder.encode(content)
 
-      // Adiciona o link ao DOM e dispara o clique
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+  // Create a blob with the UTF-8 encoded content
+  const blob = new Blob([utf8Content], { type: blobType })
 
-      this.loading = false
-    },
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
 
-    escapeXml(value) {
-      if (value === null || value === undefined) return ''
-      if (value === false) return 'Não'
-      if (value === true) return 'Sim'
+  link.style.visibility = 'hidden'
 
-      return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-    },
+  // Adiciona o link ao DOM e dispara o clique
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 
-    buildContentTable(data) {
-      // Início do XML
-      let content = `
+  loading.value = false
+}
+
+function escapeXml(value) {
+  if (value === null || value === undefined) return ''
+  if (value === false) return 'Não'
+  if (value === true) return 'Sim'
+
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function buildContentTable(data) {
+  // Início do XML
+  let content = `
       <?xml version="1.0" encoding="UTF-8"?>
   <html xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:x="urn:schemas-microsoft-com:office:excel"
@@ -1272,55 +1282,55 @@ export default {
   <table>
     <thead>
       <tr>
-        ${this.Columns.filter((column) => this.visibleColumns.includes(column.field))
-          .map((column) => `<th>${this.escapeXml(column.label)}</th>`)
+        ${props.Columns.filter((column) => visibleColumns.value.includes(column.field))
+          .map((column) => `<th>${escapeXml(column.label)}</th>`)
           .join('')}
       </tr>
     </thead>
     <tbody>
   `
 
-      // Adiciona as linhas
-      for (let j = 0; j < data.length; j++) {
-        content += '<tr>'
-        let row = data[j]
+  // Adiciona as linhas
+  for (let j = 0; j < data.length; j++) {
+    content += '<tr>'
+    let row = data[j]
 
-        for (let i = 0; i < this.Columns.length; i++) {
-          let clm = this.Columns[i]
-          if (!this.visibleColumns.includes(clm.field)) continue
-          content += `<td>${
-            clm.format ? clm.format(row) : row[clm.field] ? row[clm.field] : ''
-          }</td>`
-        }
-        content += '</tr>'
-      }
-      // Fecha o XML
-      content += `
+    for (let i = 0; i < props.Columns.length; i++) {
+      let clm = props.Columns[i]
+      if (!visibleColumns.value.includes(clm.field)) continue
+      content += `<td>${
+        clm.format ? clm.format(row) : row[clm.field] ? row[clm.field] : ''
+      }</td>`
+    }
+    content += '</tr>'
+  }
+  // Fecha o XML
+  content += `
     </tbody>
   </table>
   `
 
-      return content
-    },
+  return content
+}
 
-    buildContentTableForPrint(data) {
-      const visible = this.Columns.filter((c) => this.visibleColumns.includes(c.field))
-      var filters = Object.entries(this.filtersValues)
-        .filter(([, value]) => value !== null && value !== undefined && value !== '')
-        .map(
-          ([filterKey, value]) =>
-            `<li>&#8250; ${this.escapeXml(
-              this.getColumnLabel(filterKey),
-            )}: <span style="font-weight: normal;">"${this.escapeXml(value)}"</span></li>`,
-        )
-        .join('')
-      if (filters.length == 0) filters = '<li>Nenhum filtro aplicado</li>'
+function buildContentTableForPrint(data) {
+  const visible = props.Columns.filter((c) => visibleColumns.value.includes(c.field))
+  var filters = Object.entries(filtersValues.value)
+    .filter(([, value]) => value !== null && value !== undefined && value !== '')
+    .map(
+      ([filterKey, value]) =>
+        `<li>&#8250; ${escapeXml(
+          getColumnLabel(filterKey),
+        )}: <span style="font-weight: normal;">"${escapeXml(value)}"</span></li>`,
+    )
+    .join('')
+  if (filters.length == 0) filters = '<li>Nenhum filtro aplicado</li>'
 
-      let content = `<!doctype html>
+  let content = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>${this.Name}</title>
+  <title>${props.Name}</title>
   <style>
     @page { margin: 10mm; }
     body { font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial; }
@@ -1338,28 +1348,28 @@ export default {
     <thead>
       <tr><th colspan="${
         visible.length
-      }" style="text-align: center; font-size: 16px;">${this.Name}</th></tr>
+      }" style="text-align: center; font-size: 16px;">${props.Name}</th></tr>
       <tr><th colspan="${visible.length}" style="text-align: left; font-size: 12px;">
         <span style="text-decoration:underline;">Filtros:</span>
         <br>
         <br>
         <ul style="list-style-type: none; padding: 0; margin: 0;">${filters}</ul></th>
       </tr>
-      <tr>${visible.map((c) => `<th>${this.escapeXml(c.label)}</th>`).join('')}</tr>
+      <tr>${visible.map((c) => `<th>${escapeXml(c.label)}</th>`).join('')}</tr>
   </thead>
   <tbody>`
 
-      for (let j = 0; j < data.length; j++) {
-        const row = data[j]
-        content += '<tr>'
-        for (const clm of visible) {
-          const val = clm.format ? clm.format(row) : (row?.[clm.field] ?? '')
-          content += `<td>${this.escapeHtml(String(val))}</td>`
-        }
-        content += '</tr>'
-      }
+  for (let j = 0; j < data.length; j++) {
+    const row = data[j]
+    content += '<tr>'
+    for (const clm of visible) {
+      const val = clm.format ? clm.format(row) : (row?.[clm.field] ?? '')
+      content += `<td>${escapeHtml(String(val))}</td>`
+    }
+    content += '</tr>'
+  }
 
-      content += `</tbody>
+  content += `</tbody>
 </table>
 </body>
 <tfoot>
@@ -1369,168 +1379,158 @@ export default {
 </tfoot>
 </html>`
 
-      return content
-    },
-
-    escapeHtml(s) {
-      return s
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;')
-    },
-
-    buildCsvContent(rawdata) {
-      // Ensure the data is an array of objects
-      if (!Array.isArray(rawdata) || !rawdata.length || typeof rawdata[0] !== 'object') {
-        console.error('The provided data could not be converted to CSV.')
-        return
-      }
-
-      // Extract headers (keys of the first object in the array)
-      const headers = this.Columns.filter((column) =>
-        this.visibleColumns.includes(column.field),
-      ).map((column) => column.label)
-
-      const data = []
-      for (let j = 0; j < rawdata.length; j++) {
-        let row = rawdata[j]
-        let rowValues = []
-
-        for (let i = 0; i < this.Columns.length; i++) {
-          let clm = this.Columns[i]
-          if (!this.visibleColumns.includes(clm.field)) continue
-          const f = clm.export ?? clm.field
-          rowValues.push(row[f])
-        }
-        data.push(rowValues)
-      }
-
-      // Generate CSV content
-      const csvContent = [headers.join(';'), ...data.map((row) => row.join(';'))].join('\r\n')
-
-      return csvContent
-    },
-
-    async printData() {
-      const data = this.fullData
-      this.loading = false
-
-      const html = this.buildContentTableForPrint(data)
-
-      const iframe = document.createElement('iframe')
-      iframe.style.position = 'fixed'
-      iframe.style.right = '0'
-      iframe.style.bottom = '0'
-      iframe.style.width = '0'
-      iframe.style.height = '0'
-      iframe.style.border = '0'
-      document.body.appendChild(iframe)
-
-      const doc = iframe.contentWindow.document
-      doc.open()
-      doc.write(html)
-      doc.close()
-
-      // dá um tempo pro layout e reflow terminarem
-      await new Promise((r) => setTimeout(r, 500))
-
-      iframe.contentWindow.focus()
-      iframe.contentWindow.print()
-
-      setTimeout(() => iframe.remove(), 1500)
-    },
-
-    //////////////////
-    // Item Functions:
-    //////////////////
-    handleItemClick(item) {
-      if (this.itemHasChildren(item)) return
-
-      item.fn({
-        fullData: this.fullData,
-        rawData: this.rawData,
-        filters: this.filtersValues,
-        ...item.params,
-      })
-    },
-
-    itemHasChildren(item) {
-      return !!item?.children
-    },
-  },
-
-  created() {
-    // Block filterParams watcher while restoring persisted filters.
-    // InputField children emit update:model-value with their Default value
-    // during their own mounted(), which runs BEFORE this component's mounted().
-    // Without this flag those emissions would wipe out the persisted filters.
-    this.isRestoring = true
-  },
-
-  async mounted() {
-    // Set columns:
-    this.columns = [...this.Columns]
-    this.visibleColumns =
-      JSON.parse(localStorage.getItem(`Datatable.${this.sluggedName}.visibleColumns`)) ??
-      this.Columns.map((clm) => clm.field)
-
-    // Set Actions:
-    if (this.RowActions && this.RowActions?.length > 0)
-      this.columns.push({
-        name: 'actions',
-        label: 'Ações',
-        align: 'center',
-        sortable: false,
-        filterable: false,
-      })
-
-    var loadFirstData = true
-    // Set persisted filters:
-    var persistedFilters = localStorage.getItem(`Datatable.${this.sluggedName}.filters`)
-    if (persistedFilters) {
-      this.showFilterPanel = true
-      setTimeout(() => {
-        this.filterParams = JSON.parse(persistedFilters)
-        this.isRestoring = false
-      }, 100)
-      loadFirstData = false
-    } else {
-      this.isRestoring = false
-    }
-
-    // Set persisted search term:
-    this.searchTerm = localStorage.getItem(`Datatable.${this.sluggedName}.searchTerm`) ?? null
-    if (this.searchTerm) loadFirstData = false
-
-    // Set sorting:
-    if (this.DefaultSorting) {
-      this.pagination.sortBy = this.DefaultSorting.by
-      this.pagination.sortDir = this.DefaultSorting.direction
-      loadFirstData = false
-    }
-
-    // Set persisted pagination:
-    var persistedPagination = localStorage.getItem(`Datatable.${this.sluggedName}.pagination`)
-    if (persistedPagination) {
-      persistedPagination = JSON.parse(persistedPagination)
-      for (let k in persistedPagination)
-        if (k in this.pagination && k != 'currentPage') this.pagination[k] = persistedPagination[k]
-
-      if (!!persistedPagination.currentPage && persistedPagination.currentPage != 1) {
-        setTimeout(() => (this.pagination.currentPage = persistedPagination.currentPage), 200)
-        loadFirstData = false
-      }
-    }
-
-    // If no change occurred in any parameters, start the first load:
-    if (loadFirstData) {
-      const response = await this.loadData()
-      if (response) this.rawData = response.data
-    }
-  },
+  return content
 }
+
+function escapeHtml(s) {
+  return s
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function buildCsvContent(rawdata) {
+  // Ensure the data is an array of objects
+  if (!Array.isArray(rawdata) || !rawdata.length || typeof rawdata[0] !== 'object') {
+    console.error('The provided data could not be converted to CSV.')
+    return
+  }
+
+  // Extract headers (keys of the first object in the array)
+  const headers = props.Columns.filter((column) =>
+    visibleColumns.value.includes(column.field),
+  ).map((column) => column.label)
+
+  const data = []
+  for (let j = 0; j < rawdata.length; j++) {
+    let row = rawdata[j]
+    let rowValues = []
+
+    for (let i = 0; i < props.Columns.length; i++) {
+      let clm = props.Columns[i]
+      if (!visibleColumns.value.includes(clm.field)) continue
+      const f = clm.export ?? clm.field
+      rowValues.push(row[f])
+    }
+    data.push(rowValues)
+  }
+
+  // Generate CSV content
+  const csvContent = [headers.join(';'), ...data.map((row) => row.join(';'))].join('\r\n')
+
+  return csvContent
+}
+
+async function printData() {
+  const data = fullData.value
+  loading.value = false
+
+  const html = buildContentTableForPrint(data)
+
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  document.body.appendChild(iframe)
+
+  const doc = iframe.contentWindow.document
+  doc.open()
+  doc.write(html)
+  doc.close()
+
+  // dá um tempo pro layout e reflow terminarem
+  await new Promise((r) => setTimeout(r, 500))
+
+  iframe.contentWindow.focus()
+  iframe.contentWindow.print()
+
+  setTimeout(() => iframe.remove(), 1500)
+}
+
+//////////////////
+// Item Functions:
+//////////////////
+function handleItemClick(item) {
+  if (itemHasChildren(item)) return
+
+  item.fn({
+    fullData: fullData.value,
+    rawData: rawData.value,
+    filters: filtersValues.value,
+    ...item.params,
+  })
+}
+
+function itemHasChildren(item) {
+  return !!item?.children
+}
+
+onMounted(async () => {
+  // Set columns:
+  columns.value = [...props.Columns]
+  visibleColumns.value =
+    JSON.parse(localStorage.getItem(`Datatable.${sluggedName.value}.visibleColumns`)) ??
+    props.Columns.map((clm) => clm.field)
+
+  // Set Actions:
+  if (props.RowActions && props.RowActions?.length > 0)
+    columns.value.push({
+      name: 'actions',
+      label: 'Ações',
+      align: 'center',
+      sortable: false,
+      filterable: false,
+    })
+
+  var loadFirstData = true
+  // Set persisted filters:
+  var persistedFilters = localStorage.getItem(`Datatable.${sluggedName.value}.filters`)
+  if (persistedFilters) {
+    showFilterPanel.value = true
+    setTimeout(() => {
+      filterParams.value = JSON.parse(persistedFilters)
+      isRestoring = false
+    }, 100)
+    loadFirstData = false
+  } else {
+    isRestoring = false
+  }
+
+  // Set persisted search term:
+  searchTerm.value = localStorage.getItem(`Datatable.${sluggedName.value}.searchTerm`) ?? null
+  if (searchTerm.value) loadFirstData = false
+
+  // Set sorting:
+  if (props.DefaultSorting) {
+    pagination.sortBy = props.DefaultSorting.by
+    pagination.sortDir = props.DefaultSorting.direction
+    loadFirstData = false
+  }
+
+  // Set persisted pagination:
+  var persistedPagination = localStorage.getItem(`Datatable.${sluggedName.value}.pagination`)
+  if (persistedPagination) {
+    persistedPagination = JSON.parse(persistedPagination)
+    for (let k in persistedPagination)
+      if (k in pagination && k != 'currentPage') pagination[k] = persistedPagination[k]
+
+    if (!!persistedPagination.currentPage && persistedPagination.currentPage != 1) {
+      setTimeout(() => (pagination.currentPage = persistedPagination.currentPage), 200)
+      loadFirstData = false
+    }
+  }
+
+  // If no change occurred in any parameters, start the first load:
+  if (loadFirstData) {
+    const response = await loadData()
+    if (response) rawData.value = response.data
+  }
+})
 </script>
 
 <style scoped>

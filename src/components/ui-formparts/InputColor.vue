@@ -21,52 +21,45 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ui-formparts-inputcolor',
+<script setup>
+import { ref, watch } from 'vue'
 
-  props: {
-    BgColor: String,
-    readonly: Boolean,
-    dense: Boolean,
-    modelValue: String,
-    Label: String,
-    Error: Boolean,
-    Default: String,
-    hint: String, 
-  },
+defineOptions({ name: 'ui-formparts-inputcolor' })
 
-  data() {
-    return {
-      value: null
-    }
-  },
+const props = defineProps({
+  BgColor: String,
+  readonly: Boolean,
+  dense: Boolean,
+  modelValue: String,
+  Label: String,
+  Error: Boolean,
+  Default: String,
+  hint: String,
+})
 
-  watch: {
-    modelValue(v) {
-      this.value = v;
-    },
+const emit = defineEmits(['focus', 'update:model-value'])
 
-    value(v){
-      this.updModelValue(v);
-    }
-  },
+const value = ref(null)
 
-  methods: {
-    updModelValue(v) {
-      this.$emit('update:model-value', v);
-    },
+watch(() => props.modelValue, (v) => {
+  value.value = v
+})
 
-    clear() {
-      if (this.Default) this.value = this.Default;
-      else this.value = this.modelValue;
-    }
-  },
+watch(value, (v) => {
+  updModelValue(v)
+})
 
-  created() {
-    this.clear();
-  }
+function updModelValue(v) {
+  emit('update:model-value', v)
 }
+
+function clear() {
+  if (props.Default) value.value = props.Default
+  else value.value = props.modelValue
+}
+
+// created()
+clear()
 </script>
 
 <style scoped>

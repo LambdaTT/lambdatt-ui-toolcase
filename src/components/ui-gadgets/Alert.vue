@@ -19,37 +19,33 @@
   </q-dialog>
 </template>
 
-<script>
-export default {
-  name: 'components-common-inconsistencewarning',
+<script setup>
+import { ref, watch, onMounted } from 'vue'
 
-  props: {
-    Icon: String,
-    Title: String,
-    Content: String,
-    persistent: Boolean,
-    modelValue: Boolean,
-    DefaultOpened: Boolean,
-  },
+defineOptions({ name: 'components-common-inconsistencewarning' })
 
-  data() {
-    return {
-      show: false,
-    }
-  },
+const props = defineProps({
+  Icon: String,
+  Title: String,
+  Content: String,
+  persistent: Boolean,
+  modelValue: Boolean,
+  DefaultOpened: Boolean,
+})
 
-  watch: {
-    modelValue(v) {
-      this.show = v;
-    },
+const emit = defineEmits(['update:model-value'])
 
-    show(v) {
-      this.$emit('update:model-value', v);
-    }
-  },
+const show = ref(false)
 
-  mounted() {
-    if (this.DefaultOpened !== null) this.show = this.DefaultOpened;
-  }
-}
+watch(() => props.modelValue, (v) => {
+  show.value = v
+})
+
+watch(show, (v) => {
+  emit('update:model-value', v)
+})
+
+onMounted(() => {
+  if (props.DefaultOpened !== null) show.value = props.DefaultOpened
+})
 </script>

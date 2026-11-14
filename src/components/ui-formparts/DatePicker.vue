@@ -35,223 +35,215 @@
   </q-input>
 </template>
 
-<script>
-export default {
-  name: 'ui-formparts-datepicker',
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
 
-  props: {
-    modelValue: { type: [String, Object] },
-    Default: { type: [String, Object] },
-    BgColor: String,
-    Label: String,
-    Error: { type: Boolean, default: false },
-    dateOptions: { type: [Array, Function] },
-    dense: Boolean,
-    range: Boolean,
-    readonly: Boolean,
-    withTime: Boolean,
-    withSeconds: Boolean,
-    todayBtn: Boolean,
-    minDatePage: String,
-    maxDatePage: String,
-    hint: String,
-  },
+defineOptions({ name: 'ui-formparts-datepicker' })
 
-  data() {
-    return {
-      defaultFirstTime: null,
-      defaultLastTime: null,
-      firstTime: null,
-      lastTime: null,
-      date: null,
+const props = defineProps({
+  modelValue: { type: [String, Object] },
+  Default: { type: [String, Object] },
+  BgColor: String,
+  Label: String,
+  Error: { type: Boolean, default: false },
+  dateOptions: { type: [Array, Function] },
+  dense: Boolean,
+  range: Boolean,
+  readonly: Boolean,
+  withTime: Boolean,
+  withSeconds: Boolean,
+  todayBtn: Boolean,
+  minDatePage: String,
+  maxDatePage: String,
+  hint: String,
+})
+
+const emit = defineEmits(['focus', 'update:model-value'])
+
+const defaultFirstTime = ref(null)
+const defaultLastTime = ref(null)
+const firstTime = ref(null)
+const lastTime = ref(null)
+const date = ref(null)
+const typingMode = ref(false)
+
+watch(date, () => {
+  updateModelValue();
+})
+
+watch(firstTime, () => {
+  updateModelValue();
+})
+
+watch(lastTime, () => {
+  updateModelValue();
+})
+
+function setDefault() {
+  var v = props.Default ?? null;
+  var newDate;
+  var newFirstTime;
+  var newLastTime;
+
+  if (v) {
+    // For date range:
+    if (typeof v == 'object') {
+      newDate = {
+        from: null,
+        to: null
+      };
+      newFirstTime = null;
+      newLastTime = null;
+
+      if (v.from) {
+        if (v.from.includes(':')) {
+          let arr = v.from.split(' ');
+          newDate.from = arr[0];
+          newFirstTime = arr[1];
+        } else {
+          newDate.from = v.from;
+        }
+      }
+
+      if (v.to) {
+        if (v.to.includes(':')) {
+          let arr = v.to.split(' ');
+          newDate.to = arr[0];
+          newLastTime = arr[1];
+        } else {
+          newDate.to = v.to;
+        }
+      }
     }
-  },
 
-  watch: {
-    date() {
-      this.updateModelValue();
-    },
-
-    firstTime() {
-      this.updateModelValue();
-    },
-
-    lastTime() {
-      this.updateModelValue();
-    },
-  },
-
-  methods: {
-    setDefault() {
-      var v = this.Default ?? null;
-      var date;
-      var firstTime;
-      var lastTime;
-
-      if (v) {
-        // For date range:
-        if (typeof v == 'object') {
-          date = {
-            from: null,
-            to: null
-          };
-          firstTime = null;
-          lastTime = null;
-
-          if (v.from) {
-            if (v.from.includes(':')) {
-              let arr = v.from.split(' ');
-              date.from = arr[0];
-              firstTime = arr[1];
-            } else {
-              date.from = v.from;
-            }
-          }
-
-          if (v.to) {
-            if (v.to.includes(':')) {
-              let arr = v.to.split(' ');
-              date.to = arr[0];
-              lastTime = arr[1];
-            } else {
-              date.to = v.to;
-            }
-          }
-        }
-
-        // For single date:
-        else {
-          if (v.includes(':')) {
-            let arr = v.split(' ');
-            date = arr[0];
-            firstTime = arr[1];
-          } else {
-            date = v;
-          }
-        }
+    // For single date:
+    else {
+      if (v.includes(':')) {
+        let arr = v.split(' ');
+        newDate = arr[0];
+        newFirstTime = arr[1];
       } else {
-        date = null;
-        firstTime = null;
-        lastTime = null;
-      }
-
-      this.date = date;
-      this.firstTime = firstTime;
-      this.lastTime = lastTime;
-
-      if (!!this.Default && firstTime) {
-        this.defaultFirstTime = firstTime;
-      }
-      if (!!this.Default && lastTime) {
-        this.defaultLastTime = lastTime;
-      }
-    },
-
-    updateModelValue() {
-      var val;
-
-      // For date range:
-      if (this.range && this.date != null) {
-        const normalize = (d) => (d ? d.replaceAll('/', '-') : null);
-
-        let from, to;
-        
-        if(typeof this.date === 'object') {
-          from = normalize(this.date.from);
-          to   = normalize(this.date.to);
-        } else {
-          const normalized = normalize(this.date);
-          from = normalized;
-          to   = normalized;
-        }
-
-        if (from && this.firstTime) from = `${from} ${this.firstTime}`;
-        if (to && this.lastTime) to = `${to} ${this.lastTime}`;
-
-        val = { from, to };
-      }
-
-      // Legacy code:
-      // if (this.date != null && (typeof this.date == 'object' || this.range)) {
-      //   // 1. Handle date:
-      //   val = {
-      //     from: !!this.date.from ? this.date.from.replaceAll('/', '-') : null,
-      //     to: !!this.date.to ? this.date.to.replaceAll('/', '-') : null,
-      //   };
-      //   // 2. Handle first time:
-      //   if (!!val.from && this.firstTime) val.from = `${val.from} ${this.firstTime}`
-      //   // 3. Handle last time:
-      //   if (!!val.to && this.lastTime) val.to = `${val.to} ${this.lastTime}`
-      // }
-
-      // For single date:
-      else {
-        // 1. Handle date:
-        val = this.date ? this.date.replaceAll('/', '-') : null;
-        // 2. Handle first time:
-        if (!!val && this.firstTime) val = `${val} ${this.firstTime}`
-      }
-      this.$emit('update:model-value', val);
-    },
-
-    clear() {
-      this.setDefault();
-      this.$emit('update:model-value', this.Default);
-      if (this.withTime) {
-        this.defaultFirstTime = this.firstTime ? this.firstTime : '00:00:00';
-        if (this.range)
-          this.defaultLastTime = this.lastTime ? this.lastTime : '23:59:59';
-
+        newDate = v;
       }
     }
-  },
-
-  computed: {
-    formattedDate() {
-      if (this.modelValue) {
-        if (typeof this.modelValue == 'object') {
-          if (!this.modelValue?.from || !this.modelValue?.to) return null;
-
-          let fromData = this.modelValue.from.split('-');
-          let toData = this.modelValue.to.split('-');
-
-          var dayFrom = fromData[2];
-          var dayTo = toData[2];
-          if (this.modelValue.from.includes(':')) {
-            let dayData = dayFrom.split(' ');
-            dayFrom = dayData[0];
-            fromData[0] = `${fromData[0]} ${dayData[1]}`;
-          }
-          if (this.modelValue.to.includes(':')) {
-            let dayData = dayTo.split(' ');
-            dayTo = dayData[0];
-            toData[0] = `${toData[0]} ${dayData[1]}`;
-          }
-
-          return `De: ${dayFrom}/${fromData[1]}/${fromData[0]}  ->  Até: ${dayTo}/${toData[1]}/${toData[0]}`
-        } else {
-          var dateData = this.modelValue.split('-');
-
-          var day = dateData[2];
-          if (this.modelValue.includes(':')) {
-            let dayData = day.split(' ');
-            day = dayData[0];
-            dateData[0] = `${dateData[0]} ${dayData[1]}`;
-          }
-          return `${day}/${dateData[1]}/${dateData[0]}`
-        }
-      }
-      else return null;
-    },
-  },
-
-  mounted() {
-    setTimeout(() => {
-      this.setDefault();
-    }, 200);
+  } else {
+    newDate = null;
+    newFirstTime = null;
+    newLastTime = null;
   }
 
+  date.value = newDate;
+  firstTime.value = newFirstTime;
+  lastTime.value = newLastTime;
+
+  if (!!props.Default && newFirstTime) {
+    defaultFirstTime.value = newFirstTime;
+  }
+  if (!!props.Default && newLastTime) {
+    defaultLastTime.value = newLastTime;
+  }
 }
+
+function updateModelValue() {
+  var val;
+
+  // For date range:
+  if (props.range && date.value != null) {
+    const normalize = (d) => (d ? d.replaceAll('/', '-') : null);
+
+    let from, to;
+
+    if (typeof date.value === 'object') {
+      from = normalize(date.value.from);
+      to   = normalize(date.value.to);
+    } else {
+      const normalized = normalize(date.value);
+      from = normalized;
+      to   = normalized;
+    }
+
+    if (from && firstTime.value) from = `${from} ${firstTime.value}`;
+    if (to && lastTime.value) to = `${to} ${lastTime.value}`;
+
+    val = { from, to };
+  }
+
+  // Legacy code:
+  // if (this.date != null && (typeof this.date == 'object' || this.range)) {
+  //   // 1. Handle date:
+  //   val = {
+  //     from: !!this.date.from ? this.date.from.replaceAll('/', '-') : null,
+  //     to: !!this.date.to ? this.date.to.replaceAll('/', '-') : null,
+  //   };
+  //   // 2. Handle first time:
+  //   if (!!val.from && this.firstTime) val.from = `${val.from} ${this.firstTime}`
+  //   // 3. Handle last time:
+  //   if (!!val.to && this.lastTime) val.to = `${val.to} ${this.lastTime}`
+  // }
+
+  // For single date:
+  else {
+    // 1. Handle date:
+    val = date.value ? date.value.replaceAll('/', '-') : null;
+    // 2. Handle first time:
+    if (!!val && firstTime.value) val = `${val} ${firstTime.value}`
+  }
+  emit('update:model-value', val);
+}
+
+function clear() {
+  setDefault();
+  emit('update:model-value', props.Default);
+  if (props.withTime) {
+    defaultFirstTime.value = firstTime.value ? firstTime.value : '00:00:00';
+    if (props.range)
+      defaultLastTime.value = lastTime.value ? lastTime.value : '23:59:59';
+
+  }
+}
+
+const formattedDate = computed(() => {
+  if (props.modelValue) {
+    if (typeof props.modelValue == 'object') {
+      if (!props.modelValue?.from || !props.modelValue?.to) return null;
+
+      let fromData = props.modelValue.from.split('-');
+      let toData = props.modelValue.to.split('-');
+
+      var dayFrom = fromData[2];
+      var dayTo = toData[2];
+      if (props.modelValue.from.includes(':')) {
+        let dayData = dayFrom.split(' ');
+        dayFrom = dayData[0];
+        fromData[0] = `${fromData[0]} ${dayData[1]}`;
+      }
+      if (props.modelValue.to.includes(':')) {
+        let dayData = dayTo.split(' ');
+        dayTo = dayData[0];
+        toData[0] = `${toData[0]} ${dayData[1]}`;
+      }
+
+      return `De: ${dayFrom}/${fromData[1]}/${fromData[0]}  ->  Até: ${dayTo}/${toData[1]}/${toData[0]}`
+    } else {
+      var dateData = props.modelValue.split('-');
+
+      var day = dateData[2];
+      if (props.modelValue.includes(':')) {
+        let dayData = day.split(' ');
+        day = dayData[0];
+        dateData[0] = `${dateData[0]} ${dayData[1]}`;
+      }
+      return `${day}/${dateData[1]}/${dateData[0]}`
+    }
+  }
+  else return null;
+})
+
+onMounted(() => {
+  setTimeout(() => {
+    setDefault();
+  }, 200);
+})
 </script>
 <style scoped>
 .cursor-ban {

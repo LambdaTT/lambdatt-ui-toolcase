@@ -28,18 +28,19 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "IconPicker",
+<script setup>
+import { ref, computed } from "vue";
 
-  props: {
-    modelValue: String,
-  },
+defineOptions({ name: "IconPicker" });
 
-  data() {
-    return {
-      search: "",
-      icons: [
+defineProps({
+  modelValue: String,
+});
+
+const emit = defineEmits(["update:modelValue"]);
+
+const search = ref("");
+const icons = [
         // Basic
         "fas fa-home",
         "fas fa-user",
@@ -264,24 +265,17 @@ export default {
         "fas fa-cash-register",
         "fas fa-receipt",
         "fas fa-person-walking-luggage"
-      ],
-    };
-  },
+];
 
-  computed: {
-    filteredIcons() {
-      if (!this.search) return this.icons;
-      const s = this.search.toLowerCase();
-      return this.icons.filter((icon) => icon.toLowerCase().includes(s));
-    },
-  },
+const filteredIcons = computed(() => {
+  if (!search.value) return icons;
+  const s = search.value.toLowerCase();
+  return icons.filter((icon) => icon.toLowerCase().includes(s));
+});
 
-  methods: {
-    selectIcon(icon) {
-      this.$emit("update:modelValue", icon);
-    },
-  },
-};
+function selectIcon(icon) {
+  emit("update:modelValue", icon);
+}
 </script>
 
 <style scoped>

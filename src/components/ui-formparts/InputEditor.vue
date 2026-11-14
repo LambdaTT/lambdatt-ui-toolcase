@@ -6,7 +6,7 @@
     <form autocorrect="off" autocapitalize="on" autocomplete="off" spellcheck="off">
       <q-editor dense toolbar-bg="grey-2"
         :disable="disable" :readonly="readonly" :placeholder="placeholder" v-model="value"
-        :class="`full-width ${this.Error ? 'error' : ''}`" @focus="() => $emit('focus')"
+        :class="`full-width ${Error ? 'error' : ''}`" @focus="() => $emit('focus')"
         :toolbar="[
           ['undo', 'redo', 'print'],
           [
@@ -57,44 +57,40 @@
   </div>
 </template>
 
-<script>
-export default{
-  name: 'ui-formparts-inputeditor',
+<script setup>
+import { ref, watch } from 'vue'
 
-  props:{
-    modelValue: String,
-    disable: Boolean,
-    readonly: Boolean,
-    placeholder: String,
-    Label: String,
-    Error: Boolean,
-  },
+defineOptions({ name: 'ui-formparts-inputeditor' })
 
-  data(){
-    return {
-      value: "",
-    }
-  },
+const props = defineProps({
+  modelValue: String,
+  disable: Boolean,
+  readonly: Boolean,
+  placeholder: String,
+  Label: String,
+  Error: Boolean,
+})
 
-  watch:{
-    // Input
-    modelValue(v){
-      if(v === null) {
-        this.value = '';
-      } else {
-        this.value = v;
-      }
-    },
+const emit = defineEmits(['focus', 'update:model-value'])
 
-    // Output
-    value(v){
-      if(v == '<br>') {
-        v = '';
-      }
-      this.$emit('update:model-value', (v == '') ? null : v);
-    }
-  },
-}
+const value = ref("")
+
+// Input
+watch(() => props.modelValue, (v) => {
+  if (v === null) {
+    value.value = '';
+  } else {
+    value.value = v;
+  }
+})
+
+// Output
+watch(value, (v) => {
+  if (v == '<br>') {
+    v = '';
+  }
+  emit('update:model-value', (v == '') ? null : v);
+})
 </script>
 
 <style scoped>

@@ -41,162 +41,158 @@
     <div class="map" :id="`map-${uniqid}`" v-show="mapState == 'ready'"></div>
   </div>
 </template>
-<script>
+<script setup>
 /* global google */
-export default {
-  name: "ui-gadgets-map",
+import { ref, watch, onMounted } from "vue";
 
-  props: {
-    AddressObj: Object,
-    AddressStr: String,
+defineOptions({ name: "ui-gadgets-map" });
+
+const props = defineProps({
+  AddressObj: Object,
+  AddressStr: String,
+});
+
+const emit = defineEmits(["map-loaded"]);
+
+const uniqid = ref(null);
+const mapState = ref("empty");
+let updMapDebounce = null;
+
+watch(
+  () => props.AddressObj,
+  (val) => {
+    handleAddressObj(val);
   },
+  { deep: true },
+);
 
-  data() {
-    return {
-      uniqid: null,
-      mapState: "empty",
-      updMapDebounce: null,
-    };
+watch(
+  () => props.AddressStr,
+  (val) => {
+    handleAddressStr(val);
   },
+);
 
-  watch: {
-    AddressObj: {
-      handler(val) {
-        this.handleAddressObj(val);
-      },
-      deep: true,
+function buildFullAddress(address) {
+  if (!address || address.ds_street == null) return null;
+
+  var fullAddress =
+    address.ds_street +
+    ", " +
+    address.ds_number +
+    (address.ds_complement ? ", " + address.ds_complement : "") +
+    ", " +
+    address.ds_neighborhood +
+    ", " +
+    address.ds_city +
+    "/" +
+    address.do_state +
+    " - CEP: " +
+    address.ds_zipcode;
+
+  return fullAddress;
+}
+
+async function getGeoCode(address, callback) {
+  var geocoder = new google.maps.Geocoder();
+
+  await geocoder.geocode(
+    {
+      address: address,
     },
+    function (results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        let latitude = results[0].geometry.location.lat();
+        let longitude = results[0].geometry.location.lng();
 
-    AddressStr(val) {
-      this.handleAddressStr(val);
+        if (callback) callback(latitude, longitude);
+      }
     },
-  },
+  );
+}
 
-  methods: {
-    buildFullAddress(address) {
-      if (!address || address.ds_street == null) return null;
+function updMapAddress(buildAddress) {
+  buildAddress = buildAddress != null ? buildAddress : true;
 
-      var fullAddress =
-        address.ds_street +
-        ", " +
-        address.ds_number +
-        (address.ds_complement ? ", " + address.ds_complement : "") +
-        ", " +
-        address.ds_neighborhood +
-        ", " +
-        address.ds_city +
-        "/" +
-        address.do_state +
-        " - CEP: " +
-        address.ds_zipcode;
+  mapState.value = "loading";
 
-      return fullAddress;
+  if (updMapDebounce) clearTimeout(updMapDebounce);
+
+  updMapDebounce = setTimeout(() => {
+    var fullAddress = buildAddress
+      ? buildFullAddress(props.AddressObj)
+      : props.AddressStr;
+
+    if (fullAddress == null) return;
+
+    getGeoCode(fullAddress, (latitude, longitude) => {
+      initMap(latitude, longitude);
+    });
+  }, 300);
+}
+
+// Initialize and add the map
+function initMap(lat, lng) {
+  // The location
+  var location = {
+    lat: lat,
+    lng: lng,
+  };
+  // The map, centered at location
+  const map = new google.maps.Map(
+    document.getElementById(`map-${uniqid.value}`),
+    {
+      zoom: 14,
+      center: location,
     },
+  );
 
-    async getGeoCode(address, callback) {
-      var geocoder = new google.maps.Geocoder();
+  // The marker, positioned at location
+  new google.maps.Marker({
+    position: location,
+    map: map,
+  });
 
-      await geocoder.geocode(
-        {
-          address: address,
-        },
-        function (results, status) {
-          if (status == google.maps.GeocoderStatus.OK) {
-            let latitude = results[0].geometry.location.lat();
-            let longitude = results[0].geometry.location.lng();
+  mapState.value = "ready";
+  emit("map-loaded");
+}
 
-            if (callback) callback(latitude, longitude);
-          }
-        },
-      );
-    },
+function handleAddressStr() {
+  if (!props.AddressStr) mapState.value = "empty";
+  else updMapAddress(false);
+}
 
-    updMapAddress(buildAddress) {
-      buildAddress = buildAddress != null ? buildAddress : true;
+function handleAddressObj(val) {
+  if (
+    !!val &&
+    !!val.ds_street &&
+    !!val.ds_number &&
+    !!val.ds_neighborhood &&
+    !!val.ds_city &&
+    !!val.do_state
+  ) {
+    updMapAddress(true);
+  } else mapState.value = "empty";
+}
 
-      this.mapState = "loading";
+onMounted(() => {
+  // Generate an uniqid
+  var ts = String(new Date().getTime()),
+    out = "";
+  var i;
+  for (i = 0; i < ts.length; i += 2) {
+    out += Number(ts.substr(i, 2)).toString(36);
+  }
+  uniqid.value = "d" + out;
 
-      if (this.updMapDebounce) clearTimeout(this.updMapDebounce);
+  if (navigator.onLine == false) {
+    mapState.value = "offline";
+    return;
+  }
 
-      this.updMapDebounce = setTimeout(() => {
-        var fullAddress = buildAddress
-          ? this.buildFullAddress(this.AddressObj)
-          : this.AddressStr;
-
-        if (fullAddress == null) return;
-
-        this.getGeoCode(fullAddress, (latitude, longitude) => {
-          this.initMap(latitude, longitude);
-        });
-      }, 300);
-    },
-
-    // Initialize and add the map
-    initMap(lat, lng) {
-      // The location
-      var location = {
-        lat: lat,
-        lng: lng,
-      };
-      // The map, centered at location
-      const map = new google.maps.Map(
-        document.getElementById(`map-${this.uniqid}`),
-        {
-          zoom: 14,
-          center: location,
-        },
-      );
-
-      this.map = map;
-
-      // The marker, positioned at location
-      new google.maps.Marker({
-        position: location,
-        map: map,
-      });
-
-      this.mapState = "ready";
-      this.$emit("map-loaded");
-    },
-
-    handleAddressStr() {
-      if (!this.AddressStr) this.mapState = "empty";
-      else this.updMapAddress(false);
-    },
-
-    handleAddressObj(val) {
-      if (
-        !!val &&
-        !!val.ds_street &&
-        !!val.ds_number &&
-        !!val.ds_neighborhood &&
-        !!val.ds_city &&
-        !!val.do_state
-      ) {
-        this.updMapAddress(true);
-      } else this.mapState = "empty";
-    },
-  },
-
-  mounted() {
-    // Generate an uniqid
-    var ts = String(new Date().getTime()),
-      out = "";
-    var i;
-    for (i = 0; i < ts.length; i += 2) {
-      out += Number(ts.substr(i, 2)).toString(36);
-    }
-    this.uniqid = "d" + out;
-
-    if (navigator.onLine == false) {
-      this.mapState = "offline";
-      return;
-    }
-
-    if (this.AddressObj) this.handleAddressObj(this.AddressObj);
-    else if (this.AddressStr) this.handleAddressStr();
-  },
-};
+  if (props.AddressObj) handleAddressObj(props.AddressObj);
+  else if (props.AddressStr) handleAddressStr();
+});
 </script>
 <style scoped>
 .map-container {

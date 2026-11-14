@@ -30,48 +30,46 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "ui-gadgets-icon",
+<script setup>
+import { computed, getCurrentInstance } from "vue";
 
-  props: {
-    Name: String,
-    Size: String,
-    Color: String,
-    Html: String,
-  },
+defineOptions({ name: "ui-gadgets-icon" });
 
-  computed: {
-    iconSizePx() {
-      const sizeMap = {
-        xs: "18px",
-        sm: "24px",
-        md: "32px",
-        lg: "38px",
-        xl: "46px",
-      };
-      const size = this.Size ?? "md";
-      return sizeMap[size] ?? size;
-    },
-    iconFontSizePx() {
-      const fontMap = {
-        xs: "12px",
-        sm: "16px",
-        md: "20px",
-        lg: "24px",
-        xl: "30px",
-      };
-      const size = this.Size ?? "md";
-      return fontMap[size] ?? size;
-    },
-  },
+const props = defineProps({
+  Name: String,
+  Size: String,
+  Color: String,
+  Html: String,
+});
 
-  methods: {
-    isCustomIcon(name) {
-      return typeof this.$isCustomIcon === "function"
-        ? this.$isCustomIcon(name)
-        : false;
-    },
-  },
-};
+const $isCustomIcon =
+  getCurrentInstance().appContext.config.globalProperties.$isCustomIcon;
+
+const iconSizePx = computed(() => {
+  const sizeMap = {
+    xs: "18px",
+    sm: "24px",
+    md: "32px",
+    lg: "38px",
+    xl: "46px",
+  };
+  const size = props.Size ?? "md";
+  return sizeMap[size] ?? size;
+});
+
+const iconFontSizePx = computed(() => {
+  const fontMap = {
+    xs: "12px",
+    sm: "16px",
+    md: "20px",
+    lg: "24px",
+    xl: "30px",
+  };
+  const size = props.Size ?? "md";
+  return fontMap[size] ?? size;
+});
+
+function isCustomIcon(name) {
+  return typeof $isCustomIcon === "function" ? $isCustomIcon(name) : false;
+}
 </script>

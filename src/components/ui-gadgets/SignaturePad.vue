@@ -8,75 +8,71 @@
   </div>
 </template>
 
-<script>
+<script setup>
 // Libs:
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import SignaturePad from 'signature_pad';
 
-export default {
-  name: 'ui-gadgets-signaturepad',
+defineOptions({ name: 'ui-gadgets-signaturepad' })
 
-  props: {
-    penColor: { type: String, default: 'rgb(0,0,0)' },
-    bgColor: { type: String, default: 'rgb(255,255,255)' }
-  },
+const props = defineProps({
+  penColor: { type: String, default: 'rgb(0,0,0)' },
+  bgColor: { type: String, default: 'rgb(255,255,255)' }
+})
 
-  data() {
-    return {
-      signaturePad: null,
-      dataURL: null,
-    };
-  },
+const emit = defineEmits(['cleared', 'saved', 'error'])
 
-  methods: {
-    initialize() {
-      const canvas = this.$refs.canvas;
-      if (!canvas) return;
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      canvas.width = canvas.offsetWidth * ratio;
-      canvas.height = canvas.offsetHeight * ratio;
-      canvas.getContext('2d').scale(ratio, ratio);
+const canvas = ref(null)
+let signaturePad = null
+let dataURL = null
 
-      this.signaturePad = new SignaturePad(canvas, {
-        backgroundColor: this.bgColor,
-        penColor: this.penColor
-      });
-    },
+function initialize() {
+  const el = canvas.value;
+  if (!el) return;
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  el.width = el.offsetWidth * ratio;
+  el.height = el.offsetHeight * ratio;
+  el.getContext('2d').scale(ratio, ratio);
 
-    handleClear() {
-      this.resize();
+  signaturePad = new SignaturePad(el, {
+    backgroundColor: props.bgColor,
+    penColor: props.penColor
+  });
+}
 
-      if (this.signaturePad) {
-        this.signaturePad.clear();
-        this.dataURL = null;
-        this.$emit('cleared');
-      }
-    },
+function handleClear() {
+  resize();
 
-    handleSave() {
-      if (this.signaturePad && !this.signaturePad.isEmpty()) {
-        this.dataURL = this.signaturePad.toDataURL('image/png');
-        this.$emit('saved', this.dataURL);
-      } else {
-        this.$emit('error', 'empty'); // Emitir erro caso vazio
-      }
-    },
-
-    resize() {
-      this.initialize();
-    }
-  },
-
-  mounted() {
-    this.$nextTick(() => {
-      this.initialize();
-    });
-    window.addEventListener('resize', this.resize);
-  },
-
-  beforeUnmount() {
-    window.removeEventListener('resize', this.resize);
+  if (signaturePad) {
+    signaturePad.clear();
+    dataURL = null;
+    emit('cleared');
   }
 }
+
+function handleSave() {
+  if (signaturePad && !signaturePad.isEmpty()) {
+    dataURL = signaturePad.toDataURL('image/png');
+    emit('saved', dataURL);
+  } else {
+    emit('error', 'empty'); // Emitir erro caso vazio
+  }
+}
+
+function resize() {
+  initialize();
+}
+
+onMounted(() => {
+  nextTick(() => {
+    initialize();
+  });
+  window.addEventListener('resize', resize);
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', resize);
+})
 </script>
 
 <style scoped>

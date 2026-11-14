@@ -15,43 +15,35 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, watch } from 'vue'
 
-  export default{
-    name: 'ui-formparts-btnselector',
-    props: {
-      Label: String,
-      Options: Array,
-      modelValue: Array,
-      readonly: Boolean,
-    },
-    data(){
-      return{
-        values: []
-      }
-    },
-    watch: {
-      values: {
-        handler(){
-          this.$emit("update:model-value", this.values)
-        },
-        deep: true
-      },
-      modelValue: {
-        handler(){
-          this.values = this.modelValue
-        },
-        deep: true
-      }
-    },
-    methods: {
-      toggleValue(value){
-          if(this.values.includes(value)){
-          this.values.splice(this.values.indexOf(value), 1)
-        }else{
-          this.values.push(value)
-        }
-      }
-    }
+defineOptions({ name: 'ui-formparts-btnselector' })
+
+const props = defineProps({
+  Label: String,
+  Options: Array,
+  modelValue: Array,
+  readonly: Boolean,
+})
+
+const emit = defineEmits(['update:model-value'])
+
+const values = ref([])
+
+watch(values, () => {
+  emit('update:model-value', values.value)
+}, { deep: true })
+
+watch(() => props.modelValue, () => {
+  values.value = props.modelValue
+}, { deep: true })
+
+function toggleValue(value) {
+  if (values.value.includes(value)) {
+    values.value.splice(values.value.indexOf(value), 1)
+  } else {
+    values.value.push(value)
   }
+}
 </script>

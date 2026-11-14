@@ -7,7 +7,7 @@
       square
       filled
       hide-bottom-space
-      :ref="inputRefId"
+      ref="inputRef"
       :label="Label"
       :clearable="clearable"
       :dense="dense"
@@ -40,7 +40,7 @@
       square
       filled
       hide-bottom-space
-      :ref="inputRefId"
+      ref="inputRef"
       :label="Label"
       :clearable="clearable"
       :dense="dense"
@@ -74,7 +74,7 @@
       square
       filled
       hide-bottom-space
-      :ref="inputRefId"
+      ref="inputRef"
       :label="Label"
       :clearable="clearable"
       :dense="dense"
@@ -104,7 +104,7 @@
       filled
       hide-bottom-space
       maxlength="255"
-      :ref="inputRefId"
+      ref="inputRef"
       :label="Label"
       :clearable="clearable"
       :dense="dense"
@@ -128,7 +128,7 @@
     <!-- Input number: -->
     <q-input
       v-if="type == 'number'"
-      :ref="inputRefId"
+      ref="inputRef"
       square
       filled
       hide-bottom-space
@@ -164,7 +164,7 @@
     <!-- Input Checkbox -->
     <q-checkbox
       v-if="type == 'checkbox'"
-      :ref="inputRefId"
+      ref="inputRef"
       :label="Label"
       :disable="disable"
       :readonly="readonly"
@@ -456,135 +456,132 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "ui-formparts-inputfield",
+<script setup>
+import { ref, watch, onMounted } from "vue";
 
-  props: {
-    // General
-    modelValue: [String, Object, Number, Boolean],
-    BgColor: String,
-    Label: String,
-    Icon: String,
-    Error: { type: Boolean, default: false },
-    ErrorMsg: String,
+defineOptions({ name: "ui-formparts-inputfield" });
+
+const props = defineProps({
+  // General
+  modelValue: [String, Object, Number, Boolean],
+  BgColor: String,
+  Label: String,
+  Icon: String,
+  Error: { type: Boolean, default: false },
+  ErrorMsg: String,
+  type: String,
+  clearable: Boolean,
+  dense: Boolean,
+  disable: Boolean,
+  maxlength: String,
+  readonly: Boolean,
+
+  // Date
+  dateOptions: { type: [Array, Function] },
+  todayBtn: Boolean,
+  minDatePage: String,
+  maxDatePage: String,
+
+  // Time
+  withSeconds: Boolean,
+
+  // Select
+  Options: {
+    type: Array,
+    default: () => []
+  },
+  OptionsURL: String,
+  OptionMap: Object,
+  Multiple: Boolean,
+  UseChips: Boolean,
+  StackLabel: Boolean,
+
+  // Number
+  step: String,
+  max: String,
+  min: String,
+
+  // Mask
+  Mask: String,
+  ReverseFillMask: Boolean,
+  FillMask: {
+    type: [String, Boolean],
+    default: false,
+  },
+
+  // Others
+  SelectOnClick: {
+    type: Boolean,
+    default: false,
+  },
+  Default: {
+    type: [String, Object, Number, Boolean],
+    default: () => null,
+  },
+  accept: String,
+  ReadAsURL: Boolean,
+  placeholder: String,
+  ignorePadding: {
+    type: Boolean,
+    default: false,
+  },
+  hint: String,
+  unmaskedValue: Boolean,
+
+  // Money
+  Currency: {
     type: String,
-    clearable: Boolean,
-    dense: Boolean,
-    disable: Boolean,
-    maxlength: String,
-    readonly: Boolean,
-
-    // Date
-    dateOptions: { type: [Array, Function] },
-    todayBtn: Boolean,
-    minDatePage: String,
-    maxDatePage: String,
-
-    // Time
-    withSeconds: Boolean,
-
-    // Select
-    Options: {
-      type: Array,
-      default: () => []
-    },
-    OptionsURL: String,
-    OptionMap: Object,
-    Multiple: Boolean,
-    UseChips: Boolean,
-    StackLabel: Boolean,
-
-    // Number
-    step: String,
-    max: String,
-    min: String,
-
-    // Mask
-    Mask: String,
-    ReverseFillMask: Boolean,
-    FillMask: {
-      type: [String, Boolean],
-      default: false,
-    },
-
-    // Others
-    SelectOnClick: {
-      type: Boolean,
-      default: false,
-    },
-    Default: {
-      type: [String, Object, Number, Boolean],
-      default: () => null,
-    },
-    accept: String,
-    ReadAsURL: Boolean,
-    placeholder: String,
-    ignorePadding: {
-      type: Boolean,
-      default: false,
-    },
-    hint: String,
-    unmaskedValue: Boolean,
-
-    // Money
-    Currency: {
-      type: String,
-      default: 'BRL',
-    },
+    default: 'BRL',
   },
+});
 
-  data() {
-    return {
-      value: null,
-      inputRefId: null,
-      isPassword: true,
-    };
+const emit = defineEmits([
+  "focus",
+  "update:modelValue",
+  "update:model-value",
+  "expose-ref",
+  "fileupload-before-choose",
+  "fileupload-chosen",
+]);
+
+const value = ref(null);
+const inputRef = ref(null);
+const isPassword = ref(true);
+
+watch(() => props.modelValue, (v) => {
+  value.value = v;
+});
+
+watch(
+  value,
+  () => {
+    emit("update:modelValue", value.value);
   },
+  { deep: true },
+);
 
-  watch: {
-    modelValue(v) {
-      this.value = v;
-    },
+function inputClicked() {
+  if (props.SelectOnClick) {
+    const nativeInput = inputRef.value.$el.querySelector("input");
+    if (nativeInput) nativeInput.select();
+  }
+}
 
-    value: {
-      handler() {
-        this.$emit("update:modelValue", this.value);
-      },
-      deep: true,
-    },
-  },
+function updModelValue(v) {
+  emit("update:model-value", v);
+}
 
-  methods: {
-    inputClicked() {
-      if (this.SelectOnClick) {
-        const nativeInput =
-          this.$refs[this.inputRefId].$el.querySelector("input");
-        if (nativeInput) nativeInput.select();
-      }
-    },
+function broadcast(eventName, data) {
+  emit(eventName, data);
+}
 
-    updModelValue(v) {
-      this.$emit("update:model-value", v);
-    },
+// created()
+value.value = props.modelValue;
 
-    broadcast(eventName, data) {
-      this.$emit(eventName, data);
-    },
-  },
-
-  created() {
-    this.inputRefId = `InputFieldRef-${this.$getService(
-      "toolcase/utils",
-    ).uniqid()}`;
-    this.value = this.modelValue;
-  },
-
-  mounted() {
-    this.$emit("expose-ref", this.$refs[this.inputRefId]);
-    if (this.Default !== null && typeof this.Default != "undefined") {
-      this.updModelValue(this.Default);
-    }
-  },
-};
+onMounted(() => {
+  emit("expose-ref", inputRef.value);
+  if (props.Default !== null && typeof props.Default != "undefined") {
+    updModelValue(props.Default);
+  }
+});
 </script>

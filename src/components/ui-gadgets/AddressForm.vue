@@ -125,129 +125,122 @@
   </q-card>
 </template>
 
-<script>
-export default {
-  name: "components-common-addressinfo",
+<script setup>
+import { reactive, ref, computed, watch, onMounted, getCurrentInstance } from "vue";
 
-  props: {
-    card: Boolean,
-    dense: Boolean,
-    hideMap: Boolean,
-    readonly: Boolean,
-    showTitle: Boolean,
-    wrapFields: Boolean,
-    modelValue: {
-      type: Object,
-    },
+defineOptions({ name: "components-common-addressinfo" });
+
+const props = defineProps({
+  card: Boolean,
+  dense: Boolean,
+  hideMap: Boolean,
+  readonly: Boolean,
+  showTitle: Boolean,
+  wrapFields: Boolean,
+  modelValue: {
+    type: Object,
   },
+});
 
-  data() {
-    return {
-      input: {
-        ds_zipcode: null,
-        ds_street: null,
-        ds_number: null,
-        ds_complement: null,
-        ds_neighborhood: null,
-        ds_city: null,
-        do_state: null,
-      },
-      inputError: {
-        ds_zipcode: false,
-        ds_street: false,
-        ds_number: false,
-        ds_neighborhood: false,
-        ds_city: false,
-        do_state: false,
-      },
-      formReadonly: !!this.readonly,
-      zipcodeWarning: null,
-    };
+const emit = defineEmits(["update:model-value"]);
+
+// Submódulo acessa os serviços do app pelo $getService global (resolução por URI) — equivalente
+// ao this.$getService do Options API.
+const getService =
+  getCurrentInstance().appContext.config.globalProperties.$getService;
+
+const input = reactive({
+  ds_zipcode: null,
+  ds_street: null,
+  ds_number: null,
+  ds_complement: null,
+  ds_neighborhood: null,
+  ds_city: null,
+  do_state: null,
+});
+const inputError = reactive({
+  ds_zipcode: false,
+  ds_street: false,
+  ds_number: false,
+  ds_neighborhood: false,
+  ds_city: false,
+  do_state: false,
+});
+const formReadonly = !!props.readonly;
+const zipcodeWarning = ref(null);
+
+const brazilianStates = computed(() =>
+  getService("toolcase/utils").brazilianStates(),
+);
+
+const factory = computed(() => ({
+  validate: validateFields,
+  read: (data) => {
+    for (let k in input) if (k in data) input[k] = data[k];
   },
-
-  computed: {
-    brazilianStates() {
-      return this.$getService("toolcase/utils").brazilianStates();
-    },
-
-    factory() {
-      return {
-        validate: this.validateFields,
-        read: (data) => {
-          for (let k in this.input) if (k in data) this.input[k] = data[k];
-        },
-        getData: () => ({ ...this.input }),
-        input: {
-          ...this.input,
-        },
-      };
-    },
+  getData: () => ({ ...input }),
+  input: {
+    ...input,
   },
+}));
 
-  methods: {
-    validateFields() {
-      if (
-        !this.$getService("toolcase/utils").validateForm(
-          this.input,
-          this.inputError,
-        )
-      )
-        return false;
-      return true;
-    },
+function validateFields() {
+  if (!getService("toolcase/utils").validateForm(input, inputError))
+    return false;
+  return true;
+}
 
-    updModel() {
-      this.$emit("update:model-value", this.factory);
-    },
+function updModel() {
+  emit("update:model-value", factory.value);
+}
 
-    async getAddressByZipcode() {
-      var address = await this.$getService(
-        "toolcase/utils",
-      ).getAddressByZipCode(this.input.ds_zipcode, false);
-      if (address === null) return;
-      if (address === false) {
-        this.zipcodeWarning =
-          "CEP não encontrado. Preencha o endereço manualmente.";
-        return;
+async function getAddressByZipcode() {
+  var address = await getService("toolcase/utils").getAddressByZipCode(
+    input.ds_zipcode,
+    false,
+  );
+  if (address === null) return;
+  if (address === false) {
+    zipcodeWarning.value =
+      "CEP não encontrado. Preencha o endereço manualmente.";
+    return;
+  }
+  zipcodeWarning.value = null;
+  // Updating Values
+  input.ds_street = address.logradouro;
+  input.ds_neighborhood = address.bairro;
+  input.ds_city = address.localidade;
+  input.do_state = address.uf;
+  // Updating Errors
+  inputError.ds_street = false;
+  inputError.ds_neighborhood = false;
+  inputError.ds_city = false;
+  inputError.do_state = false;
+}
+
+watch(
+  input,
+  () => {
+    updModel();
+  },
+  { deep: true },
+);
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    for (let k in input) {
+      if (k in newValue) {
+        input[k] = newValue[k];
       }
-      this.zipcodeWarning = null;
-      // Updating Values
-      this.input.ds_street = address.logradouro;
-      this.input.ds_neighborhood = address.bairro;
-      this.input.ds_city = address.localidade;
-      this.input.do_state = address.uf;
-      // Updating Errors
-      this.inputError.ds_street = false;
-      this.inputError.ds_neighborhood = false;
-      this.inputError.ds_city = false;
-      this.inputError.do_state = false;
-    },
+    }
   },
+  { deep: true },
+);
 
-  watch: {
-    input: {
-      handler() {
-        this.updModel();
-      },
-      deep: true,
-    },
-
-    modelValue: {
-      handler(newValue) {
-        for (let k in this.input) {
-          if (k in newValue) {
-            this.input[k] = newValue[k];
-          }
-        }
-      },
-      deep: true,
-    },
-  },
-
-  mounted() {
-    this.updModel();
-  },
-};
+onMounted(() => {
+  updModel();
+});
 </script>
 <style scoped>
 .card-title {

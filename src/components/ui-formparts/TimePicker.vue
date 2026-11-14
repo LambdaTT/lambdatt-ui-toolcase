@@ -41,82 +41,72 @@
   </q-input>
 </template>
 
-<script>
-export default {
-  name: 'ui-formparts-timepicker',
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
 
-  props: {
-    BgColor: String,
-    dense: Boolean,
-    Label: String,
-    Error: Boolean,
-    modelValue: [String, Object],
-    readonly: Boolean,
-    Default: [String, Object],
-    withSeconds: Boolean,
-    hint: String,
-    range: Boolean,
-  },
+defineOptions({ name: 'ui-formparts-timepicker' })
 
-  data() {
-    return {
-      value: null,
-    }
-  },
+const props = defineProps({
+  BgColor: String,
+  dense: Boolean,
+  Label: String,
+  Error: Boolean,
+  modelValue: [String, Object],
+  readonly: Boolean,
+  Default: [String, Object],
+  withSeconds: Boolean,
+  hint: String,
+  range: Boolean,
+})
 
-  watch: {
-    modelValue(v) {
-      this.value = v;
-    }
-  },
+const emit = defineEmits(['focus', 'update:model-value'])
 
-  methods: {
-    updateModelValue(v) {
-      this.value = `${v}`;
-      this.$emit('update:model-value', this.value);
-    },
+const value = ref(null)
 
-    updateRangeValue(endpoint, value) {
-      this.value = {
-        from: this.value?.from ?? null,
-        to: this.value?.to ?? null,
-        [endpoint]: value,
-      };
-      this.$emit('update:model-value', this.value);
-    },
+watch(() => props.modelValue, (v) => {
+  value.value = v;
+})
 
-    clear() {
-      this.value = this.Default;
-      this.$emit('update:model-value', this.Default);
-    }
-  },
-
-  computed: {
-    displayValue() {
-      if (!this.range) return this.value;
-
-      const from = this.value?.from;
-      const to = this.value?.to;
-
-      if (from && to) return `De: ${from} - Até: ${to}`;
-      if (from) return `De: ${from}`;
-      if (to) return `Até: ${to}`;
-      return null;
-    },
-
-    hasValue() {
-      return this.range
-        ? !!(this.value?.from || this.value?.to)
-        : !!this.value;
-    },
-  },
-
-  mounted() {
-    if (!this.modelValue)
-      this.clear();
-    else this.value = this.modelValue;
-  }
+function updateModelValue(v) {
+  value.value = `${v}`;
+  emit('update:model-value', value.value);
 }
+
+function updateRangeValue(endpoint, val) {
+  value.value = {
+    from: value.value?.from ?? null,
+    to: value.value?.to ?? null,
+    [endpoint]: val,
+  };
+  emit('update:model-value', value.value);
+}
+
+function clear() {
+  value.value = props.Default;
+  emit('update:model-value', props.Default);
+}
+
+const displayValue = computed(() => {
+  if (!props.range) return value.value;
+
+  const from = value.value?.from;
+  const to = value.value?.to;
+
+  if (from && to) return `De: ${from} - Até: ${to}`;
+  if (from) return `De: ${from}`;
+  if (to) return `Até: ${to}`;
+  return null;
+})
+
+const hasValue = computed(() =>
+  props.range ? !!(value.value?.from || value.value?.to) : !!value.value,
+)
+
+onMounted(() => {
+  if (!props.modelValue)
+    clear();
+  else value.value = props.modelValue;
+})
 </script>
 <style scoped>
 .time-range-picker {

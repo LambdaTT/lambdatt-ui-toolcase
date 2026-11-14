@@ -13,16 +13,14 @@
   </q-btn-dropdown>
 </template>
 
-<script>
-export default {
-  name: 'ui-gadgets-btndropdown',
+<script setup>
+defineOptions({ name: 'ui-gadgets-btndropdown' })
 
-  props: {
-    Icon: String,
-    Disable: Boolean,
-    Color: String,
-    Label: String,
-    AvailableActions: Array,
-  }
-}
+defineProps({
+  Icon: String,
+  Disable: Boolean,
+  Color: String,
+  Label: String,
+  AvailableActions: Array,
+})
 </script>
