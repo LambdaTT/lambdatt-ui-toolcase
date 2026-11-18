@@ -161,6 +161,8 @@
                 clearable
                 dense
                 :type="f.type"
+                :Multiple="f.type === 'select'"
+                :UseChips="f.type === 'select'"
                 :withSeconds="f.filterOptions?.withSeconds"
                 :Label="`Filtrar por ${f.label}`"
                 :Options="f.options ?? []"
@@ -850,10 +852,13 @@ function getStaticResponse(ignorePagination) {
 
   for (const filter of availableFilters.value) {
     const value = filterParams.value[filter.field]
-    if (value == null || value === '') continue
+    if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) continue
 
     if (typeof filter.filterFn === 'function') {
-      rows = rows.filter((row) => filter.filterFn(row, value))
+      // Multi-seleção (OR): casa se a linha satisfaz qualquer valor escolhido.
+      rows = Array.isArray(value)
+        ? rows.filter((row) => value.some((v) => filter.filterFn(row, v)))
+        : rows.filter((row) => filter.filterFn(row, value))
     } else if (filter.type === 'timerangepicker') {
       if (!value.from || !value.to) continue
 
@@ -875,7 +880,10 @@ function getStaticResponse(ignorePagination) {
         return time !== null && time >= from && time <= to
       })
     } else if (filter.type === 'select') {
-      rows = rows.filter((row) => String(row[filter.field]) === String(value))
+      // Multi-seleção (OR): casa se o valor da linha for um dos selecionados.
+      rows = Array.isArray(value)
+        ? rows.filter((row) => value.some((v) => String(row[filter.field]) === String(v)))
+        : rows.filter((row) => String(row[filter.field]) === String(value))
     }
   }
 
