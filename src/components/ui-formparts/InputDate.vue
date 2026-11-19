@@ -1,6 +1,6 @@
 <template>
   <q-input type="text" square filled hide-bottom-space :label="Label" :clearable="clearable" :dense="dense"
-  :disable="disable" :readonly="readonly" :mask="mask" :hint="hint"
+  :disable="disable" :readonly="readonly" :mask="mask" :placeholder="placeholder" :hint="hint"
     :class="`full-width bg-${BgColor ? BgColor : 'white'}`" v-model="value" :error="hasError" :error-message="ErrorMsg"
     @focus="() => $emit('focus')">
     <template v-slot:append>
@@ -44,6 +44,11 @@ const hasError = computed(() => state.value === 'error' || error.value || props.
 
 const mask = computed(
   () => `${props.withTime ? `##/##/#### ##:##${props.withSeconds ? ':##' : ''}` : '##/##/####'}`,
+)
+
+// Placeholder visível com o formato da máscara (ex.: "--/--/---- --:--") enquanto o campo está vazio.
+const placeholder = computed(
+  () => `${props.withTime ? `--/--/---- --:--${props.withSeconds ? ':--' : ''}` : '--/--/----'}`,
 )
 
 watch(() => props.modelValue, (val) => {

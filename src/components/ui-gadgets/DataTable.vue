@@ -643,7 +643,11 @@ const filtersValues = computed(() => ({
 
 const activeFiltersCount = computed(() => {
   const filters = JSON.parse(JSON.stringify(filterParams.value))
-  return Object.values(filters).filter((v) => v !== null && v !== undefined && v !== '').length
+  // Conta só filtros realmente ativos: ignora vazios (null/undefined/'') e arrays vazios dos
+  // selects multi-seleção, coerente com a aplicação dos filtros (ver getStaticResponse).
+  return Object.values(filters).filter(
+    (v) => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0),
+  ).length
 })
 
 const sluggedName = computed(() =>
@@ -1499,9 +1503,14 @@ onMounted(async () => {
   // Set persisted filters:
   var persistedFilters = localStorage.getItem(`Datatable.${sluggedName.value}.filters`)
   if (persistedFilters) {
-    showFilterPanel.value = true
+    const parsedFilters = JSON.parse(persistedFilters)
+    // Abre o painel só quando há filtro realmente ativo (ignora vazios e arrays vazios dos
+    // selects multi-seleção) — coerente com activeFiltersCount e com a aplicação dos filtros.
+    showFilterPanel.value = Object.values(parsedFilters).some(
+      (v) => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0),
+    )
     setTimeout(() => {
-      filterParams.value = JSON.parse(persistedFilters)
+      filterParams.value = parsedFilters
       isRestoring = false
     }, 100)
     loadFirstData = false
