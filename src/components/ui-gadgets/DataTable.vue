@@ -4,19 +4,10 @@
     <div class="row q-pb-sm items-center">
       <div class="col-12 col-md-8">
         <!-- Options -->
-        <q-btn
-          v-if="availableFilters.length > 0"
-          flat
-          round
-          color="primary"
-          size="sm"
-          icon="fas fa-filter"
-          @click="showFilterPanel = !showFilterPanel"
-        >
-          <q-tooltip
-            >Filtros da tabela
-            {{ activeFiltersCount > 0 ? `(${activeFiltersCount})` : '' }}</q-tooltip
-          >
+        <q-btn v-if="availableFilters.length > 0" flat round color="primary" size="sm" icon="fas fa-filter"
+          @click="showFilterPanel = !showFilterPanel">
+          <q-tooltip>Filtros da tabela
+            {{ activeFiltersCount > 0 ? `(${activeFiltersCount})` : '' }}</q-tooltip>
           <!-- Active filter badge -->
           <q-badge v-if="activeFiltersCount > 0" color="red" floating rounded transparent>
             {{ activeFiltersCount }}
@@ -28,33 +19,16 @@
         <q-btn flat round color="primary" size="sm" icon="fas fa-columns">
           <q-tooltip>Colunas visíveis</q-tooltip>
           <q-menu class="q-pa-sm">
-            <q-option-group
-              v-model="visibleColumns"
-              type="checkbox"
-              :options="columnOptions"
-            ></q-option-group>
+            <q-option-group v-model="visibleColumns" type="checkbox" :options="columnOptions"></q-option-group>
           </q-menu>
         </q-btn>
-        <q-btn
-          :disable="fullData.length === 0"
-          v-if="!!Export"
-          flat
-          round
-          color="primary"
-          size="sm"
-          icon="fas fa-file-download"
-        >
+        <q-btn :disable="fullData.length === 0" v-if="!!Export" flat round color="primary" size="sm"
+          icon="fas fa-file-download">
           <q-tooltip>Opções de Exportação</q-tooltip>
           <q-menu class="q-pa-sm">
             <q-list class="text-primary">
-              <q-item
-                v-close-popup
-                dense
-                v-for="(opt, idx) in exportOptions"
-                :key="idx"
-                clickable
-                @click="exportFile(opt.filetype, opt.filename)"
-              >
+              <q-item v-close-popup dense v-for="(opt, idx) in exportOptions" :key="idx" clickable
+                @click="exportFile(opt.filetype, opt.filename)">
                 <q-item-section avatar>
                   <q-icon :name="opt.icon" size="xs"></q-icon>
                 </q-item-section>
@@ -65,52 +39,26 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn
-          :disable="fullData.length === 0"
-          v-if="!!Printable"
-          flat
-          round
-          color="primary"
-          size="sm"
-          icon="fas fa-print"
-          @click="printData()"
-        >
+        <q-btn :disable="fullData.length === 0" v-if="!!Printable" flat round color="primary" size="sm"
+          icon="fas fa-print" @click="printData()">
           <q-tooltip>Imprimir</q-tooltip>
         </q-btn>
 
         <!-- Custom Resources -->
-        <q-btn
-          v-for="(r, i) in CustomResources"
-          :key="i"
-          :disable="fullData.length === 0"
-          flat
-          round
-          color="primary"
-          size="sm"
-          :icon="r.icon ?? 'fas fa-gear'"
-          @click="handleItemClick(r)"
-        >
+        <q-btn v-for="(r, i) in CustomResources" :key="i" :disable="fullData.length === 0" flat round color="primary"
+          size="sm" :icon="r.icon ?? 'fas fa-gear'" @click="handleItemClick(r)">
           <q-tooltip>{{ r.label ?? 'Recurso personalizado' }}</q-tooltip>
           <q-menu v-if="itemHasChildren(r)" class="q-pa-sm">
             <q-list class="text-primary">
-              <q-item
-                v-for="(opt, idx) in r.children"
-                :key="idx"
-                v-close-popup
-                dense
-                clickable
-                @click="
-                  opt.fn({
-                    fullData,
-                    rawData,
-                    filters: filtersValues,
-                    ...opt.params,
-                  })
-                "
-              >
-                <q-item-section v-if="opt.icon" avatar
-                  ><q-icon :name="opt.icon" size="xs"
-                /></q-item-section>
+              <q-item v-for="(opt, idx) in r.children" :key="idx" v-close-popup dense clickable @click="
+                opt.fn({
+                  fullData,
+                  rawData,
+                  filters: filtersValues,
+                  ...opt.params,
+                })
+                ">
+                <q-item-section v-if="opt.icon" avatar><q-icon :name="opt.icon" size="xs" /></q-item-section>
                 <q-item-section>{{ opt.label }}</q-item-section>
               </q-item>
             </q-list>
@@ -120,18 +68,10 @@
 
       <!-- Search Field -->
       <div class="col-12 col-md-4">
-        <q-input
-          v-if="hasSearchableColumns"
-          dense
-          square
-          filled
-          clearable
-          label="Pesquisar na lista"
-          v-model="searchTerm"
-        >
+        <q-input v-if="hasSearchableColumns" dense square filled clearable label="Pesquisar na lista"
+          v-model="searchTerm">
           <template v-slot:append>
-            <q-icon size="xs" name="fas fa-search" color="grey-8" /> </template
-        ></q-input>
+            <q-icon size="xs" name="fas fa-search" color="grey-8" /> </template></q-input>
       </div>
     </div>
 
@@ -143,32 +83,17 @@
         <q-expansion-item hide-expand-icon v-model="showFilterPanel" header-style="display:none;">
           <q-toolbar class="bg-grey-3">
             <q-toolbar-title> Filtros da Tabela </q-toolbar-title>
-            <q-btn
-              size="sm"
-              icon="fas fa-filter-circle-xmark"
-              color="primary"
-              flat
-              round
-              dense
-              @click="filterParams = {}"
-            >
+            <q-btn size="sm" icon="fas fa-filter-circle-xmark" color="primary" flat round dense
+              @click="filterParams = {}">
               <q-tooltip>Limpar filtros</q-tooltip>
             </q-btn>
           </q-toolbar>
           <div class="row q-py-sm">
             <div v-for="(f, i) in availableFilters" :key="i" class="col-12 col-md-4">
-              <InputField
-                clearable
-                dense
-                :type="f.type"
-                :Multiple="f.type === 'select'"
-                :UseChips="f.type === 'select'"
-                :withSeconds="f.filterOptions?.withSeconds"
-                :Label="`Filtrar por ${f.label}`"
-                :Options="f.options ?? []"
+              <InputField clearable dense :type="f.type" :Multiple="f.type === 'select'" :UseChips="f.type === 'select'"
+                :withSeconds="f.filterOptions?.withSeconds" :Label="`Filtrar por ${f.label}`" :Options="f.options ?? []"
                 v-model="filterParams[f.field]"
-                :Default="f.default !== null && typeof f.default != 'undefined' ? f.default : null"
-              >
+                :Default="f.default !== null && typeof f.default != 'undefined' ? f.default : null">
               </InputField>
             </div>
           </div>
@@ -183,27 +108,14 @@
       <table>
         <thead>
           <tr>
-            <th
-              v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${
-                column.sortable !== false ? 'cursor-pointer' : ''
-              }`"
-              v-for="column in columns"
-              :key="column.field"
-              @click="sort(column)"
-              :style="column.width ? `width: ${column.width};` : ''"
-            >
+            <th v-show="visibleColumns.includes(column.field) || column.name == 'actions'" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${column.sortable !== false ? 'cursor-pointer' : ''
+              }`" v-for="column in columns" :key="column.field" @click="sort(column)"
+              :style="column.width ? `width: ${column.width};` : ''">
               <span>{{ column.label }}</span>
-              <q-icon
-                v-if="column.sortable !== false"
-                size="0.9em"
-                :name="getSortIcon(column)"
-                :color="getColumnNumber(column) == pagination.sortBy ? 'primary' : null"
-              >
+              <q-icon v-if="column.sortable !== false" size="0.9em" :name="getSortIcon(column)"
+                :color="getColumnNumber(column) == pagination.sortBy ? 'primary' : null">
               </q-icon>
-              <q-tooltip v-if="column.sortable !== false"
-                >Clique para ordenar p/ {{ column.label }}</q-tooltip
-              >
+              <q-tooltip v-if="column.sortable !== false">Clique para ordenar p/ {{ column.label }}</q-tooltip>
             </th>
           </tr>
         </thead>
@@ -212,15 +124,9 @@
         <tbody v-if="state == 'ready'">
           <template v-for="(row, idx) in rows" :key="idx">
             <tr v-if="row != 'interval'">
-              <td
-                v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-                :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${
-                  !!column.align ? `text-${column.align}` : ''
-                }`"
-                v-for="column in columns"
-                :key="column.field"
-                :style="column.width ? `width: ${column.width};` : ''"
-              >
+              <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${!!column.align ? `text-${column.align}` : ''
+                }`" v-for="column in columns" :key="column.field"
+                :style="column.width ? `width: ${column.width};` : ''">
                 <div v-if="column.name != 'actions'">
                   <!-- In case no template is set for the td-->
                   <div v-if="!(`cell-${column.name}` in $slots)">
@@ -235,40 +141,21 @@
 
                 <!-- Especial td of actions -->
                 <div class="text-center" v-if="column.name == 'actions' && showActionsColumn">
-                  <q-btn
-                    v-if="showActionsBtnInRow(row)"
-                    flat
-                    dense
-                    color="primary"
-                    icon="fas fa-ellipsis-v"
-                  >
+                  <q-btn v-if="showActionsBtnInRow(row)" flat dense color="primary" icon="fas fa-ellipsis-v">
                     <q-tooltip>Ações do registro</q-tooltip>
                     <q-menu>
                       <q-list>
-                        <q-item
-                          class="text-primary"
-                          v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in RowActions"
-                          :key="idx"
-                          clickable
-                          v-close-popup
-                          @click="a.fn(row)"
-                        >
+                        <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
+                          v-for="(a, idx) in RowActions" :key="idx" clickable v-close-popup @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
                           <q-item-section>{{ a.label }}</q-item-section>
                           <q-tooltip v-if="a.tooltip">{{ a.tooltip }}</q-tooltip>
                         </q-item>
-                        <q-item
-                          class="text-primary"
-                          v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
-                          v-for="(a, idx) in injectedRowActions(row)"
-                          :key="idx"
-                          clickable
-                          v-close-popup
-                          @click="a.fn(row)"
-                        >
+                        <q-item class="text-primary" v-show="typeof a.hide == 'function' ? !a.hide(row) : !a.hide"
+                          v-for="(a, idx) in injectedRowActions(row)" :key="idx" clickable v-close-popup
+                          @click="a.fn(row)">
                           <q-item-section v-if="a.icon" side>
                             <q-icon color="primary" size="sm" :name="a.icon"></q-icon>
                           </q-item-section>
@@ -283,14 +170,11 @@
             </tr>
             <tr v-else>
               <td :colspan="columns.length" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'}`">
-                <slot
-                  name="interval-row"
-                  :data="{
-                    previous: dataInPage[idx - 1],
-                    current: dataInPage,
-                    next: dataInPage[idx + 1],
-                  }"
-                >
+                <slot name="interval-row" :data="{
+                  previous: dataInPage[idx - 1],
+                  current: dataInPage,
+                  next: dataInPage[idx + 1],
+                }">
                 </slot>
               </td>
             </tr>
@@ -338,15 +222,8 @@
 
         <tfoot v-if="hasAnyColumnFooter || 'footer' in $slots">
           <tr class="text-bold">
-            <td
-              v-show="visibleColumns.includes(column.field) || column.name == 'actions'"
-              :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${
-                !!column.align ? `text-${column.align}` : ''
-              }`"
-              v-for="column in columns"
-              :key="column.field"
-              :style="column.width ? `width: ${column.width};` : ''"
-            >
+            <td v-show="visibleColumns.includes(column.field) || column.name == 'actions'" :class="`${dense ? 'q-pa-xs' : 'q-pa-sm'} ${!!column.align ? `text-${column.align}` : ''
+              }`" v-for="column in columns" :key="column.field" :style="column.width ? `width: ${column.width};` : ''">
               <div v-if="!!column.footer">
                 <div v-if="`foot-${column.name}` in $slots">
                   <slot :name="`foot-${column.name}`"></slot>
@@ -392,14 +269,8 @@
           <q-tooltip>Página Anterior</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-left"></q-icon>
         </q-btn>
-        <q-btn
-          class="q-px-sm"
-          color="primary"
-          v-for="page in pagination.pages"
-          :key="page"
-          @click="goToPage(page)"
-          :flat="page == pagination.currentPage"
-        >
+        <q-btn class="q-px-sm" color="primary" v-for="page in pagination.pages" :key="page" @click="goToPage(page)"
+          :flat="page == pagination.currentPage">
           <q-tooltip>Página {{ page }}</q-tooltip>
           {{ page }}
         </q-btn>
@@ -407,11 +278,7 @@
           <q-tooltip>Próxima Página</q-tooltip>
           <q-icon size="xs" name="fas fa-chevron-right"></q-icon>
         </q-btn>
-        <q-btn
-          :disable="fullData.length === 0"
-          color="primary"
-          @click="goToPage(pagination.finalPage)"
-        >
+        <q-btn :disable="fullData.length === 0" color="primary" @click="goToPage(pagination.finalPage)">
           <q-tooltip>Última Página</q-tooltip>
           <q-icon size="xs" name="fas fa-angles-right"></q-icon>
         </q-btn>
@@ -475,7 +342,12 @@ const props = defineProps({
   CustomResources: Array,
 })
 
-const emit = defineEmits(['update:model-value', 'error-thrown'])
+const emit = defineEmits([
+  'update:model-value',
+  'datatable-fetchdata-before',
+  'datatable-fetchdata-after',
+  'datatable-fetchdata-error',
+])
 
 // Submódulo acessa os serviços do app pelo $getService global (resolução por URI) — equivalente
 // ao this.$getService do Options API.
@@ -535,9 +407,9 @@ const columnOptions = computed(() =>
     .map((clm) => {
       return clm.name != 'actions'
         ? {
-            label: clm.label,
-            value: clm.field,
-          }
+          label: clm.label,
+          value: clm.field,
+        }
         : null
     })
     .filter((item) => item != null),
@@ -932,21 +804,21 @@ async function loadData(ignorePagination) {
     }
 
     try {
-      // Before Load callback:
-      if (props.BeforeLoad) await props.BeforeLoad(params)
+      // Emit Before-Load Event:
+      emit('datatable-fetchdata-before', params)
 
       // fetch data (server or local StaticData)
       const response = await fetchData(params, ignorePagination)
 
-      // On Loaded callback:
-      if (props.OnLoaded) await props.OnLoaded(response)
+      // Emit After-Load Event:
+      emit('datatable-fetchdata-after', response)
 
       return response
     } catch (err) {
       loading.value = false
       errorState.value = true
       error.value = err
-      emit('error-thrown', err)
+      emit('datatable-fetchdata-after', err)
       throw err
     }
   }
@@ -1295,8 +1167,8 @@ function buildContentTable(data) {
     <thead>
       <tr>
         ${props.Columns.filter((column) => visibleColumns.value.includes(column.field))
-          .map((column) => `<th>${escapeXml(column.label)}</th>`)
-          .join('')}
+      .map((column) => `<th>${escapeXml(column.label)}</th>`)
+      .join('')}
       </tr>
     </thead>
     <tbody>
@@ -1310,9 +1182,8 @@ function buildContentTable(data) {
     for (let i = 0; i < props.Columns.length; i++) {
       let clm = props.Columns[i]
       if (!visibleColumns.value.includes(clm.field)) continue
-      content += `<td>${
-        clm.format ? clm.format(row) : row[clm.field] ? row[clm.field] : ''
-      }</td>`
+      content += `<td>${clm.format ? clm.format(row) : row[clm.field] ? row[clm.field] : ''
+        }</td>`
     }
     content += '</tr>'
   }
@@ -1358,9 +1229,8 @@ function buildContentTableForPrint(data) {
 <body>
   <table>
     <thead>
-      <tr><th colspan="${
-        visible.length
-      }" style="text-align: center; font-size: 16px;">${props.Name}</th></tr>
+      <tr><th colspan="${visible.length
+    }" style="text-align: center; font-size: 16px;">${props.Name}</th></tr>
       <tr><th colspan="${visible.length}" style="text-align: left; font-size: 12px;">
         <span style="text-decoration:underline;">Filtros:</span>
         <br>
@@ -1548,6 +1418,18 @@ onMounted(async () => {
     if (response) rawData.value = response.data
   }
 })
+
+defineExpose({
+  state: (() => state.value)(),
+  params: (() => setParams())(),
+  filterValues: (() => filtersValues.value)(),
+  dataInPage: (() => dataInPage.value)(),
+  rowsInPage: (() => dataInPage.value.length)(),
+  visibleColumns: (() => visibleColumns.value)(),
+  reload: reload,
+  fullData: (() => fullData.value)(),
+  totalRows: (() => fullData.value.length)(),
+})
 </script>
 
 <style scoped>
@@ -1578,7 +1460,7 @@ th {
   /* Adjusts width to fit the content */
 }
 
-tbody > tr:nth-child(even) {
+tbody>tr:nth-child(even) {
   background-color: #e2e2e2;
 }
 
