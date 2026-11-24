@@ -173,13 +173,13 @@ export default {
       ...options,
       actions: [
         ...(options.actions ?? []),
-        { icon: "close", color: "white", round: true, handler: () => {} },
+        { icon: "close", color: "white", round: true, handler: () => { } },
       ],
     });
   },
 
   notifyError: function (error) {
-    const closeAction = { icon: "close", color: "white", round: true, handler: () => {} };
+    const closeAction = { icon: "close", color: "white", round: true, handler: () => { } };
     let message = "Houve um problema para executar esta ação. Tente novamente mais tarde.";
 
     // Só sobrescreve a mensagem-padrão por uma STRING não-vazia. Antes, o envelope de erro do
@@ -192,8 +192,7 @@ export default {
         (data.accessible || data.userReadable) && typeof data.message === "string" ? data.message : null;
       const candidate =
         userMsg ??
-        (typeof data.error === "string" ? data.error : null) ??
-        (typeof data.message === "string" ? data.message : null);
+        (typeof data.error === "string" ? data.error : null) ?? null;
       if (candidate && candidate.trim() !== "") message = candidate;
     }
 

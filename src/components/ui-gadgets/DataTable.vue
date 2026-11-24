@@ -298,10 +298,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  modelValue: {
-    type: Object,
-    required: true,
-  },
+  modelValue: Object,
   DataURL: {
     // Optional when `StaticData` is provided (local/mock mode, no HTTP).
     type: String,
